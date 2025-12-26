@@ -140,7 +140,7 @@ export default function Home() {
     }, 0);
 
     const totalAttendance = activeData.reduce((acc, item) => {
-        const attendance = parseNumericValue(item.highestAttendance);
+        const attendance = parseNumericValue(item.averageAttendance);
         return acc + attendance;
     }, 0);
 
@@ -305,7 +305,7 @@ export default function Home() {
                               </div>
                               <ScrollArea className="h-48 mt-4">
                                   <div className="text-xs p-2 bg-muted rounded-md break-all">
-                                      {filteredData.map(item => parseNumericValue(item.highestAttendance)).join(' + ')}
+                                      {filteredData.map(item => parseNumericValue(item.averageAttendance)).join(' + ')}
                                   </div>
                               </ScrollArea>
                           </PopoverContent>
