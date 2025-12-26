@@ -5,7 +5,7 @@ import { DataTable } from "@/components/dashboard/data-table";
 import Logo from "@/components/logo";
 import type { ClassEntry } from "@/lib/definitions";
 import { useToast } from "@/hooks/use-toast";
-import { BookOpen, User, BookCopy, Activity, Clock, TrendingUp, Users, Info, ChevronsUpDown } from "lucide-react";
+import { BookOpen, User, BookCopy, Activity, Clock, TrendingUp, Users, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -225,7 +225,7 @@ export default function Home() {
                 <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-5 w-5">
-                        <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+                        <Info className="h-4 w-4 text-muted-foreground" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto max-w-[300px]" side="top" align="end">
@@ -277,7 +277,7 @@ export default function Home() {
                 <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-5 w-5">
-                        <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+                        <Info className="h-4 w-4 text-muted-foreground" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto" side="top" align="end">
