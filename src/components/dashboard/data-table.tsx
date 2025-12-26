@@ -27,6 +27,7 @@ import {
   Columns,
   Edit,
   Loader,
+  X,
 } from "lucide-react";
 import type { ClassEntry } from "@/lib/definitions";
 import { EditDialog } from "./edit-dialog";
@@ -62,6 +63,7 @@ interface DataTableProps {
   productTypes: string[];
   courses: string[];
   teachers: string[];
+  subjects: string[];
   globalFilter: string;
   setGlobalFilter: (value: string) => void;
   productTypeFilters: string[];
@@ -70,6 +72,9 @@ interface DataTableProps {
   setCourseFilters: (value: string[]) => void;
   teacher1Filters: string[];
   setTeacher1Filters: (value: string[]) => void;
+  subjectFilters: string[];
+  setSubjectFilters: (value: string[]) => void;
+  onClearFilters: () => void;
   onDataUpdate: (data: ClassEntry[]) => void;
   isLoading: boolean;
 }
@@ -80,6 +85,7 @@ export function DataTable({
   productTypes,
   courses,
   teachers,
+  subjects,
   globalFilter,
   setGlobalFilter,
   productTypeFilters,
@@ -88,6 +94,9 @@ export function DataTable({
   setCourseFilters,
   teacher1Filters,
   setTeacher1Filters,
+  subjectFilters,
+  setSubjectFilters,
+  onClearFilters,
   onDataUpdate,
   isLoading,
 }: DataTableProps) {
@@ -172,6 +181,8 @@ export function DataTable({
     });
   };
 
+  const isFiltered = globalFilter || productTypeFilters.length > 0 || courseFilters.length > 0 || teacher1Filters.length > 0 || subjectFilters.length > 0;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4">
@@ -184,33 +195,52 @@ export function DataTable({
             className="h-10 w-full md:w-[350px]"
           />
         </div>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:flex-wrap">
           <MultiSelectFilter
             title="Product Types"
             options={productTypes.map(type => ({ value: type, label: type }))}
             selectedValues={productTypeFilters}
             onSelectedValuesChange={setProductTypeFilters}
-            triggerClassName="w-full md:w-[250px] lg:w-[200px]"
+            triggerClassName="w-full md:w-auto"
           />
           <MultiSelectFilter
             title="Courses"
             options={courses.map(course => ({ value: course, label: course }))}
             selectedValues={courseFilters}
             onSelectedValuesChange={setCourseFilters}
-            triggerClassName="w-full md:w-[250px] lg:w-[200px]"
+            triggerClassName="w-full md:w-auto"
           />
           <MultiSelectFilter
             title="Teachers"
             options={teachers.map(teacher => ({ value: teacher, label: teacher }))}
             selectedValues={teacher1Filters}
             onSelectedValuesChange={setTeacher1Filters}
-            triggerClassName="w-full md:w-[250px] lg:w-[200px]"
+            triggerClassName="w-full md:w-auto"
           />
+           <MultiSelectFilter
+            title="Subjects"
+            options={subjects.map(subject => ({ value: subject, label: subject }))}
+            selectedValues={subjectFilters}
+            onSelectedValuesChange={setSubjectFilters}
+            triggerClassName="w-full md:w-auto"
+          />
+
+          {isFiltered && (
+            <Button
+              variant="ghost"
+              onClick={onClearFilters}
+              className="h-10 px-2 lg:px-3"
+            >
+              Clear Filters
+              <X className="ml-2 h-4 w-4" />
+            </Button>
+          )}
+
 
           <div className="flex-grow" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-10">
+              <Button variant="outline" className="h-10 ml-auto">
                 <Columns className="mr-2 h-4 w-4" />
                 View
               </Button>

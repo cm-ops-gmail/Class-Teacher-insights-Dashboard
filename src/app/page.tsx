@@ -17,6 +17,8 @@ export default function Home() {
   const [productTypeFilters, setProductTypeFilters] = useState<string[]>([]);
   const [courseFilters, setCourseFilters] = useState<string[]>([]);
   const [teacher1Filters, setTeacher1Filters] = useState<string[]>([]);
+  const [subjectFilters, setSubjectFilters] = useState<string[]>([]);
+
 
   useEffect(() => {
     const handleImport = async (url: string) => {
@@ -80,6 +82,10 @@ export default function Home() {
     () => [...new Set(data.map((item) => item.teacher1).filter(Boolean))],
     [data]
   );
+  const subjects = useMemo(
+    () => [...new Set(data.map((item) => item.subject).filter(Boolean))],
+    [data]
+  );
 
   const filteredData = useMemo(() => {
     let filtered = data;
@@ -99,6 +105,12 @@ export default function Home() {
         teacher1Filters.includes(item.teacher1)
       );
     }
+    if (subjectFilters.length > 0) {
+      filtered = filtered.filter((item) =>
+        subjectFilters.includes(item.subject)
+      );
+    }
+
 
     if (globalFilter) {
       const lowercasedFilter = globalFilter.toLowerCase();
@@ -110,7 +122,7 @@ export default function Home() {
     }
 
     return filtered;
-  }, [data, globalFilter, productTypeFilters, courseFilters, teacher1Filters]);
+  }, [data, globalFilter, productTypeFilters, courseFilters, teacher1Filters, subjectFilters]);
 
   const summary = useMemo(() => {
     const activeData = filteredData;
@@ -128,6 +140,14 @@ export default function Home() {
       totalDuration: Math.round(totalDuration),
     }
   }, [data.length, filteredData]);
+  
+  const clearAllFilters = () => {
+    setGlobalFilter("");
+    setProductTypeFilters([]);
+    setCourseFilters([]);
+    setTeacher1Filters([]);
+    setSubjectFilters([]);
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -225,6 +245,7 @@ export default function Home() {
           productTypes={productTypes}
           courses={courses}
           teachers={teachers}
+          subjects={subjects}
           globalFilter={globalFilter}
           setGlobalFilter={setGlobalFilter}
           productTypeFilters={productTypeFilters}
@@ -233,6 +254,9 @@ export default function Home() {
           setCourseFilters={setCourseFilters}
           teacher1Filters={teacher1Filters}
           setTeacher1Filters={setTeacher1Filters}
+          subjectFilters={subjectFilters}
+          setSubjectFilters={setSubjectFilters}
+          onClearFilters={clearAllFilters}
           onDataUpdate={setData}
           isLoading={isLoading}
         />
