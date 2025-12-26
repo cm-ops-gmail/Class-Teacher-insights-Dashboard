@@ -3,7 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "SheetDash",
+  title: "Run Sheet Data Visualization",
   description: "Dashboard for your Google Sheet data.",
 };
 

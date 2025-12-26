@@ -189,7 +189,7 @@ export default function Home() {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8 space-y-2">
           <h1 className="text-3xl font-bold tracking-tight font-headline">
-            Class Dashboard
+            2025 Class data analysis
           </h1>
           <p className="text-muted-foreground">
             An interactive view of your Google Sheet data.
@@ -197,30 +197,30 @@ export default function Home() {
         </div>
 
         <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-          <Card>
+          <Card className="border-chart-1/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Total Classes
               </CardTitle>
-              <BookCopy className="h-4 w-4 text-muted-foreground" />
+              <BookCopy className="h-4 w-4 text-chart-1" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{summary.filtered}</div>
+              <div className="text-2xl font-bold text-chart-1">{summary.filtered}</div>
                <p className="text-xs text-muted-foreground">
                 of {summary.total} total
               </p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-chart-2/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Unique Courses
               </CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
+              <BookOpen className="h-4 w-4 text-chart-2" />
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{summary.courses.length}</div>
+                <div className="text-2xl font-bold text-chart-2">{summary.courses.length}</div>
                 <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-5 w-5">
@@ -249,16 +249,16 @@ export default function Home() {
               </p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-chart-3/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Product Types
               </CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
+              <Activity className="h-4 w-4 text-chart-3" />
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{summary.productTypes.length}</div>
+                <div className="text-2xl font-bold text-chart-3">{summary.productTypes.length}</div>
                 <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-5 w-5">
@@ -287,30 +287,30 @@ export default function Home() {
               </p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-chart-4/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Total Duration (min)
               </CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Clock className="h-4 w-4 text-chart-4" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{summary.totalDuration.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-chart-4">{summary.totalDuration.toLocaleString()}</div>
                <p className="text-xs text-muted-foreground">
                 in current view
               </p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-chart-5/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Highest Attendance
               </CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <TrendingUp className="h-4 w-4 text-chart-5" />
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{summary.highestAttendance.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-chart-5">{summary.highestAttendance.toLocaleString()}</div>
                 {summary.topClass && (
                   <Popover>
                     <PopoverTrigger asChild>
@@ -329,16 +329,16 @@ export default function Home() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-chart-6/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Average Attendance
               </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-4 w-4 text-chart-6" />
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{summary.averageAttendance.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-chart-6">{summary.averageAttendance.toLocaleString()}</div>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-5 w-5">
