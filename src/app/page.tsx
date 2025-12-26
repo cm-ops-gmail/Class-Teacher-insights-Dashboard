@@ -18,41 +18,41 @@ export default function Home() {
   const [courseFilter, setCourseFilter] = useState("all");
   const [teacher1Filter, setTeacher1Filter] = useState("all");
 
-  const handleImport = async (url: string) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/sheet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sheetUrl: url }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to fetch data from sheet.");
-      }
-
-      const sheetData = await response.json();
-      setData(sheetData);
-      toast({
-          title: "Success!",
-          description: "Data imported successfully from your Google Sheet.",
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Uh oh! Something went wrong.",
-        description:
-          error.message ||
-          "Could not import data. Please check the URL and try again.",
-      });
-      setData([]); // Set data to empty on error
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const handleImport = async (url: string) => {
+      setIsLoading(true);
+      try {
+        const response = await fetch("/api/sheet", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sheetUrl: url }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to fetch data from sheet.");
+        }
+
+        const sheetData = await response.json();
+        setData(sheetData);
+        toast({
+            title: "Success!",
+            description: "Data imported successfully from your Google Sheet.",
+        });
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: "Uh oh! Something went wrong.",
+          description:
+            error.message ||
+            "Could not import data. Please check the URL and try again.",
+        });
+        setData([]); // Set data to empty on error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     const initialSheetUrl = process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL;
     if (initialSheetUrl) {
       handleImport(initialSheetUrl);

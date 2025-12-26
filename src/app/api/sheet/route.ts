@@ -69,26 +69,26 @@ export async function POST(request: Request) {
     }
 
     const header = rows[0].map(h => h.trim());
-    const classEntryKeys = Object.keys(initialClassEntry) as (keyof ClassEntry)[];
+    const classEntryKeys = Object.keys(getInitialClassEntry()) as (keyof ClassEntry)[];
     
     // Create a map from spreadsheet header to ClassEntry key
-    const headerMap: { [key: string]: keyof ClassEntry } = {};
+    const headerMap: { [key: number]: keyof ClassEntry } = {};
     const lowerCaseKeyMap = new Map(classEntryKeys.map(k => [k.toLowerCase().replace(/[^a-z0-9]/gi, ''), k]));
 
-    header.forEach((h) => {
+    header.forEach((h, i) => {
         const normalizedHeader = h.toLowerCase().replace(/[^a-z0-9]/gi, '');
         if (lowerCaseKeyMap.has(normalizedHeader)) {
-            headerMap[h] = lowerCaseKeyMap.get(normalizedHeader)!;
+            headerMap[i] = lowerCaseKeyMap.get(normalizedHeader)!;
         }
     });
 
     const data = rows.slice(1).map((row, index) => {
       const entry: Partial<ClassEntry> = { id: String(index + 1) };
-      header.forEach((headerName, i) => {
-        const key = headerMap[headerName];
-        if (key) {
-            (entry as any)[key] = row[i] || "";
-        }
+      row.forEach((cellValue, i) => {
+          const key = headerMap[i];
+          if (key) {
+              (entry as any)[key] = cellValue || "";
+          }
       });
       // Fill any missing keys with empty strings
       classEntryKeys.forEach(key => {
@@ -126,44 +126,46 @@ export async function POST(request: Request) {
 }
 
 // Used to get all possible keys for mapping and default values
-const initialClassEntry: ClassEntry = {
-  id: '',
-  date: '',
-  scheduledTime: '',
-  entryTime: '',
-  slideQAC: '',
-  classStartTime: '',
-  productType: '',
-  course: '',
-  subject: '',
-  topic: '',
-  teacher1: '',
-  teacher2: '',
-  teacher3: '',
-  studio: '',
-  studioCoordinator: '',
-  opsStakeholder: '',
-  lectureSlide: '',
-  title: '',
-  caption: '',
-  crossPost: '',
-  sourcePlatform: '',
-  teacherConfirmation: '',
-  zoomLink: '',
-  zoomCredentials: '',
-  moderatorLink: '',
-  annotatedSlideLink: '',
-  classStopTimestamps: '',
-  startDelayMinutes: '',
-  totalDurationMinutes: '',
-  viewCount10Min: '',
-  viewCount40_50Min: '',
-  viewCountBeforeEnd: '',
-  highestAttendance: '',
-  averageAttendance: '',
-  totalComments: '',
-  classLink: '',
-  recordingLink: '',
-  classQACFeedback: '',
-  remarks: '',
-};
+function getInitialClassEntry(): ClassEntry {
+    return {
+      id: '',
+      date: '',
+      scheduledTime: '',
+      entryTime: '',
+      slideQAC: '',
+      classStartTime: '',
+      productType: '',
+      course: '',
+      subject: '',
+      topic: '',
+      teacher1: '',
+      teacher2: '',
+      teacher3: '',
+      studio: '',
+      studioCoordinator: '',
+      opsStakeholder: '',
+      lectureSlide: '',
+      title: '',
+      caption: '',
+      crossPost: '',
+      sourcePlatform: '',
+      teacherConfirmation: '',
+      zoomLink: '',
+      zoomCredentials: '',
+      moderatorLink: '',
+      annotatedSlideLink: '',
+      classStopTimestamps: '',
+      startDelayMinutes: '',
+      totalDurationMinutes: '',
+      viewCount10Min: '',
+      viewCount40_50Min: '',
+      viewCountBeforeEnd: '',
+      highestAttendance: '',
+      averageAttendance: '',
+      totalComments: '',
+      classLink: '',
+      recordingLink: '',
+      classQACFeedback: '',
+      remarks: '',
+    };
+}
