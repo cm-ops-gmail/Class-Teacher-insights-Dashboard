@@ -134,10 +134,16 @@ export default function Home() {
       return acc + duration;
     }, 0);
 
-    const highestAttendance = activeData.reduce((max, item) => {
+    const { highestAttendance, topClass } = activeData.reduce(
+      (acc, item) => {
         const attendance = parseNumericValue(item.highestAttendance);
-        return Math.max(max, attendance);
-    }, 0);
+        if (attendance > acc.highestAttendance) {
+          return { highestAttendance: attendance, topClass: item };
+        }
+        return acc;
+      },
+      { highestAttendance: 0, topClass: null as ClassEntry | null }
+    );
 
     const totalAttendance = activeData.reduce((acc, item) => {
         const attendance = parseNumericValue(item.averageAttendance);
@@ -156,6 +162,7 @@ export default function Home() {
       productTypes: new Set(activeData.map(item => item.productType).filter(Boolean)).size,
       totalDuration: Math.round(totalDuration),
       highestAttendance: highestAttendance,
+      topClass: topClass,
       totalAttendance: totalAttendance,
       averageAttendance: averageAttendance,
     }
@@ -265,10 +272,24 @@ export default function Home() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{summary.highestAttendance.toLocaleString()}</div>
-               <p className="text-xs text-muted-foreground">
-                in current view
-              </p>
+              <div className="flex items-center justify-between">
+                <div className="text-2xl font-bold">{summary.highestAttendance.toLocaleString()}</div>
+                {summary.topClass && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-5 w-5">
+                        <Info className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="text-sm w-auto" side="top" align="end">
+                      <div className="grid gap-1">
+                        <div className="font-bold">{summary.topClass.topic}</div>
+                        <div className="text-xs text-muted-foreground">{summary.topClass.date}</div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
             </CardContent>
           </Card>
           <Card>
