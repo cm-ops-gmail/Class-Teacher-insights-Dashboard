@@ -73,10 +73,10 @@ export async function POST(request: Request) {
     
     // Create a map from spreadsheet header to ClassEntry key
     const headerMap: { [key: string]: keyof ClassEntry } = {};
-    const lowerCaseKeyMap = new Map(classEntryKeys.map(k => [k.toLowerCase().replace(/\s/g, ''), k]));
+    const lowerCaseKeyMap = new Map(classEntryKeys.map(k => [k.toLowerCase().replace(/[^a-z0-9]/gi, ''), k]));
 
     header.forEach((h) => {
-        const normalizedHeader = h.toLowerCase().replace(/\s/g, '');
+        const normalizedHeader = h.toLowerCase().replace(/[^a-z0-9]/gi, '');
         if (lowerCaseKeyMap.has(normalizedHeader)) {
             headerMap[h] = lowerCaseKeyMap.get(normalizedHeader)!;
         }
@@ -88,6 +88,12 @@ export async function POST(request: Request) {
         const key = headerMap[headerName];
         if (key) {
             (entry as any)[key] = row[i] || "";
+        }
+      });
+      // Fill any missing keys with empty strings
+      classEntryKeys.forEach(key => {
+        if (!(key in entry)) {
+          (entry as any)[key] = "";
         }
       });
       return entry as ClassEntry;
@@ -119,7 +125,7 @@ export async function POST(request: Request) {
   }
 }
 
-// Used to get all possible keys for mapping
+// Used to get all possible keys for mapping and default values
 const initialClassEntry: ClassEntry = {
   id: '',
   date: '',
@@ -161,5 +167,3 @@ const initialClassEntry: ClassEntry = {
   classQACFeedback: '',
   remarks: '',
 };
-
-    
