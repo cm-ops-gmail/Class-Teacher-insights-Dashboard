@@ -521,6 +521,7 @@ export default function Home() {
 
         <DataTable
           data={filteredData}
+          allData={data}
           allColumns={allColumns}
           productTypes={productTypes}
           courses={courses}

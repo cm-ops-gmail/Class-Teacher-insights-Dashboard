@@ -154,18 +154,18 @@ export function TopTeachers({ data }: TopTeachersProps) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card>
+      <Card className="border-chart-1/50 hover:border-chart-1">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Most Classes Taught</CardTitle>
-          <Award className="h-4 w-4 text-muted-foreground" />
+          <Award className="h-4 w-4 text-chart-1" />
         </CardHeader>
         <CardContent>
           <ul className="space-y-2 text-sm">
             {topTeachers.byClassCount.map((teacher, index) => (
               <li key={index} className="flex justify-between items-center">
-                <span>{teacher.name}</span>
+                <span className="text-chart-1">{teacher.name}</span>
                 <div className="flex items-center">
-                    <span className="font-bold">{teacher.classCount} classes</span>
+                    <span className="font-bold text-chart-1">{teacher.classCount} classes</span>
                     <StatPopover teacherName={teacher.name} statType="classCount" details={teacherDetails[teacher.name]} />
                 </div>
               </li>
@@ -173,18 +173,18 @@ export function TopTeachers({ data }: TopTeachersProps) {
           </ul>
         </CardContent>
       </Card>
-       <Card>
+       <Card className="border-chart-2/50 hover:border-chart-2">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Highest Average Attendance</CardTitle>
-          <UserCheck className="h-4 w-4 text-muted-foreground" />
+          <UserCheck className="h-4 w-4 text-chart-2" />
         </CardHeader>
         <CardContent>
           <ul className="space-y-2 text-sm">
             {topTeachers.byAverageAttendance.map((teacher, index) => (
               <li key={index} className="flex justify-between items-center">
-                <span>{teacher.name}</span>
+                <span className="text-chart-2">{teacher.name}</span>
                 <div className="flex items-center">
-                    <span className="font-bold">{teacher.avgAttendance.toLocaleString()}</span>
+                    <span className="font-bold text-chart-2">{teacher.avgAttendance.toLocaleString()}</span>
                     <StatPopover teacherName={teacher.name} statType="avgAttendance" details={teacherDetails[teacher.name]} />
                 </div>
               </li>
@@ -192,18 +192,18 @@ export function TopTeachers({ data }: TopTeachersProps) {
           </ul>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="border-chart-5/50 hover:border-chart-5">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Highest Peak Attendance</CardTitle>
-          <Star className="h-4 w-4 text-muted-foreground" />
+          <Star className="h-4 w-4 text-chart-5" />
         </CardHeader>
         <CardContent>
           <ul className="space-y-2 text-sm">
             {topTeachers.byHighestAttendance.map((teacher, index) => (
               <li key={index} className="flex justify-between items-center">
-                <span>{teacher.name}</span>
+                <span className="text-chart-5">{teacher.name}</span>
                 <div className="flex items-center">
-                    <span className="font-bold">{teacher.highestPeakAttendance.toLocaleString()}</span>
+                    <span className="font-bold text-chart-5">{teacher.highestPeakAttendance.toLocaleString()}</span>
                     <StatPopover teacherName={teacher.name} statType="highestAttendance" details={teacherDetails[teacher.name]} />
                 </div>
               </li>
@@ -211,18 +211,18 @@ export function TopTeachers({ data }: TopTeachersProps) {
           </ul>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="border-chart-4/50 hover:border-chart-4">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Longest Total Duration</CardTitle>
-          <Clock className="h-4 w-4 text-muted-foreground" />
+          <Clock className="h-4 w-4 text-chart-4" />
         </CardHeader>
         <CardContent>
           <ul className="space-y-2 text-sm">
             {topTeachers.byTotalDuration.map((teacher, index) => (
               <li key={index} className="flex justify-between items-center">
-                <span>{teacher.name}</span>
+                <span className="text-chart-4">{teacher.name}</span>
                 <div className="flex items-center">
-                    <span className="font-bold">{teacher.totalDuration.toLocaleString()} min</span>
+                    <span className="font-bold text-chart-4">{teacher.totalDuration.toLocaleString()} min</span>
                     <StatPopover teacherName={teacher.name} statType="totalDuration" details={teacherDetails[teacher.name]} />
                 </div>
               </li>

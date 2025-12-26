@@ -56,6 +56,7 @@ type SortConfig = {
 
 interface DataTableProps {
   data: ClassEntry[];
+  allData: ClassEntry[];
   allColumns: ColumnDef[];
   productTypes: string[];
   courses: string[];
@@ -88,6 +89,7 @@ const parseNumericValue = (value: string | number | undefined | null): number =>
 
 export function DataTable({
   data,
+  allData,
   allColumns,
   productTypes,
   courses,
@@ -254,7 +256,7 @@ export function DataTable({
       </div>
       
       <div className="my-8">
-        <TopTeachers data={data} />
+        <TopTeachers data={allData} />
       </div>
 
       <div className="rounded-md border">
