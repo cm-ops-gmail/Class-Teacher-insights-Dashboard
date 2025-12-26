@@ -29,6 +29,7 @@ import {
 import type { ClassEntry } from "@/lib/definitions";
 import { MultiSelectFilter } from "./multi-select-filter";
 import { TopTeachers } from "./top-teachers";
+import { ScrollArea } from "../ui/scroll-area";
 
 type ColumnDef = {
   key: keyof ClassEntry;
@@ -235,21 +236,23 @@ export function DataTable({
             <DropdownMenuContent align="end" className="w-[250px]">
               <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {allColumns.map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.key}
-                  className="capitalize"
-                  checked={columnVisibility[column.key]}
-                  onCheckedChange={(value) =>
-                    setColumnVisibility((prev) => ({
-                      ...prev,
-                      [column.key]: !!value,
-                    }))
-                  }
-                >
-                  {column.header}
-                </DropdownMenuCheckboxItem>
-              ))}
+              <ScrollArea className="h-72">
+                {allColumns.map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.key}
+                    className="capitalize"
+                    checked={columnVisibility[column.key]}
+                    onCheckedChange={(value) =>
+                      setColumnVisibility((prev) => ({
+                        ...prev,
+                        [column.key]: !!value,
+                      }))
+                    }
+                  >
+                    {column.header}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </ScrollArea>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
