@@ -2,25 +2,14 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "@/components/dashboard/data-table";
-import { classEntries as initialClassEntries } from "@/lib/data";
 import Logo from "@/components/logo";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import type { ClassEntry } from "@/lib/definitions";
 import { useToast } from "@/hooks/use-toast";
-import { Loader, BookOpen, User, BookCopy } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { BookOpen, User, BookCopy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Home() {
-  const [data, setData] = useState<ClassEntry[]>(initialClassEntries);
-  const [sheetUrl, setSheetUrl] = useState("");
+  const [data, setData] = useState<ClassEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -29,23 +18,13 @@ export default function Home() {
   const [courseFilter, setCourseFilter] = useState("all");
   const [teacher1Filter, setTeacher1Filter] = useState("all");
 
-  const handleImport = async (url?: string) => {
-    const importUrl = url || sheetUrl;
-    if (!importUrl) {
-      toast({
-        variant: "destructive",
-        title: "Invalid URL",
-        description: "Please enter a valid Google Sheet URL.",
-      });
-      setIsLoading(false);
-      return;
-    }
+  const handleImport = async (url: string) => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/sheet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sheetUrl: importUrl }),
+        body: JSON.stringify({ sheetUrl: url }),
       });
 
       if (!response.ok) {
@@ -55,12 +34,10 @@ export default function Home() {
 
       const sheetData = await response.json();
       setData(sheetData);
-      if(!url){
-        toast({
-            title: "Success!",
-            description: "Data imported successfully from your Google Sheet.",
-        });
-      }
+      toast({
+          title: "Success!",
+          description: "Data imported successfully from your Google Sheet.",
+      });
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -69,18 +46,22 @@ export default function Home() {
           error.message ||
           "Could not import data. Please check the URL and try again.",
       });
+      setData([]); // Set data to empty on error
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    // The URL is fetched from the server-side environment variable via a script in the layout
     const initialSheetUrl = process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL;
     if (initialSheetUrl) {
-      setSheetUrl(initialSheetUrl);
       handleImport(initialSheetUrl);
     } else {
+        toast({
+            variant: "destructive",
+            title: "Configuration Error",
+            description: "Google Sheet URL is not configured in environment variables.",
+        });
         setIsLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
