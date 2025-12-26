@@ -289,13 +289,14 @@ export default function Home() {
                   <PopoverContent className="text-sm w-auto" side="top" align="end">
                     <div className="grid gap-2">
                       <div className="font-bold">Calculation</div>
-                      <p>
+                      <div>
                         Total Attendance: {summary.totalAttendance.toLocaleString()}
-                        <br />
+                      </div>
+                      <div>
                         Total Classes: {summary.filtered.toLocaleString()}
-                      </p>
-                      <p className="font-bold">
-                        {summary.totalAttendance.toLocaleString()} / {summary.filtered.toLocaleString()} = {summary.averageAttendance.toLocaleString()}
+                      </div>
+                      <p className="font-bold border-t pt-2 mt-1">
+                        {summary.totalAttendance.toLocaleString()} / {summary.filtered > 0 ? summary.filtered.toLocaleString() : 1} = {summary.averageAttendance.toLocaleString()}
                       </p>
                     </div>
                   </PopoverContent>
@@ -366,7 +367,7 @@ const allColumns = [
   { key: "annotatedSlideLink", header: "Annotated Slide" },
   { key: "classStopTimestamps", header: "Class Stop Timestamps" },
   { key: "startDelayMinutes", header: "Start Delay (min)" },
-  { key: "viewCount10Min", header: "Views (10 Min)" },
+  { key_:"viewCount10Min", header: "Views (10 Min)" },
   { key: "viewCount40_50Min", header: "Views (40-50 Min)" },
   { key: "viewCountBeforeEnd", header: "Views (End)" },
   { key: "classLink", header: "Class LINK" },
