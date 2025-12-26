@@ -184,6 +184,20 @@ export default function Home() {
     courseFilters.length > 0 ||
     teacher1Filters.length > 0 ||
     subjectFilters.length > 0;
+    
+  const formatDuration = (totalMinutes: number) => {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    let result = '';
+    if (hours > 0) {
+      result += `${hours} hour${hours > 1 ? 's' : ''} `;
+    }
+    if (minutes > 0) {
+      result += `${minutes} min${minutes > 1 ? 's' : ''}`;
+    }
+    return result.trim();
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -358,7 +372,7 @@ export default function Home() {
                     </PopoverTrigger>
                     <PopoverContent className="text-sm w-auto" side="top" align="end">
                       <div className="font-bold">
-                        {(summary.totalDuration / 60).toFixed(1)} hours
+                        {formatDuration(summary.totalDuration)}
                       </div>
                     </PopoverContent>
                   </Popover>
