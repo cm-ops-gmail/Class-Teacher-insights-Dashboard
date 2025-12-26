@@ -18,7 +18,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
 
 type MultiSelectFilterProps = {
   options: { value: string; label: string }[];
@@ -78,7 +77,7 @@ export function MultiSelectFilter({
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+      <PopoverContent className="w-[250px] p-0">
         <Command>
           <CommandInput placeholder={`Search ${title.toLowerCase()}...`} />
           <CommandList>
@@ -108,5 +107,3 @@ export function MultiSelectFilter({
     </Popover>
   );
 }
-
-    
