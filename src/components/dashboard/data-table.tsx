@@ -20,13 +20,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   ChevronDown,
   ChevronUp,
   ChevronsUpDown,
@@ -38,6 +31,7 @@ import {
 import type { ClassEntry } from "@/lib/definitions";
 import { EditDialog } from "./edit-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Combobox } from "../ui/combobox";
 
 type ColumnDef = {
   key: keyof ClassEntry;
@@ -192,42 +186,34 @@ export function DataTable({
           />
         </div>
         <div className="flex flex-col gap-4 md:flex-row md:items-center">
-          <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
-            <SelectTrigger className="w-full md:w-[250px] lg:w-[200px] h-10">
-              <SelectValue placeholder="Filter by product type..." />
-            </SelectTrigger>
-            <SelectContent>
-              {productTypes.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type === "all" ? "All Product Types" : type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={courseFilter} onValueChange={setCourseFilter}>
-            <SelectTrigger className="w-full md:w-[250px] lg:w-[200px] h-10">
-              <SelectValue placeholder="Filter by course..." />
-            </SelectTrigger>
-            <SelectContent>
-              {courses.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type === "all" ? "All Courses" : type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={teacher1Filter} onValueChange={setTeacher1Filter}>
-            <SelectTrigger className="w-full md:w-[250px] lg:w-[200px] h-10">
-              <SelectValue placeholder="Filter by teacher..." />
-            </SelectTrigger>
-            <SelectContent>
-              {teachers.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type === "all" ? "All Teachers" : type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            options={productTypes.map(type => ({ value: type, label: type === 'all' ? 'All Product Types' : type }))}
+            selectedValue={productTypeFilter}
+            onSelectedValueChange={setProductTypeFilter}
+            placeholder="Filter by product type..."
+            searchPlaceholder="Search product types..."
+            noResultsMessage="No product types found."
+            triggerClassName="w-full md:w-[250px] lg:w-[200px]"
+          />
+           <Combobox
+            options={courses.map(type => ({ value: type, label: type === 'all' ? 'All Courses' : type }))}
+            selectedValue={courseFilter}
+            onSelectedValueChange={setCourseFilter}
+            placeholder="Filter by course..."
+            searchPlaceholder="Search courses..."
+            noResultsMessage="No courses found."
+            triggerClassName="w-full md:w-[250px] lg:w-[200px]"
+          />
+          <Combobox
+            options={teachers.map(type => ({ value: type, label: type === 'all' ? 'All Teachers' : type }))}
+            selectedValue={teacher1Filter}
+            onSelectedValueChange={setTeacher1Filter}
+            placeholder="Filter by teacher..."
+            searchPlaceholder="Search teachers..."
+            noResultsMessage="No teachers found."
+            triggerClassName="w-full md:w-[250px] lg:w-[200px]"
+          />
+
           <div className="flex-grow" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
