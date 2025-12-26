@@ -49,6 +49,7 @@ const defaultVisibleColumns: (keyof ClassEntry)[] = [
   "topic",
   "teacher1",
   "highestAttendance",
+  "averageAttendance",
   "totalDurationMinutes",
 ];
 
