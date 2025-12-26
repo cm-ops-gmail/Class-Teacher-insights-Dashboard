@@ -1,3 +1,4 @@
+
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
 import type { ClassEntry } from "@/lib/definitions";
@@ -27,20 +28,31 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if API key is present
-    if (!process.env.GOOGLE_SHEETS_API_KEY) {
-      console.error("GOOGLE_SHEETS_API_KEY is not set in .env or .env.local");
+    if (
+      !process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ||
+      !process.env.GOOGLE_PRIVATE_KEY
+    ) {
+      console.error("Google service account credentials are not set in .env.local");
       return NextResponse.json(
         {
-          error: "Server configuration error: Missing Google Sheets API key.",
+          error:
+            "Server configuration error: Missing Google service account credentials.",
         },
         { status: 500 }
       );
     }
 
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      },
+      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+    });
+
     const sheets = google.sheets({
       version: "v4",
-      auth: process.env.GOOGLE_SHEETS_API_KEY,
+      auth,
     });
 
     const response = await sheets.spreadsheets.values.get({
@@ -49,26 +61,33 @@ export async function POST(request: Request) {
     });
 
     const rows = response.data.values;
-    if (!rows || rows.length === 0) {
+    if (!rows || rows.length < 2) { // Need at least a header and one data row
       return NextResponse.json(
         { error: "No data found in the 'Central_Class_OPS' sheet." },
         { status: 404 }
       );
     }
 
-    const header = rows[0] as (keyof ClassEntry)[];
+    const header = rows[0].map(h => h.trim());
+    const classEntryKeys = Object.keys(initialClassEntry) as (keyof ClassEntry)[];
+    
+    // Create a map from spreadsheet header to ClassEntry key
+    const headerMap: { [key: string]: keyof ClassEntry } = {};
+    const lowerCaseKeyMap = new Map(classEntryKeys.map(k => [k.toLowerCase().replace(/\s/g, ''), k]));
+
+    header.forEach((h) => {
+        const normalizedHeader = h.toLowerCase().replace(/\s/g, '');
+        if (lowerCaseKeyMap.has(normalizedHeader)) {
+            headerMap[h] = lowerCaseKeyMap.get(normalizedHeader)!;
+        }
+    });
+
     const data = rows.slice(1).map((row, index) => {
       const entry: Partial<ClassEntry> = { id: String(index + 1) };
-      header.forEach((key, i) => {
-        const definitionKeys = Object.keys(
-          {} as Record<keyof ClassEntry, any>
-        );
-        const matchingKey = definitionKeys.find(
-          (k) => k.toLowerCase() === String(key).toLowerCase()
-        ) as keyof ClassEntry | undefined;
-
-        if (matchingKey) {
-          (entry as any)[matchingKey] = row[i] || "";
+      header.forEach((headerName, i) => {
+        const key = headerMap[headerName];
+        if (key) {
+            (entry as any)[key] = row[i] || "";
         }
       });
       return entry as ClassEntry;
@@ -78,21 +97,69 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("Error fetching from Google Sheet:", error);
 
-    if (error.response?.data?.error) {
-      const googleError = error.response.data.error;
-      let userMessage = `Google API Error: ${googleError.message}`;
-      if (googleError.code === 403) {
-        userMessage =
-          "Permission denied. Please make sure your Google Sheet is public ('Anyone with the link can view') and the API key is correct.";
-      } else if (googleError.code === 404) {
-        userMessage = "Spreadsheet not found. Please double-check the URL.";
-      }
-      return NextResponse.json({ error: userMessage }, { status: googleError.code });
+    let userMessage = "An unexpected error occurred while fetching data from the sheet.";
+    let statusCode = 500;
+
+    if (error.code === 'ENOTFOUND') {
+        userMessage = "Could not connect to Google Sheets. Please check your network connection.";
+        statusCode = 503; // Service Unavailable
+    } else if (error.errors) {
+        const googleError = error.errors[0];
+        userMessage = `Google API Error: ${googleError.message}`;
+        if (googleError.reason === 'forbidden') {
+            statusCode = 403;
+            userMessage = "Permission denied. Please make sure the service account has 'Viewer' access to the Google Sheet.";
+        } else if (googleError.reason === 'notFound') {
+            statusCode = 404;
+            userMessage = "Spreadsheet not found. Please double-check the URL.";
+        }
     }
 
-    return NextResponse.json(
-      { error: "An unexpected error occurred while fetching data from the sheet." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: userMessage }, { status: statusCode });
   }
 }
+
+// Used to get all possible keys for mapping
+const initialClassEntry: ClassEntry = {
+  id: '',
+  date: '',
+  scheduledTime: '',
+  entryTime: '',
+  slideQAC: '',
+  classStartTime: '',
+  productType: '',
+  course: '',
+  subject: '',
+  topic: '',
+  teacher1: '',
+  teacher2: '',
+  teacher3: '',
+  studio: '',
+  studioCoordinator: '',
+  opsStakeholder: '',
+  lectureSlide: '',
+  title: '',
+  caption: '',
+  crossPost: '',
+  sourcePlatform: '',
+  teacherConfirmation: '',
+  zoomLink: '',
+  zoomCredentials: '',
+  moderatorLink: '',
+  annotatedSlideLink: '',
+  classStopTimestamps: '',
+  startDelayMinutes: '',
+  totalDurationMinutes: '',
+  viewCount10Min: '',
+  viewCount40_50Min: '',
+  viewCountBeforeEnd: '',
+  highestAttendance: '',
+  averageAttendance: '',
+  totalComments: '',
+  classLink: '',
+  recordingLink: '',
+  classQACFeedback: '',
+  remarks: '',
+};
+
+    
