@@ -37,7 +37,7 @@ export default function Home() {
         setData(sheetData);
         toast({
             title: "Success!",
-            description: "Data imported successfully from your Google Sheet.",
+            description: "Data loaded from your Google Sheet.",
         });
       } catch (error: any) {
         toast({
@@ -133,7 +133,7 @@ export default function Home() {
             Class Dashboard
           </h1>
           <p className="text-muted-foreground">
-            A customizable, interactive view of your Google Sheet data.
+            An interactive view of your Google Sheet data.
           </p>
         </div>
 
