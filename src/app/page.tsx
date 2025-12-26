@@ -272,7 +272,34 @@ export default function Home() {
               <BookCopy className="h-4 w-4 text-chart-1" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-chart-1">{summary.filtered}</div>
+              <div className="flex items-center justify-between">
+                <div className="text-2xl font-bold text-chart-1">{summary.filtered}</div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-5 w-5">
+                        <Info className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto max-w-[350px]" side="top" align="end">
+                       <div className="space-y-2">
+                          <h4 className="font-medium leading-none">Filtered Classes</h4>
+                          <p className="text-xs text-muted-foreground">
+                              List of classes in the current view.
+                          </p>
+                      </div>
+                      <ScrollArea className="h-48 mt-4">
+                        <div className="flex flex-col gap-2 text-sm">
+                          {filteredData.map(item => (
+                            <div key={item.id} className="flex justify-between items-center gap-4">
+                              <span className="text-muted-foreground">{item.date}</span>
+                              <span className="font-medium text-right truncate">{item.course}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </PopoverContent>
+                  </Popover>
+              </div>
                <p className="text-xs text-muted-foreground">
                 of {summary.total} total
               </p>
