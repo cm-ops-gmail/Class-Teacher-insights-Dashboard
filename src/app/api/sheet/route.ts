@@ -27,12 +27,22 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if API key is present
+    if (!process.env.GOOGLE_SHEETS_API_KEY) {
+      console.error("GOOGLE_SHEETS_API_KEY is not set in .env or .env.local");
+      return NextResponse.json(
+        {
+          error: "Server configuration error: Missing Google Sheets API key.",
+        },
+        { status: 500 }
+      );
+    }
+
     const sheets = google.sheets({
       version: "v4",
       auth: process.env.GOOGLE_SHEETS_API_KEY,
     });
 
-    // Assuming data is in the first sheet, change 'Central_Class_OPS' if needed
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: "Central_Class_OPS",
@@ -41,7 +51,7 @@ export async function POST(request: Request) {
     const rows = response.data.values;
     if (!rows || rows.length === 0) {
       return NextResponse.json(
-        { error: "No data found in the sheet." },
+        { error: "No data found in the 'Central_Class_OPS' sheet." },
         { status: 404 }
       );
     }
@@ -50,7 +60,6 @@ export async function POST(request: Request) {
     const data = rows.slice(1).map((row, index) => {
       const entry: Partial<ClassEntry> = { id: String(index + 1) };
       header.forEach((key, i) => {
-        // Find the correct key from definition as it might be different casing
         const definitionKeys = Object.keys(
           {} as Record<keyof ClassEntry, any>
         );
@@ -67,22 +76,22 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error(error);
-    // Check for specific Google API errors
-    if (error.code === 403) {
-       return NextResponse.json(
-        {
-          error:
-            "Permission denied. Make sure your Google Sheet is public ('Anyone with the link can view') and the API key is correct.",
-        },
-        { status: 403 }
-      );
+    console.error("Error fetching from Google Sheet:", error);
+
+    if (error.response?.data?.error) {
+      const googleError = error.response.data.error;
+      let userMessage = `Google API Error: ${googleError.message}`;
+      if (googleError.code === 403) {
+        userMessage =
+          "Permission denied. Please make sure your Google Sheet is public ('Anyone with the link can view') and the API key is correct.";
+      } else if (googleError.code === 404) {
+        userMessage = "Spreadsheet not found. Please double-check the URL.";
+      }
+      return NextResponse.json({ error: userMessage }, { status: googleError.code });
     }
-     if (error.code === 404) {
-      return NextResponse.json({ error: "Spreadsheet not found. Please check the URL." }, { status: 404 });
-    }
+
     return NextResponse.json(
-      { error: "An unexpected error occurred." },
+      { error: "An unexpected error occurred while fetching data from the sheet." },
       { status: 500 }
     );
   }
