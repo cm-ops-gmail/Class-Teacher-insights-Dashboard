@@ -48,6 +48,7 @@ const defaultVisibleColumns: (keyof ClassEntry)[] = [
   "topic",
   "teacher1",
   "highestAttendance",
+  "totalDurationMinutes",
 ];
 
 type SortConfig = {
@@ -319,5 +320,3 @@ export function DataTable({
     </div>
   );
 }
-
-    

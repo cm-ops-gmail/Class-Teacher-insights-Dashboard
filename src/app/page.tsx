@@ -5,7 +5,7 @@ import { DataTable } from "@/components/dashboard/data-table";
 import Logo from "@/components/logo";
 import type { ClassEntry } from "@/lib/definitions";
 import { useToast } from "@/hooks/use-toast";
-import { BookOpen, User, BookCopy, Activity } from "lucide-react";
+import { BookOpen, User, BookCopy, Activity, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Home() {
@@ -114,12 +114,18 @@ export default function Home() {
 
   const summary = useMemo(() => {
     const activeData = filteredData;
+    const totalDuration = activeData.reduce((acc, item) => {
+      const duration = parseFloat(item.totalDurationMinutes);
+      return acc + (isNaN(duration) ? 0 : duration);
+    }, 0);
+
     return {
       total: data.length,
       filtered: activeData.length,
       courses: new Set(activeData.map(item => item.course).filter(Boolean)).size,
       teachers: new Set(activeData.map(item => item.teacher1).filter(Boolean)).size,
       productTypes: new Set(activeData.map(item => item.productType).filter(Boolean)).size,
+      totalDuration: Math.round(totalDuration),
     }
   }, [data.length, filteredData]);
 
@@ -140,7 +146,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -197,6 +203,20 @@ export default function Home() {
               </p>
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Duration (min)
+              </CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{summary.totalDuration.toLocaleString()}</div>
+               <p className="text-xs text-muted-foreground">
+                in current view
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <DataTable
@@ -234,6 +254,7 @@ const allColumns = [
   { key: "highestAttendance", header: "Highest Attendance", sortable: true },
   { key: "averageAttendance", header: "Average Attendance", sortable: true },
   { key: "totalComments", header: "Total Comments", sortable: true },
+  { key: "totalDurationMinutes", header: "Total Duration (min)", sortable: true },
   { key: "entryTime", header: "Entry Time" },
   { key: "slideQAC", header: "Slide QAC" },
   { key: "classStartTime", header: "Class Start Time" },
@@ -252,7 +273,6 @@ const allColumns = [
   { key: "annotatedSlideLink", header: "Annotated Slide" },
   { key: "classStopTimestamps", header: "Class Stop Timestamps" },
   { key: "startDelayMinutes", header: "Start Delay (min)" },
-  { key: "totalDurationMinutes", header: "Total Duration (min)" },
   { key: "viewCount10Min", header: "Views (10 Min)" },
   { key: "viewCount40_50Min", header: "Views (40-50 Min)" },
   { key: "viewCountBeforeEnd", header: "Views (End)" },
@@ -261,5 +281,3 @@ const allColumns = [
   { key: "classQACFeedback", header: "QAC Feedback" },
   { key: "remarks", header: "Remarks" },
 ];
-
-    
