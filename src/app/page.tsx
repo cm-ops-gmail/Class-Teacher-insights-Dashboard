@@ -296,23 +296,18 @@ export default function Home() {
                           <PopoverTrigger asChild>
                             <Button variant="link" size="sm" className="p-0 h-auto text-sm">{summary.totalAttendance.toLocaleString()}</Button>
                           </PopoverTrigger>
-                          <PopoverContent side="bottom" align="center" className="w-48">
-                            <div className="space-y-2">
-                                <h4 className="font-medium leading-none">Attendance Breakdown</h4>
-                                <p className="text-xs text-muted-foreground">
-                                    Sum of individual class attendance.
-                                </p>
-                            </div>
-                            <ScrollArea className="h-48 mt-4">
-                                <div className="space-y-1">
-                                    {filteredData.map((item, index) => (
-                                        <div key={index} className="text-xs flex justify-between">
-                                            <span>{item.topic || `Class ${item.id}`}:</span>
-                                            <span>{parseNumericValue(item.highestAttendance).toLocaleString()}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </ScrollArea>
+                          <PopoverContent side="bottom" align="center" className="w-64">
+                              <div className="space-y-2">
+                                  <h4 className="font-medium leading-none">Attendance Summation</h4>
+                                  <p className="text-xs text-muted-foreground">
+                                      Individual attendance counts being added.
+                                  </p>
+                              </div>
+                              <ScrollArea className="h-48 mt-4">
+                                  <div className="text-xs p-2 bg-muted rounded-md break-all">
+                                      {filteredData.map(item => parseNumericValue(item.highestAttendance)).join(' + ')}
+                                  </div>
+                              </ScrollArea>
                           </PopoverContent>
                         </Popover>
                       </div>
