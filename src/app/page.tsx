@@ -5,8 +5,10 @@ import { DataTable } from "@/components/dashboard/data-table";
 import Logo from "@/components/logo";
 import type { ClassEntry } from "@/lib/definitions";
 import { useToast } from "@/hooks/use-toast";
-import { BookOpen, User, BookCopy, Activity, Clock, TrendingUp, Users } from "lucide-react";
+import { BookOpen, User, BookCopy, Activity, Clock, TrendingUp, Users, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const [data, setData] = useState<ClassEntry[]>([]);
@@ -153,6 +155,7 @@ export default function Home() {
       productTypes: new Set(activeData.map(item => item.productType).filter(Boolean)).size,
       totalDuration: Math.round(totalDuration),
       highestAttendance: highestAttendance,
+      totalAttendance: totalAttendance,
       averageAttendance: averageAttendance,
     }
   }, [data.length, filteredData]);
@@ -275,7 +278,29 @@ export default function Home() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{summary.averageAttendance.toLocaleString()}</div>
+              <div className="flex items-center justify-between">
+                <div className="text-2xl font-bold">{summary.averageAttendance.toLocaleString()}</div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-5 w-5">
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="text-sm w-auto" side="top" align="end">
+                    <div className="grid gap-2">
+                      <div className="font-bold">Calculation</div>
+                      <p>
+                        Total Attendance: {summary.totalAttendance.toLocaleString()}
+                        <br />
+                        Total Classes: {summary.filtered.toLocaleString()}
+                      </p>
+                      <p className="font-bold">
+                        {summary.totalAttendance.toLocaleString()} / {summary.filtered.toLocaleString()} = {summary.averageAttendance.toLocaleString()}
+                      </p>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
                <p className="text-xs text-muted-foreground">
                 in current view
               </p>
@@ -347,5 +372,7 @@ const allColumns = [
   { key: "classLink", header: "Class LINK" },
   { key: "recordingLink", header: "Recording Link" },
   { key: "classQACFeedback", header: "QAC Feedback" },
-  { key: "remarks", header: "Remarks" },
+  { key: "remarks", header: "Remarks" }
 ];
+
+    
