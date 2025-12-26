@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "@/components/dashboard/data-table";
-import { TopTeachers } from "@/components/dashboard/top-teachers";
 import Logo from "@/components/logo";
 import type { ClassEntry } from "@/lib/definitions";
 import { useToast } from "@/hooks/use-toast";
@@ -520,10 +519,6 @@ export default function Home() {
           </Card>
         </div>
 
-        <div className="mb-8">
-            <TopTeachers data={filteredData} />
-        </div>
-
         <DataTable
           data={filteredData}
           allColumns={allColumns}
@@ -590,5 +585,3 @@ const allColumns = [
   { key: "classQACFeedback", header: "QAC Feedback" },
   { key: "remarks", header: "Remarks" }
 ];
-
-    

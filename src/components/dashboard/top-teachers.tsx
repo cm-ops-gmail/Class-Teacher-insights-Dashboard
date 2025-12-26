@@ -3,7 +3,11 @@
 import { useMemo } from 'react';
 import type { ClassEntry } from '@/lib/definitions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, Clock, Star, UserCheck } from 'lucide-react';
+import { Award, Clock, Star, UserCheck, Info } from 'lucide-react';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '../ui/scroll-area';
+import { Badge } from '../ui/badge';
 
 interface TopTeachersProps {
   data: ClassEntry[];
@@ -23,17 +27,23 @@ type TeacherStats = {
   classCount: number;
   totalDuration: number;
   totalAverageAttendance: number;
+  avgAttendance: number;
   highestPeakAttendance: number;
+  classes: ClassEntry[];
+  highestAttendanceClass: ClassEntry | null;
 };
 
 export function TopTeachers({ data }: TopTeachersProps) {
-  const topTeachers = useMemo(() => {
+  const { topTeachers, teacherDetails } = useMemo(() => {
     if (!data || data.length === 0) {
       return {
-        byClassCount: [],
-        byAverageAttendance: [],
-        byHighestAttendance: [],
-        byTotalDuration: [],
+        topTeachers: {
+          byClassCount: [],
+          byAverageAttendance: [],
+          byHighestAttendance: [],
+          byTotalDuration: [],
+        },
+        teacherDetails: {},
       };
     }
 
@@ -49,39 +59,98 @@ export function TopTeachers({ data }: TopTeachersProps) {
           classCount: 0,
           totalDuration: 0,
           totalAverageAttendance: 0,
+          avgAttendance: 0,
           highestPeakAttendance: 0,
+          classes: [],
+          highestAttendanceClass: null,
         };
       }
 
       teacherStats[teacherName].classCount += 1;
       teacherStats[teacherName].totalDuration += parseNumericValue(item.totalDurationMinutes);
       teacherStats[teacherName].totalAverageAttendance += parseNumericValue(item.averageAttendance);
+      teacherStats[teacherName].classes.push(item);
       
       const peakAttendance = parseNumericValue(item.highestAttendance);
       if (peakAttendance > teacherStats[teacherName].highestPeakAttendance) {
         teacherStats[teacherName].highestPeakAttendance = peakAttendance;
+        teacherStats[teacherName].highestAttendanceClass = item;
       }
+    });
+
+    Object.values(teacherStats).forEach(t => {
+      t.avgAttendance = t.classCount > 0 ? Math.round(t.totalAverageAttendance / t.classCount) : 0;
     });
 
     const statsArray = Object.values(teacherStats);
     
     const byClassCount = [...statsArray].sort((a, b) => b.classCount - a.classCount).slice(0, 3);
-    
-    const byAverageAttendance = [...statsArray]
-      .map(t => ({ ...t, avgAttendance: t.classCount > 0 ? Math.round(t.totalAverageAttendance / t.classCount) : 0 }))
-      .sort((a, b) => b.avgAttendance - a.avgAttendance)
-      .slice(0, 3);
-      
+    const byAverageAttendance = [...statsArray].sort((a, b) => b.avgAttendance - a.avgAttendance).slice(0, 3);
     const byHighestAttendance = [...statsArray].sort((a, b) => b.highestPeakAttendance - a.highestPeakAttendance).slice(0, 3);
-    
     const byTotalDuration = [...statsArray].sort((a, b) => b.totalDuration - a.totalDuration).slice(0, 3);
 
-    return { byClassCount, byAverageAttendance, byHighestAttendance, byTotalDuration };
+    return { 
+      topTeachers: { byClassCount, byAverageAttendance, byHighestAttendance, byTotalDuration },
+      teacherDetails: teacherStats,
+    };
   }, [data]);
   
   if (data.length === 0) {
     return null;
   }
+  
+  const StatPopover = ({ teacherName, statType, details }: { teacherName: string, statType: string, details: TeacherStats }) => {
+    let content;
+    switch(statType) {
+        case 'classCount':
+            content = (
+              <ScrollArea className="h-48">
+                <div className="flex flex-col gap-2 text-sm pr-4">
+                  {details.classes.map(c => (
+                    <div key={c.id} className="flex justify-between items-center border-b pb-1">
+                      <span className="truncate max-w-[150px]">{c.topic}</span>
+                      <Badge variant="secondary">{c.date}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            );
+            break;
+        case 'avgAttendance':
+            content = <p className="text-sm text-muted-foreground">Based on {details.classCount} classes.</p>
+            break;
+        case 'highestAttendance':
+            content = (
+                <div className="text-sm">
+                    {details.highestAttendanceClass ? (
+                        <>
+                            <p className="font-bold">{details.highestAttendanceClass.topic}</p>
+                            <p className="text-xs text-muted-foreground">{details.highestAttendanceClass.date}</p>
+                        </>
+                    ) : 'No data'}
+                </div>
+            );
+            break;
+        case 'totalDuration':
+             content = <p className="text-sm text-muted-foreground">Total from {details.classCount} classes.</p>;
+             break;
+        default:
+            content = null;
+    }
+
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-4 w-4 ml-2"><Info className="h-3 w-3" /></Button>
+            </PopoverTrigger>
+            <PopoverContent side="top" className="w-64">
+                <h4 className="font-bold mb-2">{teacherName}</h4>
+                {content}
+            </PopoverContent>
+        </Popover>
+    );
+  };
+
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -93,9 +162,12 @@ export function TopTeachers({ data }: TopTeachersProps) {
         <CardContent>
           <ul className="space-y-2 text-sm">
             {topTeachers.byClassCount.map((teacher, index) => (
-              <li key={index} className="flex justify-between">
+              <li key={index} className="flex justify-between items-center">
                 <span>{teacher.name}</span>
-                <span className="font-bold">{teacher.classCount} classes</span>
+                <div className="flex items-center">
+                    <span className="font-bold">{teacher.classCount} classes</span>
+                    <StatPopover teacherName={teacher.name} statType="classCount" details={teacherDetails[teacher.name]} />
+                </div>
               </li>
             ))}
           </ul>
@@ -109,9 +181,12 @@ export function TopTeachers({ data }: TopTeachersProps) {
         <CardContent>
           <ul className="space-y-2 text-sm">
             {topTeachers.byAverageAttendance.map((teacher, index) => (
-              <li key={index} className="flex justify-between">
+              <li key={index} className="flex justify-between items-center">
                 <span>{teacher.name}</span>
-                <span className="font-bold">{teacher.avgAttendance.toLocaleString()}</span>
+                <div className="flex items-center">
+                    <span className="font-bold">{teacher.avgAttendance.toLocaleString()}</span>
+                    <StatPopover teacherName={teacher.name} statType="avgAttendance" details={teacherDetails[teacher.name]} />
+                </div>
               </li>
             ))}
           </ul>
@@ -125,9 +200,12 @@ export function TopTeachers({ data }: TopTeachersProps) {
         <CardContent>
           <ul className="space-y-2 text-sm">
             {topTeachers.byHighestAttendance.map((teacher, index) => (
-              <li key={index} className="flex justify-between">
+              <li key={index} className="flex justify-between items-center">
                 <span>{teacher.name}</span>
-                <span className="font-bold">{teacher.highestPeakAttendance.toLocaleString()}</span>
+                <div className="flex items-center">
+                    <span className="font-bold">{teacher.highestPeakAttendance.toLocaleString()}</span>
+                    <StatPopover teacherName={teacher.name} statType="highestAttendance" details={teacherDetails[teacher.name]} />
+                </div>
               </li>
             ))}
           </ul>
@@ -141,9 +219,12 @@ export function TopTeachers({ data }: TopTeachersProps) {
         <CardContent>
           <ul className="space-y-2 text-sm">
             {topTeachers.byTotalDuration.map((teacher, index) => (
-              <li key={index} className="flex justify-between">
+              <li key={index} className="flex justify-between items-center">
                 <span>{teacher.name}</span>
-                <span className="font-bold">{teacher.totalDuration.toLocaleString()} min</span>
+                <div className="flex items-center">
+                    <span className="font-bold">{teacher.totalDuration.toLocaleString()} min</span>
+                    <StatPopover teacherName={teacher.name} statType="totalDuration" details={teacherDetails[teacher.name]} />
+                </div>
               </li>
             ))}
           </ul>

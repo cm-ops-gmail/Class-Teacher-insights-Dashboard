@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import type { ClassEntry } from "@/lib/definitions";
 import { MultiSelectFilter } from "./multi-select-filter";
+import { TopTeachers } from "./top-teachers";
 
 type ColumnDef = {
   key: keyof ClassEntry;
@@ -251,6 +252,11 @@ export function DataTable({
           </DropdownMenu>
         </div>
       </div>
+      
+      <div className="my-8">
+        <TopTeachers data={data} />
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
