@@ -179,6 +179,12 @@ export default function Home() {
     setSubjectFilters([]);
   };
 
+  const hasActiveFilters =
+    productTypeFilters.length > 0 ||
+    courseFilters.length > 0 ||
+    teacher1Filters.length > 0 ||
+    subjectFilters.length > 0;
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-sm">
@@ -195,6 +201,53 @@ export default function Home() {
             An interactive view of your Google Sheet data.
           </p>
         </div>
+
+        {hasActiveFilters && (
+          <div className="mb-8 rounded-lg border bg-card p-4 shadow-sm">
+            {teacher1Filters.length > 0 && (
+              <div className="mb-3">
+                <h2 className="text-lg font-semibold tracking-tight">
+                  {teacher1Filters.join(", ")}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Filtered Results
+                </p>
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {productTypeFilters.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Product Types:</span>
+                  {productTypeFilters.map(filter => (
+                    <Badge key={filter} variant="secondary" className="pl-2">
+                      {filter}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {courseFilters.length > 0 && (
+                 <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Courses:</span>
+                  {courseFilters.map(filter => (
+                    <Badge key={filter} variant="secondary" className="pl-2">
+                      {filter}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {subjectFilters.length > 0 && (
+                 <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Subjects:</span>
+                  {subjectFilters.map(filter => (
+                    <Badge key={filter} variant="secondary" className="pl-2">
+                      {filter}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
           <Card className="border-chart-1/50">
