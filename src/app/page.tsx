@@ -5,7 +5,7 @@ import { DataTable } from "@/components/dashboard/data-table";
 import Logo from "@/components/logo";
 import type { ClassEntry } from "@/lib/definitions";
 import { useToast } from "@/hooks/use-toast";
-import { BookOpen, User, BookCopy, Activity, Clock } from "lucide-react";
+import { BookOpen, User, BookCopy, Activity, Clock, TrendingUp, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Home() {
@@ -131,6 +131,20 @@ export default function Home() {
       return acc + (isNaN(duration) ? 0 : duration);
     }, 0);
 
+    const highestAttendance = activeData.reduce((max, item) => {
+        const attendance = parseInt(item.highestAttendance, 10);
+        return isNaN(attendance) ? max : Math.max(max, attendance);
+    }, 0);
+
+    const totalAverageAttendance = activeData.reduce((acc, item) => {
+        const attendance = parseFloat(item.averageAttendance);
+        return acc + (isNaN(attendance) ? 0 : attendance);
+    }, 0);
+
+    const averageAttendance = activeData.length > 0
+        ? Math.round(totalAverageAttendance / activeData.length)
+        : 0;
+
     return {
       total: data.length,
       filtered: activeData.length,
@@ -138,6 +152,8 @@ export default function Home() {
       teachers: new Set(activeData.map(item => item.teacher1).filter(Boolean)).size,
       productTypes: new Set(activeData.map(item => item.productType).filter(Boolean)).size,
       totalDuration: Math.round(totalDuration),
+      highestAttendance: highestAttendance,
+      averageAttendance: averageAttendance,
     }
   }, [data.length, filteredData]);
   
@@ -166,7 +182,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -232,6 +248,34 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{summary.totalDuration.toLocaleString()}</div>
+               <p className="text-xs text-muted-foreground">
+                in current view
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Highest Attendance
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{summary.highestAttendance.toLocaleString()}</div>
+               <p className="text-xs text-muted-foreground">
+                in current view
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Average Attendance
+              </CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{summary.averageAttendance.toLocaleString()}</div>
                <p className="text-xs text-muted-foreground">
                 in current view
               </p>
