@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { DataTable } from "@/components/dashboard/data-table";
 import type { ClassEntry } from "@/lib/definitions";
 import { useToast } from "@/hooks/use-toast";
-import { BookOpen, BookCopy, Activity, Clock, TrendingUp, Users, Info, Columns, X, LogOut } from "lucide-react";
+import { BookOpen, BookCopy, Activity, Clock, TrendingUp, Users, Info, Columns, X, LogOut, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -32,6 +32,8 @@ import {
 import { TeacherPerformanceCharts } from "@/components/dashboard/teacher-performance-charts";
 import Navbar from "@/components/navbar";
 import { useRouter } from "next/navigation";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
@@ -41,6 +43,55 @@ const parseNumericValue = (value: string | number | undefined | null): number =>
   const cleanedValue = stringValue.replace(/,/g, '');
   const numberValue = parseFloat(cleanedValue);
   return isNaN(numberValue) ? 0 : numberValue;
+};
+
+const parseDateString = (dateStr: string): Date | null => {
+  if (!dateStr) return null;
+  
+  // Try parsing different date formats
+  // Format: "Wednesday, January 1, 2025"
+  const formats = [
+    /^(\w+),\s+(\w+)\s+(\d+),\s+(\d+)$/,  // Wednesday, January 1, 2025
+    /^(\d+)-(\w+)-(\d+)$/,                 // 1-Jan-2025
+    /^(\d{4})-(\d{2})-(\d{2})$/,           // 2025-01-01
+  ];
+  
+  const monthMap: { [key: string]: number } = {
+    'January': 0, 'February': 1, 'March': 2, 'April': 3, 'May': 4, 'June': 5,
+    'July': 6, 'August': 7, 'September': 8, 'October': 9, 'November': 10, 'December': 11,
+    'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+    'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+  };
+  
+  // Try format: "Wednesday, January 1, 2025"
+  const match1 = dateStr.match(formats[0]);
+  if (match1) {
+    const [, , month, day, year] = match1;
+    const monthNum = monthMap[month];
+    if (monthNum !== undefined) {
+      return new Date(parseInt(year), monthNum, parseInt(day));
+    }
+  }
+  
+  // Try format: "1-Jan-2025"
+  const match2 = dateStr.match(formats[1]);
+  if (match2) {
+    const [, day, month, year] = match2;
+    const monthNum = monthMap[month];
+    if (monthNum !== undefined) {
+      return new Date(parseInt(year), monthNum, parseInt(day));
+    }
+  }
+  
+  // Try ISO format: "2025-01-01"
+  const match3 = dateStr.match(formats[2]);
+  if (match3) {
+    return new Date(dateStr);
+  }
+  
+  // Fallback to Date parsing
+  const parsed = new Date(dateStr);
+  return isNaN(parsed.getTime()) ? null : parsed;
 };
 
 const monthMap: { [key: string]: number } = {
@@ -59,8 +110,15 @@ export default function Dashboard() {
   const { toast } = useToast();
   const router = useRouter();
 
-
   const [globalFilter, setGlobalFilter] = useState("");
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [tempStartDate, setTempStartDate] = useState<Date | undefined>();
+  const [tempEndDate, setTempEndDate] = useState<Date | undefined>();
+  const [showStartCalendar, setShowStartCalendar] = useState(false);
+  const [showEndCalendar, setShowEndCalendar] = useState(false);
+  const [startCalendarMonth, setStartCalendarMonth] = useState(new Date());
+  const [endCalendarMonth, setEndCalendarMonth] = useState(new Date());
   const [productTypeFilters, setProductTypeFilters] = useState<string[]>([]);
   const [courseFilters, setCourseFilters] = useState<string[]>([]);
   const [teacher1Filters, setTeacher1Filters] = useState<string[]>([]);
@@ -148,6 +206,24 @@ export default function Dashboard() {
 
   const filteredData = useMemo(() => {
     return data.filter(item => {
+      // Date Filter
+      if (startDate || endDate) {
+        const itemDate = parseDateString(item.date);
+        if (!itemDate) return false;
+        
+        if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          if (itemDate < start) return false;
+        }
+        
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          if (itemDate > end) return false;
+        }
+      }
+      
       // Other Filters
       if (productTypeFilters.length > 0 && !productTypeFilters.includes(item.productType)) {
           return false;
@@ -169,7 +245,7 @@ export default function Dashboard() {
       }
       return true;
     });
-  }, [data, globalFilter, productTypeFilters, courseFilters, teacher1Filters, subjectFilters]);
+  }, [data, globalFilter, startDate, endDate, productTypeFilters, courseFilters, teacher1Filters, subjectFilters]);
 
 
   const summary = useMemo(() => {
@@ -217,13 +293,120 @@ export default function Dashboard() {
   
   const clearAllFilters = () => {
     setGlobalFilter("");
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setTempStartDate(undefined);
+    setTempEndDate(undefined);
     setProductTypeFilters([]);
     setCourseFilters([]);
     setTeacher1Filters([]);
     setSubjectFilters([]);
   };
 
+  const applyDateFilter = () => {
+    setStartDate(tempStartDate);
+    setEndDate(tempEndDate);
+    setShowStartCalendar(false);
+    setShowEndCalendar(false);
+  };
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+    
+    const days = [];
+    // Add empty slots for days before the first day of the month
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    // Add all days of the month
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(new Date(year, month, i));
+    }
+    return days;
+  };
+
+  const isSameDay = (date1: Date | undefined, date2: Date | null) => {
+    if (!date1 || !date2) return false;
+    return date1.getDate() === date2.getDate() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getFullYear() === date2.getFullYear();
+  };
+
+  const formatDate = (date: Date | undefined) => {
+    if (!date) return "Select date";
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const CalendarPicker = ({ 
+    selectedDate, 
+    onSelectDate, 
+    currentMonth, 
+    setCurrentMonth 
+  }: { 
+    selectedDate: Date | undefined;
+    onSelectDate: (date: Date) => void;
+    currentMonth: Date;
+    setCurrentMonth: (date: Date) => void;
+  }) => {
+    const days = getDaysInMonth(currentMonth);
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    
+    const goToPreviousMonth = () => {
+      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+    };
+    
+    const goToNextMonth = () => {
+      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+    };
+
+    return (
+      <div className="bg-popover text-popover-foreground rounded-md border shadow-md p-3 w-[280px]">
+        <div className="flex items-center justify-between mb-2">
+          <Button variant="ghost" size="icon" onClick={goToPreviousMonth} className="h-7 w-7">
+            ←
+          </Button>
+          <div className="font-medium">
+            {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+          </div>
+          <Button variant="ghost" size="icon" onClick={goToNextMonth} className="h-7 w-7">
+            →
+          </Button>
+        </div>
+        <div className="grid grid-cols-7 gap-1 mb-1">
+          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+            <div key={day} className="text-center text-xs font-medium text-muted-foreground py-1">
+              {day}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {days.map((day, index) => (
+            <button
+              key={index}
+              onClick={() => day && onSelectDate(day)}
+              disabled={!day}
+              className={cn(
+                "h-8 w-8 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors",
+                !day && "invisible",
+                isSameDay(selectedDate, day) && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+              )}
+            >
+              {day?.getDate()}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const hasActiveFilters =
+    startDate !== undefined ||
+    endDate !== undefined ||
     productTypeFilters.length > 0 ||
     courseFilters.length > 0 ||
     teacher1Filters.length > 0 ||
@@ -243,7 +426,7 @@ export default function Dashboard() {
     return result.trim() || '0 min';
   };
 
-  const isFiltered = productTypeFilters.length > 0 || courseFilters.length > 0 || teacher1Filters.length > 0 || subjectFilters.length > 0;
+  const isFiltered = startDate !== undefined || endDate !== undefined || productTypeFilters.length > 0 || courseFilters.length > 0 || teacher1Filters.length > 0 || subjectFilters.length > 0;
 
   const handleLogout = () => {
     localStorage.removeItem("dashboard_session");
@@ -281,6 +464,14 @@ export default function Dashboard() {
               </div>
             )}
             <div className="flex flex-wrap items-center gap-2">
+              {(startDate || endDate) && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Date Range:</span>
+                  <Badge variant="secondary" className="pl-2">
+                    {formatDate(startDate)} to {formatDate(endDate)}
+                  </Badge>
+                </div>
+              )}
               {productTypeFilters.length > 0 && (
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">Product Types:</span>
@@ -575,6 +766,63 @@ export default function Dashboard() {
             Advanced Filtering & Column Selection
           </h2>
           <div className="flex flex-col gap-4">
+            {/* Date Filter Row */}
+            <div className="flex flex-col gap-4 md:flex-row md:items-end">
+              <div className="grid w-full md:w-auto gap-1.5">
+                <Label className="text-sm font-medium">Start Date</Label>
+                <Popover open={showStartCalendar} onOpenChange={setShowStartCalendar}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full md:w-[240px] justify-start text-left font-normal"
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {formatDate(tempStartDate)}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarPicker
+                      selectedDate={tempStartDate}
+                      onSelectDate={setTempStartDate}
+                      currentMonth={startCalendarMonth}
+                      setCurrentMonth={setStartCalendarMonth}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="grid w-full md:w-auto gap-1.5">
+                <Label className="text-sm font-medium">End Date</Label>
+                <Popover open={showEndCalendar} onOpenChange={setShowEndCalendar}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full md:w-[240px] justify-start text-left font-normal"
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {formatDate(tempEndDate)}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarPicker
+                      selectedDate={tempEndDate}
+                      onSelectDate={setTempEndDate}
+                      currentMonth={endCalendarMonth}
+                      setCurrentMonth={setEndCalendarMonth}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              {(tempStartDate || tempEndDate) && (
+                <Button
+                  onClick={applyDateFilter}
+                  className="h-10 w-full md:w-auto"
+                >
+                  Apply Date Filter
+                </Button>
+              )}
+            </div>
+            
+            {/* Other Filters Row */}
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:flex-wrap">
               <MultiSelectFilter
                 title="Product Types"
@@ -615,7 +863,6 @@ export default function Dashboard() {
                   <X className="ml-2 h-4 w-4" />
                 </Button>
               )}
-
 
               <div className="flex-grow" />
               <DropdownMenu>
@@ -686,7 +933,6 @@ export default function Dashboard() {
           </h2>
           <TeacherPerformanceCharts data={data} />
         </section>
-
 
       </main>
       <footer className="border-t">
