@@ -293,13 +293,53 @@ export default function TeacherProfilePage() {
                                         <DialogTrigger asChild>
                                             <Button variant="ghost" size="icon"><Info className="h-4 w-4" /></Button>
                                         </DialogTrigger>
-                                        <DialogContent>
+                                        <DialogContent className="sm:max-w-md">
                                             <DialogHeader>
                                                 <DialogTitle>Average Attendance Calculation</DialogTitle>
                                             </DialogHeader>
-                                            <div className="grid gap-4 py-4 text-sm mt-4">
-                                                <p>Total Combined Attendance: {aggregatedStats.totalAverageAttendance.toLocaleString()}</p>
-                                                <p>Total Classes: {aggregatedStats.classCount.toLocaleString()}</p>
+                                            <div className="grid gap-4 py-4 text-sm">
+                                                <div className="flex items-center gap-1.5">
+                                                    Total Combined Attendance:
+                                                    <Dialog>
+                                                        <DialogTrigger asChild>
+                                                            <Button variant="link" size="sm" className="p-0 h-auto text-sm">{aggregatedStats.totalAverageAttendance.toLocaleString()}</Button>
+                                                        </DialogTrigger>
+                                                        <DialogContent className="sm:max-w-2xl">
+                                                            <DialogHeader>
+                                                                <DialogTitle>Total Attendance Breakdown</DialogTitle>
+                                                            </DialogHeader>
+                                                            <ScrollArea className="h-96 mt-4">
+                                                                <Table>
+                                                                    <TableHeader>
+                                                                        <TableRow>
+                                                                            <TableHead>Class Topic</TableHead>
+                                                                            <TableHead>Course</TableHead>
+                                                                            <TableHead className="text-right">Attendance</TableHead>
+                                                                        </TableRow>
+                                                                    </TableHeader>
+                                                                    <TableBody>
+                                                                        {aggregatedStats.classes.map(item => (
+                                                                            <TableRow key={item.id}>
+                                                                                <TableCell className="font-medium max-w-xs truncate">{item.topic}</TableCell>
+                                                                                <TableCell>{item.course}</TableCell>
+                                                                                <TableCell className="text-right">{parseNumericValue(item.averageAttendance).toLocaleString()}</TableCell>
+                                                                            </TableRow>
+                                                                        ))}
+                                                                    </TableBody>
+                                                                    <TableFooter>
+                                                                        <TableRow>
+                                                                            <TableCell colSpan={2} className="font-bold">Total</TableCell>
+                                                                            <TableCell className="text-right font-bold">{aggregatedStats.totalAverageAttendance.toLocaleString()}</TableCell>
+                                                                        </TableRow>
+                                                                    </TableFooter>
+                                                                </Table>
+                                                            </ScrollArea>
+                                                        </DialogContent>
+                                                    </Dialog>
+                                                </div>
+                                                <div>
+                                                    Total Classes: {aggregatedStats.classCount.toLocaleString()}
+                                                </div>
                                                 <p className="font-bold border-t pt-2 mt-1">
                                                     {aggregatedStats.totalAverageAttendance.toLocaleString()} / {aggregatedStats.classCount > 0 ? aggregatedStats.classCount.toLocaleString() : 1} = {aggregatedStats.avgAttendance.toLocaleString()}
                                                 </p>
