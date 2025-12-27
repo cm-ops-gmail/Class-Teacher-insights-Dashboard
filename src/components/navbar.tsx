@@ -10,12 +10,6 @@ const Navbar = () => {
         <div className="flex items-center gap-4">
           <Logo />
         </div>
-        <div className="flex items-center gap-4">
-          <div>
-            <p className="text-sm font-medium">User Name</p>
-            <p className="text-xs text-muted-foreground">user@example.com</p>
-          </div>
-        </div>
       </div>
     </header>
   );
