@@ -22,6 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MultiSelectFilter } from '@/components/dashboard/multi-select-filter';
 import { TeacherComparison } from '@/components/dashboard/teacher-comparison';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const parseNumericValue = (
   value: string | number | undefined | null
@@ -51,6 +52,20 @@ type TeacherStats = {
   uniqueCourses: string[];
   uniqueProductTypes: string[];
 };
+
+const formatDuration = (totalMinutes: number) => {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    let result = '';
+    if (hours > 0) {
+      result += `${hours} hour${hours > 1 ? 's' : ''} `;
+    }
+    if (minutes > 0) {
+      result += `${minutes} min${minutes > 1 ? 's' : ''}`;
+    }
+    return result.trim() || '0 min';
+  };
 
 export default function TeacherProfilePage() {
   const [data, setData] = useState<ClassEntry[]>([]);
@@ -230,30 +245,115 @@ export default function TeacherProfilePage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                             <div className="flex items-center gap-4 rounded-lg border p-4">
                                 <Award className="h-8 w-8 text-chart-1" />
-                                <div>
-                                    <p className="text-muted-foreground">Total Classes Taught</p>
-                                    <p className="text-2xl font-bold">{aggregatedStats.classCount}</p>
+                                <div className="flex-1 flex justify-between items-center">
+                                    <div>
+                                        <p className="text-muted-foreground">Total Classes Taught</p>
+                                        <p className="text-2xl font-bold">{aggregatedStats.classCount}</p>
+                                    </div>
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button variant="ghost" size="icon"><Info className="h-4 w-4" /></Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-2xl">
+                                            <DialogHeader>
+                                                <DialogTitle>Classes Taught by {aggregatedStats.name}</DialogTitle>
+                                            </DialogHeader>
+                                            <ScrollArea className="h-96 mt-4">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                            <TableHead>Date</TableHead>
+                                                            <TableHead>Topic</TableHead>
+                                                            <TableHead>Course</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {aggregatedStats.classes.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(c => (
+                                                            <TableRow key={c.id}>
+                                                                <TableCell><Badge variant="secondary">{c.date}</Badge></TableCell>
+                                                                <TableCell className="font-medium max-w-xs truncate">{c.topic}</TableCell>
+                                                                <TableCell>{c.course}</TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </ScrollArea>
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 rounded-lg border p-4">
                                 <Users className="h-8 w-8 text-chart-2" />
-                                <div>
-                                    <p className="text-muted-foreground">Combined Avg. Attendance</p>
-                                    <p className="text-2xl font-bold">{aggregatedStats.avgAttendance.toLocaleString()}</p>
+                                <div className="flex-1 flex justify-between items-center">
+                                    <div>
+                                        <p className="text-muted-foreground">Combined Avg. Attendance</p>
+                                        <p className="text-2xl font-bold">{aggregatedStats.avgAttendance.toLocaleString()}</p>
+                                    </div>
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button variant="ghost" size="icon"><Info className="h-4 w-4" /></Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Average Attendance Calculation</DialogTitle>
+                                            </DialogHeader>
+                                            <div className="grid gap-4 py-4 text-sm mt-4">
+                                                <p>Total Combined Attendance: {aggregatedStats.totalAverageAttendance.toLocaleString()}</p>
+                                                <p>Total Classes: {aggregatedStats.classCount.toLocaleString()}</p>
+                                                <p className="font-bold border-t pt-2 mt-1">
+                                                    {aggregatedStats.totalAverageAttendance.toLocaleString()} / {aggregatedStats.classCount > 0 ? aggregatedStats.classCount.toLocaleString() : 1} = {aggregatedStats.avgAttendance.toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
                             </div>
                              <div className="flex items-center gap-4 rounded-lg border p-4">
                                 <BookOpen className="h-8 w-8 text-chart-3" />
-                                <div>
-                                    <p className="text-muted-foreground">Unique Courses Taught</p>
-                                    <p className="text-2xl font-bold">{aggregatedStats.uniqueCourses.length}</p>
+                                <div className="flex-1 flex justify-between items-center">
+                                    <div>
+                                        <p className="text-muted-foreground">Unique Courses Taught</p>
+                                        <p className="text-2xl font-bold">{aggregatedStats.uniqueCourses.length}</p>
+                                    </div>
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button variant="ghost" size="icon"><Info className="h-4 w-4" /></Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Unique Courses by {aggregatedStats.name}</DialogTitle>
+                                            </DialogHeader>
+                                            <ScrollArea className="h-72 mt-4">
+                                                <div className="flex flex-wrap gap-2 p-1">
+                                                    {aggregatedStats.uniqueCourses.map(c => <Badge key={c} variant="secondary" className="text-base">{c}</Badge>)}
+                                                </div>
+                                            </ScrollArea>
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 rounded-lg border p-4">
                                 <Package className="h-8 w-8 text-chart-6" />
-                                <div>
-                                    <p className="text-muted-foreground">Unique Product Types</p>
-                                    <p className="text-2xl font-bold">{aggregatedStats.uniqueProductTypes.length}</p>
+                                <div className="flex-1 flex justify-between items-center">
+                                    <div>
+                                        <p className="text-muted-foreground">Unique Product Types</p>
+                                        <p className="text-2xl font-bold">{aggregatedStats.uniqueProductTypes.length}</p>
+                                    </div>
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button variant="ghost" size="icon"><Info className="h-4 w-4" /></Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Unique Product Types by {aggregatedStats.name}</DialogTitle>
+                                            </DialogHeader>
+                                            <ScrollArea className="h-72 mt-4">
+                                                <div className="flex flex-wrap gap-2 p-1">
+                                                    {aggregatedStats.uniqueProductTypes.map(p => <Badge key={p} variant="secondary" className="text-base">{p}</Badge>)}
+                                                </div>
+                                            </ScrollArea>
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 rounded-lg border p-4 col-span-1 lg:col-span-1">
@@ -285,9 +385,21 @@ export default function TeacherProfilePage() {
                             </div>
                             <div className="flex items-center gap-4 rounded-lg border p-4">
                                 <Clock className="h-8 w-8 text-chart-4" />
-                                <div>
-                                    <p className="text-muted-foreground">Total Duration</p>
-                                    <p className="text-2xl font-bold">{aggregatedStats.totalDuration.toLocaleString()} min</p>
+                                 <div className="flex-1 flex justify-between items-center">
+                                    <div>
+                                        <p className="text-muted-foreground">Total Duration</p>
+                                        <p className="text-2xl font-bold">{aggregatedStats.totalDuration.toLocaleString()} min</p>
+                                    </div>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                             <Button variant="ghost" size="icon"><Info className="h-4 w-4" /></Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="text-sm w-auto" side="top" align="end">
+                                            <div className="font-bold">
+                                            {formatDuration(aggregatedStats.totalDuration)}
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
                                 </div>
                             </div>
                         </div>
