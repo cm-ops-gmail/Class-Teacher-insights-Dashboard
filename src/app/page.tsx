@@ -22,6 +22,7 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { TopTeachers } from "@/components/dashboard/top-teachers";
 import { Separator } from "@/components/ui/separator";
 import { MultiSelectFilter } from "@/components/dashboard/multi-select-filter";
+import { TeacherPerformanceCharts } from "@/components/dashboard/teacher-performance-charts";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -656,7 +657,7 @@ export default function Home() {
           <h2 className="text-2xl font-bold tracking-tight mb-4">
             Detailed Class Data
           </h2>
-          <Card>
+          <Card className="p-0">
             <CardContent className="p-0">
               <DataTable
                 data={filteredData}
@@ -667,6 +668,16 @@ export default function Home() {
             </CardContent>
           </Card>
         </section>
+
+        <Separator className="my-8" />
+        
+        <section>
+          <h2 className="text-2xl font-bold tracking-tight mb-4">
+            Teacher Performance Breakdown
+          </h2>
+          <TeacherPerformanceCharts data={data} />
+        </section>
+
 
       </main>
       <footer className="border-t">
