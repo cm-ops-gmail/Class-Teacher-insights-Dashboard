@@ -20,6 +20,8 @@ import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MultiSelectFilter } from '@/components/dashboard/multi-select-filter';
+import { TeacherComparison } from '@/components/dashboard/teacher-comparison';
+import { Separator } from '@/components/ui/separator';
 
 const parseNumericValue = (
   value: string | number | undefined | null
@@ -187,8 +189,8 @@ export default function TeacherProfilePage() {
           <LogOut className="h-4 w-4" />
         </Button>
       </Navbar>
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="mb-8 space-y-2">
+      <main className="flex-grow container mx-auto px-4 py-8 space-y-8">
+        <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight font-headline">
             Teacher Profile
           </h1>
@@ -362,13 +364,18 @@ export default function TeacherProfilePage() {
             </div>
         )}
         
-        {!isLoading && !aggregatedStats && (
+        {!isLoading && !aggregatedStats && selectedTeachers.length === 0 && (
              <div className="flex flex-col items-center justify-center text-center border-2 border-dashed rounded-lg p-12 h-96">
                 <UserCheck className="h-16 w-16 text-muted-foreground mb-4" />
                 <h2 className="text-xl font-semibold">Select Teachers</h2>
                 <p className="text-muted-foreground mt-2">Choose one or more teachers from the dropdown above to see their combined statistics.</p>
             </div>
         )}
+
+        <Separator />
+        
+        <TeacherComparison data={data} allTeachers={allTeachers} />
+
       </main>
     </div>
   );

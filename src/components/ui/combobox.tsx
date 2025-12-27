@@ -49,9 +49,11 @@ export function Combobox({
           aria-expanded={open}
           className={cn("h-10 justify-between", triggerClassName)}
         >
+          <span className="truncate">
           {selectedValue
             ? options.find((option) => option.value === selectedValue)?.label
             : placeholder}
+          </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -66,7 +68,9 @@ export function Combobox({
                   key={option.value}
                   value={option.value}
                   onSelect={(currentValue) => {
-                    onSelectedValueChange(currentValue === selectedValue ? "" : currentValue)
+                    // find value in options that has a label equal to currentValue
+                    const selectedOption = options.find(opt => opt.value.toLowerCase() === currentValue.toLowerCase());
+                    onSelectedValueChange(selectedOption ? selectedOption.value : "")
                     setOpen(false)
                   }}
                 >
@@ -86,5 +90,3 @@ export function Combobox({
     </Popover>
   )
 }
-
-    
