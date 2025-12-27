@@ -534,6 +534,15 @@ export default function Home() {
         </section>
         
         <Separator className="my-8" />
+        
+        <section className="mb-12">
+          <h2 className="text-2xl font-bold tracking-tight mb-4">
+            Top 3 Teachers Stats on Various Categories
+          </h2>
+          <TopTeachers data={data} />
+        </section>
+
+        <Separator className="my-8" />
 
         <section>
           <h2 className="text-2xl font-bold tracking-tight mb-4">
@@ -563,15 +572,6 @@ export default function Home() {
           />
         </section>
 
-        <Separator className="my-8" />
-        
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold tracking-tight mb-4">
-            Top 3 Teachers Stats on Various Categories
-          </h2>
-          <TopTeachers data={data} />
-        </section>
-        
       </main>
       <footer className="border-t">
         <div className="container mx-auto px-4 py-6 text-center text-muted-foreground">
