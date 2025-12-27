@@ -243,7 +243,7 @@ export default function TeacherProfilePage() {
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-                            <div className="flex items-center gap-4 rounded-lg border p-4 transition-all duration-300 ease-in-out hover:shadow-lg border-chart-1/50 hover:border-chart-1">
+                            <div className="flex items-center gap-4 rounded-lg border p-4 transition-all duration-300 ease-in-out hover:shadow-lg border-chart-1/50 hover:border-chart-1 hover:-translate-y-1">
                                 <Award className="h-8 w-8 text-chart-1" />
                                 <div className="flex-1 flex justify-between items-center">
                                     <div>
@@ -282,7 +282,7 @@ export default function TeacherProfilePage() {
                                     </Dialog>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4 rounded-lg border p-4 transition-all duration-300 ease-in-out hover:shadow-lg border-chart-2/50 hover:border-chart-2">
+                            <div className="flex items-center gap-4 rounded-lg border p-4 transition-all duration-300 ease-in-out hover:shadow-lg border-chart-2/50 hover:border-chart-2 hover:-translate-y-1">
                                 <Users className="h-8 w-8 text-chart-2" />
                                 <div className="flex-1 flex justify-between items-center">
                                     <div>
@@ -348,7 +348,7 @@ export default function TeacherProfilePage() {
                                     </Dialog>
                                 </div>
                             </div>
-                             <div className="flex items-center gap-4 rounded-lg border p-4 transition-all duration-300 ease-in-out hover:shadow-lg border-chart-3/50 hover:border-chart-3">
+                             <div className="flex items-center gap-4 rounded-lg border p-4 transition-all duration-300 ease-in-out hover:shadow-lg border-chart-3/50 hover:border-chart-3 hover:-translate-y-1">
                                 <BookOpen className="h-8 w-8 text-chart-3" />
                                 <div className="flex-1 flex justify-between items-center">
                                     <div>
@@ -372,7 +372,7 @@ export default function TeacherProfilePage() {
                                     </Dialog>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4 rounded-lg border p-4 transition-all duration-300 ease-in-out hover:shadow-lg border-chart-6/50 hover:border-chart-6">
+                            <div className="flex items-center gap-4 rounded-lg border p-4 transition-all duration-300 ease-in-out hover:shadow-lg border-chart-6/50 hover:border-chart-6 hover:-translate-y-1">
                                 <Package className="h-8 w-8 text-chart-6" />
                                 <div className="flex-1 flex justify-between items-center">
                                     <div>
@@ -396,7 +396,7 @@ export default function TeacherProfilePage() {
                                     </Dialog>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4 rounded-lg border p-4 col-span-1 lg:col-span-1 transition-all duration-300 ease-in-out hover:shadow-lg border-chart-5/50 hover:border-chart-5">
+                            <div className="flex items-center gap-4 rounded-lg border p-4 col-span-1 lg:col-span-1 transition-all duration-300 ease-in-out hover:shadow-lg border-chart-5/50 hover:border-chart-5 hover:-translate-y-1">
                                 <Star className="h-8 w-8 text-chart-5" />
                                 <div className="flex-1 flex justify-between items-center">
                                     <div>
@@ -423,7 +423,7 @@ export default function TeacherProfilePage() {
                                     )}
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4 rounded-lg border p-4 transition-all duration-300 ease-in-out hover:shadow-lg border-chart-4/50 hover:border-chart-4">
+                            <div className="flex items-center gap-4 rounded-lg border p-4 transition-all duration-300 ease-in-out hover:shadow-lg border-chart-4/50 hover:border-chart-4 hover:-translate-y-1">
                                 <Clock className="h-8 w-8 text-chart-4" />
                                  <div className="flex-1 flex justify-between items-center">
                                     <div>
