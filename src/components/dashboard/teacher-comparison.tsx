@@ -7,10 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Award, Clock, Star, Users, BookOpen, Package, Info, UserSearch } from 'lucide-react';
 import { Table, TableBody, TableCell, TableRow, TableHead, TableHeader } from '@/components/ui/table';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Combobox } from '@/components/ui/combobox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '../ui/separator';
+import { MultiSelectFilter } from './multi-select-filter';
 
 interface TeacherComparisonProps {
   data: ClassEntry[];
@@ -38,13 +37,13 @@ type TeacherStats = {
   classes: ClassEntry[];
 };
 
-const calculateTeacherStats = (teacherName: string, allData: ClassEntry[]): TeacherStats | null => {
-  if (!teacherName) return null;
+const calculateTeacherGroupStats = (teacherNames: string[], allData: ClassEntry[]): TeacherStats | null => {
+  if (!teacherNames || teacherNames.length === 0) return null;
 
-  const teacherClasses = allData.filter(item => item.teacher1 === teacherName);
+  const teacherClasses = allData.filter(item => teacherNames.includes(item.teacher1));
   if (teacherClasses.length === 0) {
     return {
-      name: teacherName,
+      name: teacherNames.join(', '),
       classCount: 0,
       totalDuration: 0,
       avgAttendance: 0,
@@ -70,7 +69,7 @@ const calculateTeacherStats = (teacherName: string, allData: ClassEntry[]): Teac
   });
 
   return {
-    name: teacherName,
+    name: teacherNames.join(', '),
     classCount: teacherClasses.length,
     totalDuration,
     avgAttendance: teacherClasses.length > 0 ? Math.round(totalAverageAttendance / teacherClasses.length) : 0,
@@ -144,13 +143,13 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
 
 
 export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps) {
-  const [teacher1, setTeacher1] = useState<string>('');
-  const [teacher2, setTeacher2] = useState<string>('');
+  const [teacherGroup1, setTeacherGroup1] = useState<string[]>([]);
+  const [teacherGroup2, setTeacherGroup2] = useState<string[]>([]);
   
   const teacherOptions = useMemo(() => allTeachers.map(t => ({ value: t, label: t })), [allTeachers]);
 
-  const teacher1Stats = useMemo(() => calculateTeacherStats(teacher1, data), [teacher1, data]);
-  const teacher2Stats = useMemo(() => calculateTeacherStats(teacher2, data), [teacher2, data]);
+  const teacherGroup1Stats = useMemo(() => calculateTeacherGroupStats(teacherGroup1, data), [teacherGroup1, data]);
+  const teacherGroup2Stats = useMemo(() => calculateTeacherGroupStats(teacherGroup2, data), [teacherGroup2, data]);
 
   const statsToCompare: { label: string; icon: React.ElementType; key: keyof TeacherStats; unit?: string }[] = [
     { label: "Total Classes", icon: Award, key: "classCount" },
@@ -165,44 +164,40 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
     <Card>
       <CardHeader>
         <CardTitle>Teacher Comparison</CardTitle>
-        <CardDescription>Select two teachers to compare their performance metrics side-by-side.</CardDescription>
+        <CardDescription>Select two teachers or groups of teachers to compare their performance metrics side-by-side.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Combobox 
-                options={teacherOptions.filter(t => t.value !== teacher2)}
-                selectedValue={teacher1}
-                onSelectedValueChange={setTeacher1}
-                placeholder="Select Teacher 1..."
-                searchPlaceholder="Search teacher..."
-                noResultsMessage="No teacher found."
+            <MultiSelectFilter
+                title="Select Group 1..."
+                options={teacherOptions.filter(t => !teacherGroup2.includes(t.value))}
+                selectedValues={teacherGroup1}
+                onSelectedValuesChange={setTeacherGroup1}
                 triggerClassName="w-full"
             />
-            <Combobox 
-                options={teacherOptions.filter(t => t.value !== teacher1)}
-                selectedValue={teacher2}
-                onSelectedValueChange={setTeacher2}
-                placeholder="Select Teacher 2..."
-                searchPlaceholder="Search teacher..."
-                noResultsMessage="No teacher found."
+            <MultiSelectFilter
+                title="Select Group 2..."
+                options={teacherOptions.filter(t => !teacherGroup1.includes(t.value))}
+                selectedValues={teacherGroup2}
+                onSelectedValuesChange={setTeacherGroup2}
                 triggerClassName="w-full"
             />
         </div>
 
-        {teacher1 && teacher2 ? (
+        {teacherGroup1.length > 0 && teacherGroup2.length > 0 ? (
             <div className="overflow-x-auto">
             <Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead className="w-[200px]">Metric</TableHead>
-                        <TableHead className="text-right">{teacher1}</TableHead>
-                        <TableHead className="text-right">{teacher2}</TableHead>
+                        <TableHead className="text-right">{teacherGroup1Stats?.name || 'Group 1'}</TableHead>
+                        <TableHead className="text-right">{teacherGroup2Stats?.name || 'Group 2'}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                    {statsToCompare.map((stat) => {
-                       const val1 = teacher1Stats ? teacher1Stats[stat.key] : null;
-                       const val2 = teacher2Stats ? teacher2Stats[stat.key] : null;
+                       const val1 = teacherGroup1Stats ? teacherGroup1Stats[stat.key] : null;
+                       const val2 = teacherGroup2Stats ? teacherGroup2Stats[stat.key] : null;
 
                        const displayVal1 = Array.isArray(val1) ? val1.length : (val1 as number)?.toLocaleString() ?? 'N/A';
                        const displayVal2 = Array.isArray(val2) ? val2.length : (val2 as number)?.toLocaleString() ?? 'N/A';
@@ -216,13 +211,13 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
                             <TableCell className="text-right">
                                 <div className="flex items-center justify-end gap-1">
                                     <span className="font-bold">{displayVal1}{val1 !== null && stat.unit}</span>
-                                    <StatPopover details={teacher1Stats} statType={stat.key as any} />
+                                    <StatPopover details={teacherGroup1Stats} statType={stat.key as any} />
                                 </div>
                             </TableCell>
                             <TableCell className="text-right">
                                 <div className="flex items-center justify-end gap-1">
                                     <span className="font-bold">{displayVal2}{val2 !== null && stat.unit}</span>
-                                    <StatPopover details={teacher2Stats} statType={stat.key as any} />
+                                    <StatPopover details={teacherGroup2Stats} statType={stat.key as any} />
                                 </div>
                             </TableCell>
                         </TableRow>
@@ -234,8 +229,8 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
         ) : (
             <div className="flex flex-col items-center justify-center text-center border-2 border-dashed rounded-lg p-12 h-64">
                 <UserSearch className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold">Select Two Teachers</h3>
-                <p className="text-muted-foreground mt-1">Choose two teachers from the dropdowns above to start comparing.</p>
+                <h3 className="text-lg font-semibold">Select Two Groups</h3>
+                <p className="text-muted-foreground mt-1">Choose teachers for both groups to start comparing.</p>
             </div>
         )}
       </CardContent>
