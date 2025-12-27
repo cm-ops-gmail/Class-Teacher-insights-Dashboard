@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo } from 'react';
@@ -61,22 +62,27 @@ const processChartData = (
   statsArray: TeacherStats[],
   valueKey: keyof TeacherStats
 ) => {
-  const sorted = [...statsArray].sort((a, b) => (b[valueKey] as number) - (a[valueKey] as number));
-  const top15 = sorted.slice(0, 15);
-  const others = sorted.slice(15);
+  // Sort by performance to get the top 30
+  const performanceSorted = [...statsArray].sort((a, b) => (b[valueKey] as number) - (a[valueKey] as number));
+  const top30 = performanceSorted.slice(0, 30);
+  const others = performanceSorted.slice(30);
 
-  const chartData = top15.map(teacher => ({
+  // Now, sort the top 30 alphabetically by name
+  const alphaSortedTop30 = top30.sort((a, b) => a.name.localeCompare(b.name));
+
+  const chartData = alphaSortedTop30.map(teacher => ({
     name: teacher.name,
     value: teacher[valueKey] as number,
   }));
 
   if (others.length > 0) {
     const othersValue = others.reduce((acc, teacher) => acc + (teacher[valueKey] as number), 0);
+    // Add "Others" to the end
     chartData.push({ name: 'Others', value: Math.round(othersValue) });
   }
   
-  // reverse for horizontal bar chart
-  return chartData.reverse().map((item, index) => ({
+  // Assign colors
+  return chartData.map((item, index) => ({
     ...item,
     fill: COLORS[index % COLORS.length],
   }));
@@ -153,12 +159,12 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
         <Card key={title} className="flex flex-col">
           <CardHeader>
             <CardTitle>{title}</CardTitle>
-            <CardDescription>Top 15 Teachers Distribution</CardDescription>
+            <CardDescription>Top 30 Teachers Distribution</CardDescription>
           </CardHeader>
           <CardContent className="flex-1 pl-0 pr-6">
             <ChartContainer
               config={chartConfig(data)}
-              className="h-[500px] w-full"
+              className="h-[800px] w-full"
             >
               <BarChart
                 accessibilityLayer
@@ -196,3 +202,4 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
     </div>
   );
 }
+
