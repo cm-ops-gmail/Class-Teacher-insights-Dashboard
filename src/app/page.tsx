@@ -647,7 +647,7 @@ export default function Home() {
           <h2 className="text-2xl font-bold tracking-tight mb-4">
             Top Teacher Performance
           </h2>
-          <TopTeachers data={filteredData} />
+          <TopTeachers data={data} />
         </section>
 
         <Separator className="my-8" />
@@ -725,7 +725,7 @@ const allColumns = [
   { key: "classStopTimestamps", header: "Class Stop Timestamps" },
   { key: "startDelayMinutes", header: "Start Delay (min)" },
   { key: "viewCount10Min", header: "Views (10 Min)" },
-  { key: "viewCount40_50Min", header: "Views (40-50 Min)" },
+  { key: "viewCount40_50Min", "header": "Views (40-50 Min)" },
   { key: "viewCountBeforeEnd", header: "Views (End)" },
   { key: "classLink", header: "Class LINK" },
   { key: "recordingLink", header: "Recording Link" },
