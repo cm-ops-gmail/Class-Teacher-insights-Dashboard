@@ -2,7 +2,7 @@
 "use client";
 
 import { useMemo } from 'react';
-import { Bar, BarChart, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, XAxis, YAxis, LabelList } from 'recharts';
 import type { ClassEntry } from '@/lib/definitions';
 import {
   Card,
@@ -88,10 +88,30 @@ const processChartData = (
   }));
 };
 
+const CustomTooltipContent = ({ active, payload, label, total, metricLabel }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    const value = payload[0].value;
+    const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
+    return (
+      <div className="rounded-lg border bg-background p-2.5 text-sm shadow-sm">
+        <div className="grid grid-cols-1 gap-1.5">
+          <p className="font-bold">{label}</p>
+          <p>{metricLabel}: <span className="font-bold">{value.toLocaleString()}</span></p>
+          <p>Percentage: <span className="font-bold">{percentage}%</span></p>
+          <p>Total: <span className="font-bold">{total.toLocaleString()}</span></p>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+
 export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps) {
-  const teacherStats = useMemo(() => {
+  const { teacherStats, totals } = useMemo(() => {
     if (!data || data.length === 0) {
-      return [];
+      return { teacherStats: [], totals: { classCount: 0, avgAttendance: 0, highestPeakAttendance: 0, totalDuration: 0 } };
     }
 
     const stats: { [key: string]: TeacherStats } = {};
@@ -126,7 +146,17 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
       t.avgAttendance = t.classCount > 0 ? Math.round(t.totalAverageAttendance / t.classCount) : 0;
     });
 
-    return Object.values(stats);
+    const statsArray = Object.values(stats);
+    
+    const totals = {
+      classCount: statsArray.reduce((acc, t) => acc + t.classCount, 0),
+      avgAttendance: statsArray.reduce((acc, t) => acc + t.avgAttendance, 0),
+      highestPeakAttendance: statsArray.reduce((acc, t) => acc + t.highestPeakAttendance, 0),
+      totalDuration: statsArray.reduce((acc, t) => acc + t.totalDuration, 0),
+    };
+
+
+    return { teacherStats: statsArray, totals };
   }, [data]);
   
   const chartConfig = (data: any[]) => {
@@ -147,15 +177,15 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
   }
   
   const chartCards = [
-    { title: "Classes Taught", data: classCountData },
-    { title: "Average Attendance", data: avgAttendanceData },
-    { title: "Peak Attendance", data: highestAttendanceData },
-    { title: "Total Duration (min)", data: totalDurationData },
+    { title: "Classes Taught", data: classCountData, total: totals.classCount, metricLabel: 'Classes' },
+    { title: "Average Attendance", data: avgAttendanceData, total: totals.avgAttendance, metricLabel: 'Avg. Attendance' },
+    { title: "Peak Attendance", data: highestAttendanceData, total: totals.highestPeakAttendance, metricLabel: 'Peak Attendance' },
+    { title: "Total Duration (min)", data: totalDurationData, total: totals.totalDuration, metricLabel: 'Duration (min)' },
   ];
 
   return (
     <div className="grid grid-cols-1 gap-6">
-      {chartCards.map(({ title, data }) => (
+      {chartCards.map(({ title, data, total, metricLabel }) => (
         <Card key={title} className="flex flex-col">
           <CardHeader>
             <CardTitle>{title}</CardTitle>
@@ -164,7 +194,7 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
           <CardContent className="flex-1 pl-0 pr-6">
             <ChartContainer
               config={chartConfig(data)}
-              className="h-[800px] w-full"
+              className="h-[1200px] w-full"
             >
               <BarChart
                 accessibilityLayer
@@ -172,7 +202,7 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
                 layout="vertical"
                 margin={{
                   left: 10,
-                  right: 10,
+                  right: 30,
                 }}
               >
                 <YAxis
@@ -181,19 +211,30 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
                   tickLine={false}
                   axisLine={false}
                   tickMargin={10}
-                  width={120}
+                  width={150}
                   className="text-xs"
                 />
                 <XAxis dataKey="value" type="number" hide />
                 <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent hideLabel />}
+                  cursor={{ fill: 'hsl(var(--muted))' }}
+                  content={<CustomTooltipContent total={total} metricLabel={metricLabel} />}
                 />
                 <Bar
                   dataKey="value"
                   radius={5}
                   barSize={20}
-                />
+                >
+                   {data.map((entry, index) => (
+                    <LabelList
+                      key={`label-${index}`}
+                      dataKey="value"
+                      position="right"
+                      offset={8}
+                      className="fill-foreground text-xs"
+                      formatter={(value: number) => value.toLocaleString()}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ChartContainer>
           </CardContent>
@@ -202,4 +243,3 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
     </div>
   );
 }
-
