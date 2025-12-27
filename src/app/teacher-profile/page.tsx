@@ -239,7 +239,7 @@ export default function TeacherProfilePage() {
                         <CardDescription>Aggregated Performance Overview</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 text-sm">
                             <div className="flex items-center gap-4 rounded-lg border p-4 transition-all duration-300 ease-in-out hover:shadow-lg border-chart-1/50 hover:border-chart-1 hover:-translate-y-1">
                                 <Award className="h-8 w-8 text-chart-1" />
                                 <div className="flex-1 flex justify-between items-center">
