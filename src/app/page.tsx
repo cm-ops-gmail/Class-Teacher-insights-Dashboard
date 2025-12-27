@@ -22,7 +22,6 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { TopTeachers } from "@/components/dashboard/top-teachers";
 import { Separator } from "@/components/ui/separator";
 import { MultiSelectFilter } from "@/components/dashboard/multi-select-filter";
-import { TeacherPerformanceCharts } from "@/components/dashboard/teacher-performance-charts";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -31,6 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { TeacherPerformanceCharts } from "@/components/dashboard/teacher-performance-charts";
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
   if (value === null || value === undefined) return 0;
