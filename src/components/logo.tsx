@@ -1,11 +1,10 @@
-import { FileSpreadsheet } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 
 const Logo = () => {
   return (
     <div className="flex items-center gap-2 text-xl font-bold text-primary">
-      <FileSpreadsheet className="h-6 w-6" />
-      <span className="font-headline">Run Sheet Data Visualization</span>
+      <Image src="/logo.png" alt="Logo" width={150} height={30} />
     </div>
   );
 };

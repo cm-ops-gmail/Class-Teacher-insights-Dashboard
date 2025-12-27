@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import { DataTable } from "@/components/dashboard/data-table";
-import Logo from "@/components/logo";
 import type { ClassEntry } from "@/lib/definitions";
 import { useToast } from "@/hooks/use-toast";
 import { BookOpen, BookCopy, Activity, Clock, TrendingUp, Users, Info, Columns, X } from "lucide-react";
@@ -31,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TeacherPerformanceCharts } from "@/components/dashboard/teacher-performance-charts";
+import Navbar from "@/components/navbar";
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
   if (value === null || value === undefined) return 0;
@@ -244,11 +244,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-sm">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Logo />
-        </div>
-      </header>
+      <Navbar />
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="mb-8 space-y-2">
           <h1 className="text-3xl font-bold tracking-tight font-headline">
