@@ -288,9 +288,9 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
                        const displayVal2 = Array.isArray(val2) ? val2.length : (val2 as number)?.toLocaleString() ?? 'N/A';
 
                        return (
-                        <TableRow key={stat.key} className="transition-colors hover:bg-accent/20">
+                        <TableRow key={stat.key} className="transition-colors hover:bg-accent/20 group">
                             <TableCell className="font-medium flex items-center gap-2">
-                                <stat.icon className="h-4 w-4 text-muted-foreground transition-transform group-hover:scale-105" />
+                                <stat.icon className="h-4 w-4 text-muted-foreground transition-transform group-hover:scale-110" />
                                 {stat.label}
                             </TableCell>
                             <TableCell className="text-right">
