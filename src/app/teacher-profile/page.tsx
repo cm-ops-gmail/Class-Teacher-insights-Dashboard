@@ -479,36 +479,55 @@ export default function TeacherProfilePage() {
                         Class History ({aggregatedStats.classCount})
                     </h2>
                     <Card>
-                        <CardContent className="p-0">
-                        <ScrollArea className="h-[500px]">
-                          <div className="overflow-x-auto">
-                            <Table className="whitespace-nowrap">
+                      <CardContent className="p-0">
+                        <style>{`
+                          .custom-scrollbar::-webkit-scrollbar {
+                            width: 12px;
+                            height: 12px;
+                          }
+                          .custom-scrollbar::-webkit-scrollbar-track {
+                            background: rgba(255, 255, 255, 0.1);
+                            border-radius: 6px;
+                          }
+                          .custom-scrollbar::-webkit-scrollbar-thumb {
+                            background: white;
+                            border-radius: 6px;
+                          }
+                          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                            background: #e0e0e0;
+                          }
+                          .custom-scrollbar {
+                            scrollbar-width: thin;
+                            scrollbar-color: white rgba(255, 255, 255, 0.1);
+                          }
+                        `}</style>
+                        <div className="h-[500px] overflow-auto custom-scrollbar">
+                          <Table className="whitespace-nowrap">
                             <TableHeader>
-                                <TableRow>
+                              <TableRow>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Teacher</TableHead>
                                 <TableHead>Topic</TableHead>
                                 <TableHead>Course</TableHead>
                                 <TableHead className="text-right">Avg. Attendance</TableHead>
                                 <TableHead className="text-right">Peak Attendance</TableHead>
-                                </TableRow>
+                              </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {aggregatedStats.classes.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(c => (
+                              {aggregatedStats.classes.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(c => (
                                 <TableRow key={c.id}>
-                                    <TableCell><Badge variant="secondary">{c.date}</Badge></TableCell>
-                                    <TableCell>{c.teacher1}</TableCell>
-                                    <TableCell className="font-medium max-w-[200px] truncate">{c.topic}</TableCell>
-                                    <TableCell>{c.course}</TableCell>
-                                    <TableCell className="text-right">{parseNumericValue(c.averageAttendance).toLocaleString()}</TableCell>
-                                    <TableCell className="text-right">{parseNumericValue(c.highestAttendance).toLocaleString()}</TableCell>
+                                  <TableCell><Badge variant="secondary">{c.date}</Badge></TableCell>
+                                  <TableCell>{c.teacher1}</TableCell>
+                                  <TableCell className="font-medium max-w-[200px] truncate">{c.topic}</TableCell>
+                                  <TableCell>{c.course}</TableCell>
+                                  <TableCell className="text-right">{parseNumericValue(c.averageAttendance).toLocaleString()}</TableCell>
+                                  <TableCell className="text-right">{parseNumericValue(c.highestAttendance).toLocaleString()}</TableCell>
                                 </TableRow>
-                                ))}
+                              ))}
                             </TableBody>
-                            </Table>
-                            </div>
-                        </ScrollArea>
-                        </CardContent>
+                          </Table>
+                        </div>
+                      </CardContent>
                     </Card>
                     </div>
                 </div>
