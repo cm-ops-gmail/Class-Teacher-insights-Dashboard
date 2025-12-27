@@ -110,7 +110,7 @@ export function DataTable({
   };
 
   return (
-    <ScrollArea className="h-[500px] rounded-md border whitespace-nowrap">
+    <ScrollArea className="h-[500px] whitespace-nowrap rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
