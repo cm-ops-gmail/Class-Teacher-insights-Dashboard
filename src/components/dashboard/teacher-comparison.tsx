@@ -275,8 +275,8 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
                 <TableHeader>
                     <TableRow>
                         <TableHead className="w-[200px]">Metric</TableHead>
-                        <TableHead className="text-right">{teacherGroup1Stats?.name || 'Group 1'}</TableHead>
-                        <TableHead className="text-right">{teacherGroup2Stats?.name || 'Group 2'}</TableHead>
+                        <TableHead className="text-center">{teacherGroup1Stats?.name || 'Group 1'}</TableHead>
+                        <TableHead className="text-center">{teacherGroup2Stats?.name || 'Group 2'}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -293,14 +293,14 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
                                 <stat.icon className="h-4 w-4 text-muted-foreground transition-transform group-hover:scale-110" />
                                 {stat.label}
                             </TableCell>
-                            <TableCell className="text-right">
-                                <div className="flex items-center justify-end gap-1">
+                            <TableCell className="text-center">
+                                <div className="flex items-center justify-center gap-1">
                                     <span className="font-bold">{displayVal1}{val1 !== null && stat.unit}</span>
                                     <StatPopover details={teacherGroup1Stats} statType={stat.key as any} />
                                 </div>
                             </TableCell>
-                            <TableCell className="text-right">
-                                <div className="flex items-center justify-end gap-1">
+                            <TableCell className="text-center">
+                                <div className="flex items-center justify-center gap-1">
                                     <span className="font-bold">{displayVal2}{val2 !== null && stat.unit}</span>
                                     <StatPopover details={teacherGroup2Stats} statType={stat.key as any} />
                                 </div>
