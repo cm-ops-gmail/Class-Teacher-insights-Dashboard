@@ -90,7 +90,6 @@ const processChartData = (
 
 const CustomTooltipContent = ({ active, payload, label, total, metricLabel }: any) => {
   if (active && payload && payload.length) {
-    const data = payload[0].payload;
     const value = payload[0].value;
     const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
     return (
