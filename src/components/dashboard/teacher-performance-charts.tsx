@@ -47,6 +47,16 @@ const COLORS = [
   "hsl(var(--chart-4))",
   "hsl(var(--chart-5))",
   "hsl(var(--chart-6))",
+  "hsl(220 84% 60%)",
+  "hsl(20 84% 60%)",
+  "hsl(340 84% 60%)",
+  "hsl(100 84% 60%)",
+  "hsl(280 84% 60%)",
+  "hsl(180 84% 60%)",
+  "hsl(60 84% 60%)",
+  "hsl(300 84% 60%)",
+  "hsl(140 84% 60%)",
+  "hsl(260 84% 60%)",
 ];
 
 const processChartData = (
@@ -54,17 +64,17 @@ const processChartData = (
   valueKey: keyof TeacherStats
 ) => {
   const sorted = [...statsArray].sort((a, b) => (b[valueKey] as number) - (a[valueKey] as number));
-  const top25 = sorted.slice(0, 25);
-  const others = sorted.slice(25);
+  const top15 = sorted.slice(0, 15);
+  const others = sorted.slice(15);
 
-  const chartData = top25.map(teacher => ({
+  const chartData = top15.map(teacher => ({
     name: teacher.name,
     value: teacher[valueKey] as number,
   }));
 
   if (others.length > 0) {
     const othersValue = others.reduce((acc, teacher) => acc + (teacher[valueKey] as number), 0);
-    chartData.push({ name: 'Others', value: othersValue });
+    chartData.push({ name: 'Others', value: Math.round(othersValue) });
   }
 
   return chartData.map((item, index) => ({
@@ -144,7 +154,7 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
         <Card key={title} className="flex flex-col">
           <CardHeader>
             <CardTitle>{title}</CardTitle>
-            <CardDescription>Top 25 Teachers Distribution</CardDescription>
+            <CardDescription>Top 15 Teachers Distribution</CardDescription>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col justify-center items-center pb-0">
             <ChartContainer
@@ -162,7 +172,11 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
                   nameKey="name"
                   innerRadius={60}
                   strokeWidth={5}
-                />
+                >
+                   {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Pie>
                 <ChartLegend
                   content={<ChartLegendContent nameKey="name" />}
                   className="-translate-y-2 flex-wrap"
