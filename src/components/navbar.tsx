@@ -11,11 +11,6 @@ const Navbar = () => {
           <Logo />
         </div>
         <div className="flex items-center gap-4">
-           <Image src="/navbar-logo.png" alt="Navbar Logo" width={100} height={30} />
-          <Avatar>
-            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-            <AvatarFallback>CN</AvatarFallback>
-          </Avatar>
           <div>
             <p className="text-sm font-medium">User Name</p>
             <p className="text-xs text-muted-foreground">user@example.com</p>
