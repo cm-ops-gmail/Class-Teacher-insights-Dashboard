@@ -39,6 +39,11 @@ type TeacherStats = {
   highestPeakAttendance: number;
 };
 
+type CourseStats = {
+  name: string;
+  classCount: number;
+};
+
 const COLORS = [
   "hsl(var(--chart-1))",
   "hsl(var(--chart-2))",
@@ -59,21 +64,21 @@ const COLORS = [
 ];
 
 const processChartData = (
-  statsArray: TeacherStats[],
-  valueKey: keyof TeacherStats
+  statsArray: (TeacherStats | CourseStats)[],
+  valueKey: keyof (TeacherStats | CourseStats)
 ) => {
   // Sort by performance to get the top 30
   const performanceSorted = [...statsArray].sort((a, b) => (b[valueKey] as number) - (a[valueKey] as number));
   const top30 = performanceSorted.slice(0, 30);
   const others = performanceSorted.slice(30);
 
-  const chartData = top30.map(teacher => ({
-    name: teacher.name,
-    value: teacher[valueKey] as number,
+  const chartData = top30.map(item => ({
+    name: item.name,
+    value: item[valueKey] as number,
   }));
 
   if (others.length > 0) {
-    const othersValue = others.reduce((acc, teacher) => acc + (teacher[valueKey] as number), 0);
+    const othersValue = others.reduce((acc, item) => acc + (item[valueKey] as number), 0);
     // Add "Others" to the end
     chartData.push({ name: 'Others', value: Math.round(othersValue) });
   }
@@ -107,7 +112,7 @@ const CustomTooltipContent = ({ active, payload, label, total, metricLabel }: an
 export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps) {
   const { teacherStats, totals } = useMemo(() => {
     if (!data || data.length === 0) {
-      return { teacherStats: [], totals: { classCount: 0, avgAttendance: 0, highestPeakAttendance: 0, totalDuration: 0 } };
+      return { teacherStats: [], totals: { classCount: 0, avgAttendance: 0, totalDuration: 0 } };
     }
 
     const stats: { [key: string]: TeacherStats } = {};
@@ -147,12 +152,39 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
     const totals = {
       classCount: statsArray.reduce((acc, t) => acc + t.classCount, 0),
       avgAttendance: statsArray.reduce((acc, t) => acc + t.avgAttendance, 0),
-      highestPeakAttendance: statsArray.reduce((acc, t) => acc + t.highestPeakAttendance, 0),
       totalDuration: statsArray.reduce((acc, t) => acc + t.totalDuration, 0),
     };
 
 
     return { teacherStats: statsArray, totals };
+  }, [data]);
+
+  const { courseStats, courseTotals } = useMemo(() => {
+    if (!data || data.length === 0) {
+      return { courseStats: [], courseTotals: { classCount: 0, uniqueCourses: 0 } };
+    }
+    const stats: { [key: string]: CourseStats } = {};
+
+    data.forEach(item => {
+      const courseName = item.course;
+      if (!courseName) return;
+
+      if (!stats[courseName]) {
+        stats[courseName] = {
+          name: courseName,
+          classCount: 0,
+        };
+      }
+      stats[courseName].classCount += 1;
+    });
+    
+    const statsArray = Object.values(stats);
+    const totals = {
+      classCount: statsArray.reduce((acc, c) => acc + c.classCount, 0),
+      uniqueCourses: statsArray.length,
+    };
+
+    return { courseStats: statsArray, courseTotals: totals };
   }, [data]);
   
   const chartConfig = (data: any[]) => {
@@ -166,34 +198,35 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
   const classCountData = processChartData(teacherStats, 'classCount');
   const avgAttendanceData = processChartData(teacherStats, 'avgAttendance');
   const totalDurationData = processChartData(teacherStats, 'totalDuration');
+  const courseClassCountData = processChartData(courseStats, 'classCount');
 
   if (!data || data.length === 0) {
     return null;
   }
   
   const allChartCards = [
-    { title: "Classes Taught", data: classCountData, total: totals.classCount, metricLabel: 'Classes' },
-    { title: "Average Attendance", data: avgAttendanceData, total: totals.avgAttendance, metricLabel: 'Avg. Attendance' },
-    { title: "Peak Attendance", data: [], total: totals.highestPeakAttendance, metricLabel: 'Peak Attendance' },
-    { title: "Total Duration (min)", data: totalDurationData, total: totals.totalDuration, metricLabel: 'Duration (min)' },
+    { title: "Classes Taught by Teacher", data: classCountData, total: totals.classCount, metricLabel: 'Classes' },
+    { title: "Average Attendance by Teacher", data: avgAttendanceData, total: totals.avgAttendance, metricLabel: 'Avg. Attendance' },
+    { title: "Total Duration (min) by Teacher", data: totalDurationData, total: totals.totalDuration, metricLabel: 'Duration (min)' },
+    { title: "Classes per Course", data: courseClassCountData, total: courseTotals.classCount, metricLabel: 'Classes', uniqueTotal: courseTotals.uniqueCourses },
   ];
-
-  const chartCards = allChartCards.filter(chart => chart.title !== 'Peak Attendance');
 
   return (
     <div className="grid grid-cols-1 gap-6">
-      {chartCards.map(({ title, data, total, metricLabel }) => {
+      {allChartCards.map(({ title, data, total, metricLabel, uniqueTotal }) => {
         const top30Value = data.filter(d => d.name !== 'Others').reduce((acc, d) => acc + d.value, 0);
         const othersValue = data.find(d => d.name === 'Others')?.value ?? 0;
         const top30Percent = total > 0 ? ((top30Value / total) * 100).toFixed(1) : 0;
         const othersPercent = total > 0 ? ((othersValue / total) * 100).toFixed(1) : 0;
         
+        const titleText = uniqueTotal ? `${title} (${uniqueTotal.toLocaleString()})` : `${title} (${total.toLocaleString()})`;
+        
         return (
           <Card key={title} className="flex flex-col">
             <CardHeader>
-              <CardTitle>{title} ({total.toLocaleString()})</CardTitle>
+              <CardTitle>{titleText}</CardTitle>
               <CardDescription>
-                Top 30 teachers contribute {top30Percent}% of the total. Others contribute {othersPercent}%.
+                Top 30 contribute {top30Percent}% of the total. Others contribute {othersPercent}%.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pl-0 pr-6">
@@ -229,16 +262,13 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
                     radius={5}
                     barSize={20}
                   >
-                     {data.map((entry, index) => (
-                      <LabelList
-                        key={`label-${index}`}
+                     <LabelList
                         dataKey="value"
                         position="right"
                         offset={8}
                         className="fill-foreground text-xs"
                         formatter={(value: number) => value.toLocaleString()}
                       />
-                    ))}
                   </Bar>
                 </BarChart>
               </ChartContainer>
