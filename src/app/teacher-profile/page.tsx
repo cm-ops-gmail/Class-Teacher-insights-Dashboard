@@ -1,5 +1,7 @@
 'use client';
 
+import React, 'use client';
+
 import React, { useState, useMemo, useEffect } from 'react';
 import type { ClassEntry } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
@@ -188,6 +190,8 @@ export default function TeacherProfilePage() {
     localStorage.removeItem('dashboard_session');
     router.replace('/login');
   };
+  
+  const isAnyTeacherSelected = selectedTeachers.length > 0;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -211,19 +215,21 @@ export default function TeacherProfilePage() {
           </p>
         </div>
 
-        {!isLoading && (
-            <Card className="border-chart-3/50 hover:border-chart-3 transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-chart-3">Total Unique Teachers</CardTitle>
+        <div className="flex justify-center mb-8">
+            <Card className="w-full max-w-sm border-chart-3/50 hover:border-chart-3 transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 text-center">
+                    <CardTitle className="text-sm font-medium text-chart-3 w-full text-center">
+                        {isAnyTeacherSelected ? 'Selected Teachers' : 'Total Unique Teachers'}
+                    </CardTitle>
                     <Users className="h-4 w-4 text-chart-3" />
                 </CardHeader>
-                <CardContent>
+                <CardContent className="text-center">
                     <div className="text-2xl font-bold text-chart-3">
-                        {allTeachers.length}
+                        {isAnyTeacherSelected ? selectedTeachers.length : allTeachers.length}
                     </div>
                 </CardContent>
             </Card>
-        )}
+        </div>
 
         <div className="mb-8">
             {isLoading ? (
