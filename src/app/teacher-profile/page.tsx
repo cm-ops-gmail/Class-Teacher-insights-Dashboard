@@ -1,7 +1,5 @@
 'use client';
 
-import React, 'use client';
-
 import React, { useState, useMemo, useEffect } from 'react';
 import type { ClassEntry } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
@@ -495,9 +493,6 @@ export default function TeacherProfilePage() {
                     </Card>
 
                     <Card>
-                      <CardHeader>
-                        <CardTitle>Class History ({aggregatedStats.classCount})</CardTitle>
-                      </CardHeader>
                       <CardContent className="p-0">
                         <style>{`
                           .custom-scrollbar::-webkit-scrollbar {
