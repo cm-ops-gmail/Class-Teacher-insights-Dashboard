@@ -211,6 +211,20 @@ export default function TeacherProfilePage() {
           </p>
         </div>
 
+        {!isLoading && (
+            <Card className="border-chart-3/50 hover:border-chart-3 transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-chart-3">Total Unique Teachers</CardTitle>
+                    <Users className="h-4 w-4 text-chart-3" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold text-chart-3">
+                        {allTeachers.length}
+                    </div>
+                </CardContent>
+            </Card>
+        )}
+
         <div className="mb-8">
             {isLoading ? (
                 <Skeleton className="h-10 w-full md:w-[400px]" />
@@ -225,7 +239,7 @@ export default function TeacherProfilePage() {
             )}
         </div>
         
-        {isLoading && (
+        {isLoading && selectedTeachers.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                 {Array.from({length: 4}).map((_, i) => <Skeleton key={i} className="h-36" />)}
             </div>
@@ -532,24 +546,6 @@ export default function TeacherProfilePage() {
             </div>
         )}
         
-        {!isLoading && !aggregatedStats && selectedTeachers.length === 0 && (
-             <div className="flex items-center justify-center py-12">
-                <Card className="w-full max-w-sm text-center">
-                    <CardHeader>
-                        <CardTitle>Total Unique Teachers</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex items-center justify-center gap-2">
-                            <Users className="h-10 w-10 text-muted-foreground" />
-                            <p className="text-5xl font-bold">
-                                {allTeachers.length}
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-        )}
-
         <Separator />
         
         <TeacherComparison data={data} allTeachers={allTeachers} />
