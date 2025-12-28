@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Award, Clock, Star, UserCheck, BookOpen, Users, LogOut, Package, Info, User } from 'lucide-react';
+import { Award, Clock, Star, UserCheck, BookOpen, Users, LogOut, Package, Info, User, X } from 'lucide-react';
 import Navbar from '@/components/navbar';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
@@ -229,7 +229,7 @@ export default function TeacherProfilePage() {
             </Card>
         </div>
 
-        <div className="mb-8">
+        <div className="flex items-center gap-2 mb-8">
             {isLoading ? (
                 <Skeleton className="h-10 w-full md:w-[400px]" />
             ) : (
@@ -240,6 +240,16 @@ export default function TeacherProfilePage() {
                     onSelectedValuesChange={setSelectedTeachers}
                     triggerClassName="w-full md:w-[400px]"
                 />
+            )}
+             {isAnyTeacherSelected && (
+              <Button
+                variant="ghost"
+                onClick={() => setSelectedTeachers([])}
+                className="h-10 px-2 lg:px-3"
+              >
+                Clear selection
+                <X className="ml-2 h-4 w-4" />
+              </Button>
             )}
         </div>
         
