@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Award, Clock, Star, UserCheck, BookOpen, Users, LogOut, Package, Info } from 'lucide-react';
+import { Award, Clock, Star, UserCheck, BookOpen, Users, LogOut, Package, Info, User } from 'lucide-react';
 import Navbar from '@/components/navbar';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
@@ -226,7 +226,7 @@ export default function TeacherProfilePage() {
         </div>
         
         {isLoading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                 {Array.from({length: 4}).map((_, i) => <Skeleton key={i} className="h-36" />)}
             </div>
         )}
@@ -474,11 +474,10 @@ export default function TeacherProfilePage() {
                         </CardContent>
                     </Card>
 
-                    <div>
-                    <h2 className="text-2xl font-bold tracking-tight mb-4">
-                        Class History ({aggregatedStats.classCount})
-                    </h2>
                     <Card>
+                      <CardHeader>
+                        <CardTitle>Class History ({aggregatedStats.classCount})</CardTitle>
+                      </CardHeader>
                       <CardContent className="p-0">
                         <style>{`
                           .custom-scrollbar::-webkit-scrollbar {
@@ -529,16 +528,25 @@ export default function TeacherProfilePage() {
                         </div>
                       </CardContent>
                     </Card>
-                    </div>
                 </div>
             </div>
         )}
         
         {!isLoading && !aggregatedStats && selectedTeachers.length === 0 && (
-             <div className="flex flex-col items-center justify-center text-center border-2 border-dashed rounded-lg p-12 h-96">
-                <UserCheck className="h-16 w-16 text-muted-foreground mb-4" />
-                <h2 className="text-xl font-semibold">Select Teachers</h2>
-                <p className="text-muted-foreground mt-2">Choose one or more teachers from the dropdown above to see their combined statistics.</p>
+             <div className="flex items-center justify-center py-12">
+                <Card className="w-full max-w-sm text-center">
+                    <CardHeader>
+                        <CardTitle>Total Unique Teachers</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex items-center justify-center gap-2">
+                            <Users className="h-10 w-10 text-muted-foreground" />
+                            <p className="text-5xl font-bold">
+                                {allTeachers.length}
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         )}
 
