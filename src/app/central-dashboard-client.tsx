@@ -744,3 +744,4 @@ const allCombinedColumns: { key: keyof CombinedClassEntry; header: string; sorta
     { key: 'averageClassRating', header: 'Rating', sortable: true },
     { key: 'issuesType', header: 'Issue Type', sortable: true },
 ];
+
