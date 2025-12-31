@@ -41,8 +41,8 @@ type TeacherStats = {
   fbTotalAverageAttendance: number;
 };
 
-const isAppEntry = (entry: DataEntry): entry is AppClassEntry & {dataSource: 'app'} => entry.dataSource === 'app';
-const isFbEntry = (entry: DataEntry): entry is ClassEntry & {dataSource: 'fb'} => entry.dataSource === 'fb';
+const isAppEntry = (entry: DataEntry): entry is AppClassEntry & {dataSource: 'app'} => 'averageClassRating' in entry;
+const isFbEntry = (entry: DataEntry): entry is ClassEntry & {dataSource: 'fb'} => 'productType' in entry && !isAppEntry(entry);
 
 export function TopTeachers({ data }: TopTeachersProps) {
   const { topTeachers, teacherDetails } = useMemo(() => {
@@ -86,22 +86,24 @@ export function TopTeachers({ data }: TopTeachersProps) {
       currentTeacherStats.classes.push(item);
       
       let peakAttendance = 0;
+      const dataSource = 'dataSource' in item ? item.dataSource : undefined;
 
-      if (isAppEntry(item)) {
+
+      if (isAppEntry(item) || (dataSource === 'app' && !('productType' in item))) {
         currentTeacherStats.appClassCount += 1;
         currentTeacherStats.totalDuration += parseNumericValue(item.classDuration);
-        const attendance = parseNumericValue(item.totalAttendance);
+        const attendance = parseNumericValue((item as AppClassEntry).totalAttendance);
         currentTeacherStats.totalAverageAttendance += attendance;
         currentTeacherStats.appTotalAverageAttendance += attendance;
         peakAttendance = attendance;
 
-      } else if (isFbEntry(item)) {
+      } else { // Handles fb-only and central dashboard fb data
         currentTeacherStats.fbClassCount += 1;
-        currentTeacherStats.totalDuration += parseNumericValue(item.totalDuration);
-        const attendance = parseNumericValue(item.averageAttendance);
+        currentTeacherStats.totalDuration += parseNumericValue((item as ClassEntry).totalDuration);
+        const attendance = parseNumericValue((item as ClassEntry).averageAttendance);
         currentTeacherStats.totalAverageAttendance += attendance;
         currentTeacherStats.fbTotalAverageAttendance += attendance;
-        peakAttendance = parseNumericValue(item.highestAttendance);
+        peakAttendance = parseNumericValue((item as ClassEntry).highestAttendance);
       }
       
       if (peakAttendance > currentTeacherStats.highestPeakAttendance) {
@@ -140,9 +142,21 @@ export function TopTeachers({ data }: TopTeachersProps) {
             title = `Classes Taught by ${teacherName}`;
             content = (
                 <div className="text-sm">
-                  <p>Total Classes: <span className='font-bold'>{details.classCount}</span></p>
-                  <p>Fb Classes: <span className='font-bold'>{details.fbClassCount}</span></p>
-                  <p>App Classes: <span className='font-bold'>{details.appClassCount}</span></p>
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="border rounded-lg p-3 text-center">
+                        <p className="text-xs text-muted-foreground">Total Classes</p>
+                        <p className='font-bold text-lg'>{details.classCount}</p>
+                    </div>
+                    <div className="border rounded-lg p-3 text-center">
+                        <p className="text-xs text-muted-foreground">Fb Classes</p>
+                        <p className='font-bold text-lg'>{details.fbClassCount}</p>
+                    </div>
+                    <div className="border rounded-lg p-3 text-center">
+                        <p className="text-xs text-muted-foreground">App Classes</p>
+                        <p className='font-bold text-lg'>{details.appClassCount}</p>
+                    </div>
+                  </div>
+                  
                   <h4 className="font-semibold mt-4 mb-2">Class List</h4>
                   <ScrollArea className="h-72 pr-4 border rounded-md">
                     <Table>
@@ -152,7 +166,7 @@ export function TopTeachers({ data }: TopTeachersProps) {
                           <TableRow key={c.id}>
                             <TableCell><Badge variant="secondary">{c.date}</Badge></TableCell>
                             <TableCell className="font-medium max-w-xs truncate">{c.subject ?? (c as AppClassEntry).classTopic}</TableCell>
-                            <TableCell><Badge variant={c.dataSource === 'app' ? 'default' : 'secondary'}>{c.dataSource?.toUpperCase()}</Badge></TableCell>
+                            <TableCell><Badge variant={isAppEntry(c) ? 'default' : 'secondary'}>{isAppEntry(c) ? 'APP' : 'FB'}</Badge></TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -167,18 +181,22 @@ export function TopTeachers({ data }: TopTeachersProps) {
             const appAvg = details.appClassCount > 0 ? (details.appTotalAverageAttendance / details.appClassCount) : 0;
             content = (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 text-sm">
+                {(details.fbClassCount > 0 || data.some(d => d.dataSource === 'fb')) && (
                 <div className="space-y-2 rounded-lg border p-4">
                     <h3 className="font-semibold text-center mb-2">Fb Data</h3>
                     <p>Total Attendance: {details.fbTotalAverageAttendance.toLocaleString()}</p>
                     <p>Total Classes: {details.fbClassCount.toLocaleString()}</p>
                     <p className="font-bold border-t pt-2 mt-2">Avg: {fbAvg.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
                 </div>
+                )}
+                {(details.appClassCount > 0 || data.some(d => d.dataSource === 'app')) && (
                 <div className="space-y-2 rounded-lg border p-4">
                     <h3 className="font-semibold text-center mb-2">App Data</h3>
                     <p>Total Attendance: {details.appTotalAverageAttendance.toLocaleString()}</p>
                     <p>Total Classes: {details.appClassCount.toLocaleString()}</p>
                     <p className="font-bold border-t pt-2 mt-2">Avg: {appAvg.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
                 </div>
+                )}
                  <div className="md:col-span-2 space-y-2 rounded-lg border bg-muted/50 p-4 mt-4">
                      <h3 className="font-semibold text-center mb-2">Combined</h3>
                      <p>Total Attendance: {details.totalAverageAttendance.toLocaleString()}</p>
@@ -196,7 +214,7 @@ export function TopTeachers({ data }: TopTeachersProps) {
                         <>
                             <h4 className="font-semibold">{details.highestAttendanceClass.teacher}</h4>
                             <p className="font-bold text-base">{isFbEntry(details.highestAttendanceClass) ? details.highestAttendanceClass.subject : (details.highestAttendanceClass as AppClassEntry).classTopic}</p>
-                            <p className="text-xs text-muted-foreground">{details.highestAttendanceClass.date} ({details.highestAttendanceClass.dataSource?.toUpperCase()})</p>
+                            <p className="text-xs text-muted-foreground">{details.highestAttendanceClass.date} <Badge variant={isAppEntry(details.highestAttendanceClass) ? 'default' : 'secondary'}>{isAppEntry(details.highestAttendanceClass) ? 'APP' : 'FB'}</Badge></p>
                         </>
                     ) : 'No data available'}
                 </div>
@@ -204,7 +222,7 @@ export function TopTeachers({ data }: TopTeachersProps) {
             break;
         case 'totalDuration':
              title = `Total Duration for ${teacherName}`;
-             content = <p className="text-sm text-muted-foreground p-4">Based on {details.classCount} classes from both platforms.</p>;
+             content = <p className="text-sm text-muted-foreground p-4">Based on {details.classCount} classes from {details.fbClassCount > 0 && details.appClassCount > 0 ? 'both platforms' : details.fbClassCount > 0 ? 'the Fb platform' : 'the App platform'}.</p>;
              break;
         default:
             content = null;
@@ -307,3 +325,5 @@ export function TopTeachers({ data }: TopTeachersProps) {
     </div>
   );
 }
+
+    
