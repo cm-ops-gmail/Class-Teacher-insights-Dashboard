@@ -40,7 +40,7 @@ const Navbar = ({ children }: NavbarProps) => {
            <Link href="/" passHref>
              <Button variant="ghost">
                 <Home className="mr-2 h-4 w-4" />
-                Fb dashboard
+                FB Dashboard
              </Button>
            </Link>
            <Link href="/app-dashboard" passHref>
