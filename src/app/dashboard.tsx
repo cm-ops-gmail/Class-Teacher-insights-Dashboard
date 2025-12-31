@@ -264,13 +264,16 @@ export default function Dashboard() {
     }
   }, [filteredData, data.length]);
 
-  const issuePercentage = useMemo(() => {
+  const { issuePercentage, issueCount } = useMemo(() => {
     const baseData = filteredDataWithoutIssues;
     if (baseData.length === 0 || issueTypeFilters.length === 0) {
-      return 0;
+      return { issuePercentage: 0, issueCount: 0 };
     }
-    const issueCount = baseData.filter(item => issueTypeFilters.includes(item.issuesType)).length;
-    return (issueCount / baseData.length) * 100;
+    const count = baseData.filter(item => issueTypeFilters.includes(item.issuesType)).length;
+    return { 
+        issuePercentage: (count / baseData.length) * 100,
+        issueCount: count
+    };
   }, [filteredDataWithoutIssues, issueTypeFilters]);
   
   const clearAllFilters = () => {
@@ -315,7 +318,7 @@ export default function Dashboard() {
 
   const isSameDay = (date1: Date | undefined, date2: Date | null) => {
     if (!date1 || !date2) return false;
-    return date1.getDate() === date2.getMonth() &&
+    return date1.getDate() === date2.getDate() &&
            date1.getMonth() === date2.getMonth() &&
            date1.getFullYear() === date2.getFullYear();
   };
@@ -912,8 +915,25 @@ export default function Dashboard() {
                 <AlertTriangle className="h-4 w-4 text-destructive" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-destructive">
-                  {issuePercentage.toFixed(2)}%
+                <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-destructive">
+                      {issuePercentage.toFixed(2)}%
+                    </div>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader><DialogTitle>Issue Percentage Calculation</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4 text-sm">
+                                <div>Total Classes in View: {filteredDataWithoutIssues.length.toLocaleString()}</div>
+                                <div>Classes with Selected Issues: {issueCount.toLocaleString()}</div>
+                                <p className="font-bold border-t pt-2 mt-1">
+                                    ({issueCount.toLocaleString()} / {filteredDataWithoutIssues.length.toLocaleString()}) * 100 = {issuePercentage.toFixed(2)}%
+                                </p>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   of classes in the current view have the selected issue types.
