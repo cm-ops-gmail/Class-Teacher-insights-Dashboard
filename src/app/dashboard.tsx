@@ -168,7 +168,7 @@ export default function Dashboard() {
     [data]
   );
 
-  const filteredData = useMemo(() => {
+  const filteredDataWithoutIssues = useMemo(() => {
     return data.filter(item => {
       // Date Filter
       if (startDate || endDate) {
@@ -188,7 +188,7 @@ export default function Dashboard() {
         }
       }
       
-      // Other Filters
+      // Other Filters (excluding issueTypeFilters)
       if (productTypeFilters.length > 0 && !productTypeFilters.includes(item.productType)) {
           return false;
       }
@@ -201,9 +201,6 @@ export default function Dashboard() {
       if (subjectFilters.length > 0 && !subjectFilters.includes(item.subject)) {
           return false;
       }
-      if (issueTypeFilters.length > 0 && !issueTypeFilters.includes(item.issuesType)) {
-          return false;
-      }
       if (globalFilter) {
           const lowercasedFilter = globalFilter.toLowerCase();
           return Object.values(item).some(value =>
@@ -212,7 +209,16 @@ export default function Dashboard() {
       }
       return true;
     });
-  }, [data, globalFilter, startDate, endDate, productTypeFilters, courseFilters, teacherFilters, subjectFilters, issueTypeFilters]);
+  }, [data, globalFilter, startDate, endDate, productTypeFilters, courseFilters, teacherFilters, subjectFilters]);
+
+  const filteredData = useMemo(() => {
+    return filteredDataWithoutIssues.filter(item => {
+      if (issueTypeFilters.length > 0 && !issueTypeFilters.includes(item.issuesType)) {
+          return false;
+      }
+      return true;
+    });
+  }, [filteredDataWithoutIssues, issueTypeFilters]);
 
 
   const summary = useMemo(() => {
@@ -259,12 +265,13 @@ export default function Dashboard() {
   }, [filteredData, data.length]);
 
   const issuePercentage = useMemo(() => {
-    if (filteredData.length === 0 || issueTypeFilters.length === 0) {
+    const baseData = filteredDataWithoutIssues;
+    if (baseData.length === 0 || issueTypeFilters.length === 0) {
       return 0;
     }
-    const issueCount = filteredData.filter(item => issueTypeFilters.includes(item.issuesType)).length;
-    return (issueCount / filteredData.length) * 100;
-  }, [filteredData, issueTypeFilters]);
+    const issueCount = baseData.filter(item => issueTypeFilters.includes(item.issuesType)).length;
+    return (issueCount / baseData.length) * 100;
+  }, [filteredDataWithoutIssues, issueTypeFilters]);
   
   const clearAllFilters = () => {
     setGlobalFilter("");
