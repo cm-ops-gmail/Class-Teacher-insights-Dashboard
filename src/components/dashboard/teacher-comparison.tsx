@@ -106,7 +106,12 @@ const calculateTeacherGroupStats = (teacherNames: string[], allData: DataEntry[]
   
   stats.highestPeakAttendance.total = highestPeak;
 
-  stats.uniqueCourses = [...new Set(teacherClasses.filter(isFbEntry).map(c => c.course).filter(Boolean))];
+  const allCourses = teacherClasses.map(c => {
+    if (isFbEntry(c)) return c.course;
+    if (isAppEntry(c)) return c.classTopic; // Or subject, depending on what's more relevant
+    return null;
+  }).filter(Boolean);
+  stats.uniqueCourses = [...new Set(allCourses)];
 
   stats.uniqueProductTypes = [...new Set([
       ...teacherClasses.filter(isAppEntry).map(c => c.product).filter(Boolean),
@@ -136,8 +141,7 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
 
     let content;
     let title;
-    let isDialog = true; // All are dialogs now
-
+    
     switch (statType) {
         case 'classCount':
             title = `Classes Taught by ${details.name}`;
@@ -207,11 +211,26 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
             break;
         case 'totalDuration':
              title = "Total Duration";
-             content = <div className="font-bold text-lg p-4">{formatDuration(details.totalDuration.total)}</div>
+             content = (
+              <div className="space-y-4 p-4 text-sm">
+                <div className="space-y-2 rounded-lg border p-4">
+                    <h3 className="font-semibold text-center mb-2">Fb Duration</h3>
+                    <p className="font-bold text-lg text-center">{formatDuration(details.totalDuration.fb)}</p>
+                </div>
+                <div className="space-y-2 rounded-lg border p-4">
+                    <h3 className="font-semibold text-center mb-2">App Duration</h3>
+                    <p className="font-bold text-lg text-center">{formatDuration(details.totalDuration.app)}</p>
+                </div>
+                 <div className="space-y-2 rounded-lg border bg-muted/50 p-4 mt-4">
+                     <h3 className="font-semibold text-center mb-2">Total Combined Duration</h3>
+                     <p className="font-bold text-xl text-center">{formatDuration(details.totalDuration.total)}</p>
+                 </div>
+              </div>
+             );
              break;
         case 'uniqueCourses':
              if (details.uniqueCourses.length === 0) return null;
-             title = `Unique Courses Taught by ${details.name} (Fb Only)`;
+             title = `Unique Courses Taught by ${details.name}`;
              content = (
                  <ScrollArea className="h-72 mt-4">
                     <div className="flex flex-wrap gap-2 p-1">
@@ -264,7 +283,7 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
     { label: "Avg. Attendance", icon: Users, key: "avgAttendance" },
     { label: "Highest Peak Attendance", icon: Star, key: "highestPeakAttendance" },
     { label: "Total Duration", icon: Clock, key: "totalDuration", unit: " min" },
-    { label: "Unique Courses (Fb)", icon: BookOpen, key: "uniqueCourses"},
+    { label: "Unique Courses", icon: BookOpen, key: "uniqueCourses"},
     { label: "Unique Product Types", icon: Package, key: "uniqueProductTypes" },
   ];
 
