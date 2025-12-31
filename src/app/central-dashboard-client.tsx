@@ -9,26 +9,26 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Award, Clock, Star, Users, TrendingUp, LogOut, Info, Columns, X, Calendar } from 'lucide-react';
 import Navbar from '@/components/navbar';
 import { useRouter } from 'next/navigation';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { MultiSelectFilter } from "@/components/dashboard/multi-select-filter";
 import { DataTable as CombinedDataTable } from "@/components/dashboard/combined-data-table"; 
 import { TopTeachers } from "@/components/dashboard/top-teachers";
 import { TeacherPerformanceCharts } from "@/components/dashboard/teacher-performance-charts";
-import { TeacherComparison } from '@/components/dashboard/teacher-comparison';
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
   if (value === null || value === undefined) return 0;
@@ -45,6 +45,20 @@ const parseDateString = (dateStr: string): Date | null => {
   if (!isNaN(parsed.getTime())) return parsed;
   return null;
 };
+
+const formatDuration = (totalMinutes: number) => {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    let result = '';
+    if (hours > 0) {
+      result += `${hours} hour${hours > 1 ? 's' : ''} `;
+    }
+    if (minutes > 0) {
+      result += `${minutes} min${minutes > 1 ? 's' : ''}`;
+    }
+    return result.trim() || '0 min';
+  };
 
 const isAppEntry = (entry: CombinedClassEntry): entry is AppClassEntry & { dataSource: 'app' } => entry.dataSource === 'app';
 const isFbEntry = (entry: CombinedClassEntry): entry is ClassEntry & { dataSource: 'fb' } => entry.dataSource === 'fb';
@@ -261,7 +275,23 @@ export default function CentralDashboard() {
                 <DialogHeader><DialogTitle>Total Classes Breakdown</DialogTitle></DialogHeader>
             } />
              <StatCard icon={Clock} title="Total Duration (min)" stat={summary.totalDuration} colorClass="chart-4" popoverContent={
-                <DialogHeader><DialogTitle>Total Duration Breakdown</DialogTitle></DialogHeader>
+                <>
+                  <DialogHeader><DialogTitle>Total Duration Breakdown</DialogTitle></DialogHeader>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 text-sm">
+                      <div className="space-y-2 rounded-lg border p-4">
+                          <h3 className="font-semibold text-center mb-2">Fb Duration</h3>
+                          <p className="font-bold text-lg text-center">{formatDuration(summary.totalDuration.fb)}</p>
+                      </div>
+                      <div className="space-y-2 rounded-lg border p-4">
+                          <h3 className="font-semibold text-center mb-2">App Duration</h3>
+                          <p className="font-bold text-lg text-center">{formatDuration(summary.totalDuration.app)}</p>
+                      </div>
+                  </div>
+                  <div className="space-y-2 rounded-lg border bg-muted/50 p-4 mt-4">
+                      <h3 className="font-semibold text-center mb-2">Total Combined Duration</h3>
+                      <p className="font-bold text-xl text-center">{formatDuration(summary.totalDuration.total)}</p>
+                  </div>
+                </>
             } />
             <StatCard icon={Users} title="Average Attendance" stat={summary.avgAttendance} colorClass="chart-6" popoverContent={
                  <>
@@ -279,6 +309,14 @@ export default function CentralDashboard() {
                             <p>Total App Classes: {summary.classCount.app.toLocaleString()}</p>
                             <p className="font-bold border-t pt-2 mt-2">Avg: {summary.avgAttendance.app.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
                         </div>
+                    </div>
+                     <div className="space-y-2 rounded-lg border bg-muted/50 p-4 mt-4">
+                         <h3 className="font-semibold text-center mb-2">Combined</h3>
+                         <p>Total Combined Attendance: {summary.totalAttendance.total.toLocaleString()}</p>
+                         <p>Total Combined Classes: {summary.classCount.total.toLocaleString()}</p>
+                         <p className="font-bold border-t pt-2 mt-2">
+                            Overall Avg: {summary.avgAttendance.total.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                         </p>
                     </div>
                 </>
             } />
@@ -380,9 +418,6 @@ export default function CentralDashboard() {
 
         <Separator className="my-8" />
 
-        <TeacherComparison data={combinedData} allTeachers={teachers} />
-
-
       </main>
       <footer className="border-t">
         <div className="container mx-auto flex items-center justify-between px-4 py-6 text-sm text-muted-foreground">
@@ -409,6 +444,3 @@ const allCombinedColumns: { key: keyof CombinedClassEntry; header: string; sorta
     { key: 'averageClassRating', header: 'Rating', sortable: true },
     { key: 'issuesType', header: 'Issue Type', sortable: true },
 ];
-
-
-    
