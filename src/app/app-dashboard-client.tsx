@@ -5,7 +5,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { DataTable } from "@/components/dashboard/app-data-table";
 import type { AppClassEntry } from "@/lib/definitions";
 import { useToast } from "@/hooks/use-toast";
-import { BookCopy, Clock, TrendingUp, Users, Info, Columns, X, LogOut, Calendar, AlertTriangle, Percent, Watch, HelpCircle, CheckCircle } from "lucide-react";
+import { BookCopy, Clock, TrendingUp, Users, Info, Columns, X, LogOut, Calendar, AlertTriangle, Percent, Watch, HelpCircle, CheckCircle, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -204,6 +204,7 @@ export default function AppDashboard() {
   const summary = useMemo(() => {
     const activeData = filteredData;
     const count = activeData.length;
+    let ratedClassesCount = 0;
 
     const totalDuration = activeData.reduce((acc, item) => acc + parseNumericValue(item.classDuration), 0);
     const totalAttendance = activeData.reduce((acc, item) => acc + parseNumericValue(item.totalAttendance), 0);
@@ -212,6 +213,14 @@ export default function AppDashboard() {
     const totalAverageWatchtimePercent = activeData.reduce((acc, item) => acc + parseNumericValue(item.averageWatchtimePercent), 0);
     const totalDoubts = activeData.reduce((acc, item) => acc + parseNumericValue(item.totalDoubt), 0);
     const totalDoubtResolvedPercent = activeData.reduce((acc, item) => acc + parseNumericValue(item.doubtResolvedPercent), 0);
+    const totalAverageClassRating = activeData.reduce((acc, item) => {
+        const rating = parseNumericValue(item.averageClassRating);
+        if (rating > 0) {
+            ratedClassesCount++;
+            return acc + rating;
+        }
+        return acc;
+    }, 0);
 
     return {
       total: data.length,
@@ -223,6 +232,7 @@ export default function AppDashboard() {
       avgWatchtimePercent: count > 0 ? totalAverageWatchtimePercent / count : 0,
       totalDoubts,
       avgDoubtResolvedPercent: count > 0 ? totalDoubtResolvedPercent / count : 0,
+      avgClassRating: ratedClassesCount > 0 ? totalAverageClassRating / ratedClassesCount : 0,
     }
   }, [filteredData, data.length]);
   
@@ -464,7 +474,7 @@ export default function AppDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-chart-5">{summary.totalAttendance.toLocaleString()}</div>
-                 <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   in current view
                 </p>
               </CardContent>
@@ -536,6 +546,20 @@ export default function AppDashboard() {
                 <div className="text-2xl font-bold text-green-500">{summary.avgDoubtResolvedPercent.toFixed(2)}%</div>
                  <p className="text-xs text-muted-foreground">
                   average for current view
+                </p>
+              </CardContent>
+            </Card>
+             <Card className="border-yellow-500/50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Avg. Class Rating
+                </CardTitle>
+                <Star className="h-4 w-4 text-yellow-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-500">{summary.avgClassRating.toFixed(2)}</div>
+                 <p className="text-xs text-muted-foreground">
+                  average for rated classes
                 </p>
               </CardContent>
             </Card>
@@ -797,6 +821,8 @@ const allColumns: {key: keyof AppClassEntry, header: string, sortable?: boolean}
   { key: "otherTechnicalIssues", header: "Other Technical Issues" },
   { key: "satisfaction", header: "Satisfaction" },
 ];
+
+    
 
     
 
