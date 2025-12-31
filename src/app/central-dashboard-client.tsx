@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Award, Clock, Star, Users, TrendingUp, LogOut, Info, Columns, X, Calendar, AlertTriangle, DropdownMenu } from 'lucide-react';
+import { Award, Clock, Star, Users, TrendingUp, LogOut, Info, Columns, X, Calendar, AlertTriangle } from 'lucide-react';
 import Navbar from '@/components/navbar';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -22,6 +22,7 @@ import { DataTable as CombinedDataTable } from "@/components/dashboard/combined-
 import { TopTeachers } from "@/components/dashboard/top-teachers";
 import { TeacherPerformanceCharts } from "@/components/dashboard/teacher-performance-charts";
 import {
+  DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
@@ -553,6 +554,8 @@ const allCombinedColumns: { key: keyof CombinedClassEntry; header: string; sorta
     { key: 'averageClassRating', header: 'Rating', sortable: true },
     { key: 'issuesType', header: 'Issue Type', sortable: true },
 ];
+
+    
 
     
 
