@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -12,7 +11,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { MultiSelectFilter } from './multi-select-filter';
 
-type DataEntry = ClassEntry | AppClassEntry;
+type DataEntry = (ClassEntry | AppClassEntry) & { dataSource?: 'fb' | 'app' };
+
 
 interface TeacherComparisonProps {
   data: DataEntry[];
@@ -41,12 +41,14 @@ type TeacherStats = {
   classes: DataEntry[];
 };
 
-const isAppEntry = (entry: DataEntry): entry is AppClassEntry => 'product' in entry;
+const isAppEntry = (entry: DataEntry): entry is AppClassEntry => 'product' in entry && 'averageClassRating' in entry;
+const isFbEntry = (entry: DataEntry): entry is ClassEntry => 'productType' in entry;
+
 
 const calculateTeacherGroupStats = (teacherNames: string[], allData: DataEntry[]): TeacherStats | null => {
   if (!teacherNames || teacherNames.length === 0) return null;
 
-  const teacherClasses = allData.filter(item => teacherNames.includes(item.teacher));
+  const teacherClasses = allData.filter(item => teacherNames.includes(item.teacher!));
   if (teacherClasses.length === 0) {
     return {
       name: teacherNames.join(', '),
@@ -85,13 +87,12 @@ const calculateTeacherGroupStats = (teacherNames: string[], allData: DataEntry[]
     }
   });
 
-  const uniqueCourses = isAppEntry(teacherClasses[0]) 
-    ? [] 
-    : [...new Set(teacherClasses.map(c => (c as ClassEntry).course).filter(Boolean))];
+  const uniqueCourses = [...new Set(teacherClasses.filter(isFbEntry).map(c => c.course).filter(Boolean))];
 
-  const uniqueProductTypes = isAppEntry(teacherClasses[0]) 
-    ? [...new Set(teacherClasses.map(c => (c as AppClassEntry).product).filter(Boolean))]
-    : [...new Set(teacherClasses.map(c => (c as ClassEntry).productType).filter(Boolean))];
+  const uniqueProductTypes = [...new Set([
+      ...teacherClasses.filter(isAppEntry).map(c => c.product).filter(Boolean),
+      ...teacherClasses.filter(isFbEntry).map(c => c.productType).filter(Boolean)
+    ])];
 
 
   return {
@@ -143,10 +144,10 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {details.classes.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(c => (
+                            {details.classes.sort((a,b) => new Date(b.date!).getTime() - new Date(a.date!).getTime()).map(c => (
                                 <TableRow key={c.id}>
                                     <TableCell><Badge variant="secondary">{c.date}</Badge></TableCell>
-                                    <TableCell className="font-medium max-w-[300px] truncate">{c.subject}</TableCell>
+                                    <TableCell className="font-medium max-w-[300px] truncate">{isFbEntry(c) ? c.subject : (c as AppClassEntry).classTopic}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -181,7 +182,7 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
                     {details.highestAttendanceClass ? (
                         <>
                             <h4 className="font-semibold">{details.name}</h4>
-                            <p className="font-bold text-base">{details.highestAttendanceClass.subject}</p>
+                            <p className="font-bold text-base">{isFbEntry(details.highestAttendanceClass) ? details.highestAttendanceClass.subject : (details.highestAttendanceClass as AppClassEntry).classTopic}</p>
                             <p className="text-xs text-muted-foreground">{details.highestAttendanceClass.date}</p>
                         </>
                     ) : 'No data available'}
@@ -207,7 +208,7 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
              break;
         case 'uniqueProductTypes':
              isDialog = true;
-             title = `Unique Product Types Taught by ${details.name}`;
+             title = `Unique Product Types by ${details.name}`;
              content = (
                  <ScrollArea className="h-72 mt-4">
                     <div className="flex flex-wrap gap-2 p-1">
@@ -356,5 +357,3 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
     </Card>
   );
 }
-
-    
