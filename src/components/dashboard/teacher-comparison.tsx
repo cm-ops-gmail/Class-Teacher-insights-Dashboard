@@ -41,8 +41,8 @@ type TeacherStats = {
   classes: DataEntry[];
 };
 
-const isAppEntry = (entry: DataEntry): entry is AppClassEntry => 'product' in entry && 'averageClassRating' in entry;
-const isFbEntry = (entry: DataEntry): entry is ClassEntry => 'productType' in entry;
+const isAppEntry = (entry: DataEntry): entry is AppClassEntry & {dataSource: 'app'} => 'product' in entry && 'averageClassRating' in entry && entry.dataSource === 'app';
+const isFbEntry = (entry: DataEntry): entry is ClassEntry & {dataSource: 'fb'} => 'productType' in entry && entry.dataSource === 'fb';
 
 
 const calculateTeacherGroupStats = (teacherNames: string[], allData: DataEntry[]): TeacherStats | null => {
@@ -75,7 +75,7 @@ const calculateTeacherGroupStats = (teacherNames: string[], allData: DataEntry[]
         totalDuration += parseNumericValue(item.classDuration);
         totalAverageAttendance += parseNumericValue(item.totalAttendance);
         peak = parseNumericValue(item.totalAttendance);
-    } else {
+    } else if (isFbEntry(item)) {
         totalDuration += parseNumericValue(item.totalDuration);
         totalAverageAttendance += parseNumericValue(item.averageAttendance);
         peak = parseNumericValue(item.highestAttendance);
@@ -141,6 +141,7 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
                             <TableRow>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Topic</TableHead>
+                                <TableHead>Source</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -148,13 +149,18 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
                                 <TableRow key={c.id}>
                                     <TableCell><Badge variant="secondary">{c.date}</Badge></TableCell>
                                     <TableCell className="font-medium max-w-[300px] truncate">{isFbEntry(c) ? c.subject : (c as AppClassEntry).classTopic}</TableCell>
+                                    <TableCell>
+                                      <Badge variant={c.dataSource === 'app' ? 'default' : 'secondary'}>
+                                          {c.dataSource?.toUpperCase()}
+                                      </Badge>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                          <TableFooter>
                             <TableRow>
-                                <TableCell className="font-bold">Total</TableCell>
-                                <TableCell className="font-bold">{details.classCount}</TableCell>
+                                <TableCell colSpan={2} className="font-bold">Total</TableCell>
+                                <TableCell className="font-bold text-right">{details.classCount}</TableCell>
                             </TableRow>
                         </TableFooter>
                     </Table>
@@ -183,7 +189,7 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
                         <>
                             <h4 className="font-semibold">{details.name}</h4>
                             <p className="font-bold text-base">{isFbEntry(details.highestAttendanceClass) ? details.highestAttendanceClass.subject : (details.highestAttendanceClass as AppClassEntry).classTopic}</p>
-                            <p className="text-xs text-muted-foreground">{details.highestAttendanceClass.date}</p>
+                            <p className="text-xs text-muted-foreground">{details.highestAttendanceClass.date} ({details.highestAttendanceClass.dataSource?.toUpperCase()})</p>
                         </>
                     ) : 'No data available'}
                 </div>
@@ -197,7 +203,7 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
         case 'uniqueCourses':
              if (details.uniqueCourses.length === 0) return null;
              isDialog = true;
-             title = `Unique Courses Taught by ${details.name}`;
+             title = `Unique Courses Taught by ${details.name} (Fb Only)`;
              content = (
                  <ScrollArea className="h-72 mt-4">
                     <div className="flex flex-wrap gap-2 p-1">
@@ -267,7 +273,7 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
     { label: "Avg. Attendance", icon: Users, key: "avgAttendance" },
     { label: "Highest Peak Attendance", icon: Star, key: "highestPeakAttendance" },
     { label: "Total Duration", icon: Clock, key: "totalDuration", unit: " min" },
-    { label: "Unique Courses", icon: BookOpen, key: "uniqueCourses", unit: ""},
+    { label: "Unique Courses (Fb)", icon: BookOpen, key: "uniqueCourses", unit: ""},
     { label: "Unique Product Types", icon: Package, key: "uniqueProductTypes", unit: "" },
   ];
 
