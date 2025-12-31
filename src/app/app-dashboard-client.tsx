@@ -286,15 +286,25 @@ export default function AppDashboard() {
     }
   }, [filteredData, data.length]);
   
-  const { issuePercentage, issueCount } = useMemo(() => {
+  const { issuePercentage, issueCount, issueBreakdown } = useMemo(() => {
     const baseData = filteredDataWithoutIssues;
     if (baseData.length === 0 || issueTypeFilters.length === 0) {
-      return { issuePercentage: 0, issueCount: 0 };
+      return { issuePercentage: 0, issueCount: 0, issueBreakdown: {} };
     }
-    const count = baseData.filter(item => issueTypeFilters.includes(item.issuesType)).length;
+    const breakdown: {[key: string]: number} = {};
+    let count = 0;
+    baseData.forEach(item => {
+      if (issueTypeFilters.includes(item.issuesType)) {
+        count++;
+        const product = item.product || 'Uncategorized';
+        breakdown[product] = (breakdown[product] || 0) + 1;
+      }
+    });
+
     return { 
         issuePercentage: (count / baseData.length) * 100,
-        issueCount: count
+        issueCount: count,
+        issueBreakdown: breakdown,
     };
   }, [filteredDataWithoutIssues, issueTypeFilters]);
 
@@ -971,8 +981,8 @@ export default function AppDashboard() {
                         <DialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader><DialogTitle>Issue Percentage Calculation</DialogTitle></DialogHeader>
+                        <DialogContent className="sm:max-w-lg">
+                            <DialogHeader><DialogTitle>Issue Percentage Analysis</DialogTitle></DialogHeader>
                             <div className="grid gap-4 py-4 text-sm">
                                 <div>Total Classes in View: {filteredDataWithoutIssues.length.toLocaleString()}</div>
                                 <div>Classes with Selected Issues: {issueCount.toLocaleString()}</div>
@@ -980,6 +990,32 @@ export default function AppDashboard() {
                                     ({issueCount.toLocaleString()} / {filteredDataWithoutIssues.length.toLocaleString()}) * 100 = {issuePercentage.toFixed(2)}%
                                 </p>
                             </div>
+                            <Separator />
+                            <h4 className="font-semibold text-base mt-2">Product-wise Breakdown</h4>
+                            <ScrollArea className="h-48 mt-2 border rounded-md">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Product</TableHead>
+                                    <TableHead className="text-right">Issue Count</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {Object.entries(issueBreakdown).sort(([, a], [, b]) => b - a).map(([product, count]) => (
+                                    <TableRow key={product}>
+                                      <TableCell className="font-medium">{product}</TableCell>
+                                      <TableCell className="text-right">{count}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                                <TableFooter>
+                                  <TableRow>
+                                      <TableCell className="font-bold">Total</TableCell>
+                                      <TableCell className="text-right font-bold">{issueCount}</TableCell>
+                                  </TableRow>
+                                </TableFooter>
+                              </Table>
+                            </ScrollArea>
                         </DialogContent>
                     </Dialog>
                 </div>
