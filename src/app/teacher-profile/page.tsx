@@ -36,7 +36,7 @@ const parseNumericValue = (
   return isNaN(numberValue) ? 0 : numberValue;
 };
 
-type CombinedClassEntry = Partial<ClassEntry> & Partial<AppClassEntry> & { dataSource: 'fb' | 'app' };
+type CombinedClassEntry = Partial<ClassEntry> & Partial<AppClassEntry> & { id: string, dataSource: 'fb' | 'app' };
 
 type CourseBreakdown = {
   [courseName: string]: number;
@@ -373,7 +373,7 @@ export default function TeacherProfilePage() {
                                                     <Table>
                                                         <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Topic</TableHead></TableRow></TableHeader>
                                                         <TableBody>
-                                                            {aggregatedStats.classes.filter(isFbEntry).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(c => (
+                                                            {aggregatedStats.classes.filter(isFbEntry).sort((a,b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()).map(c => (
                                                                 <TableRow key={c.id}><TableCell><Badge variant="secondary">{c.date}</Badge></TableCell><TableCell className="font-medium max-w-xs truncate">{c.subject}</TableCell></TableRow>
                                                             ))}
                                                         </TableBody>
@@ -386,7 +386,7 @@ export default function TeacherProfilePage() {
                                                     <Table>
                                                         <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Topic</TableHead></TableRow></TableHeader>
                                                         <TableBody>
-                                                            {aggregatedStats.classes.filter(isAppEntry).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(c => (
+                                                            {aggregatedStats.classes.filter(isAppEntry).sort((a,b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()).map(c => (
                                                                 <TableRow key={c.id}><TableCell><Badge variant="secondary">{c.date}</Badge></TableCell><TableCell className="font-medium max-w-xs truncate">{c.classTopic}</TableCell></TableRow>
                                                             ))}
                                                         </TableBody>
@@ -402,14 +402,33 @@ export default function TeacherProfilePage() {
                                 title="Combined Avg. Attendance"
                                 stat={aggregatedStats.avgAttendance}
                                 popoverContent={
-                                    <DialogContent className="sm:max-w-md">
+                                    <DialogContent className="sm:max-w-2xl">
                                         <DialogHeader><DialogTitle>Average Attendance Calculation</DialogTitle></DialogHeader>
-                                        <div className="grid gap-4 py-4 text-sm">
-                                            <p>Total Combined Attendance: {aggregatedStats.totalAverageAttendance.total.toLocaleString()}</p>
-                                            <p>Total Classes: {aggregatedStats.classCount.total.toLocaleString()}</p>
-                                            <p className="font-bold border-t pt-2 mt-1">
-                                                {aggregatedStats.totalAverageAttendance.total.toLocaleString()} / {aggregatedStats.classCount.total > 0 ? aggregatedStats.classCount.total.toLocaleString() : 1} = {aggregatedStats.avgAttendance.total.toLocaleString()}
-                                            </p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 text-sm">
+                                            <div className="space-y-2 rounded-lg border p-4">
+                                                <h3 className="font-semibold text-center mb-2">Fb Data</h3>
+                                                <p>Total Fb Attendance: {aggregatedStats.totalAverageAttendance.fb.toLocaleString()}</p>
+                                                <p>Total Fb Classes: {aggregatedStats.classCount.fb.toLocaleString()}</p>
+                                                <p className="font-bold border-t pt-2 mt-2">
+                                                    Avg: {aggregatedStats.avgAttendance.fb.toLocaleString()}
+                                                </p>
+                                            </div>
+                                            <div className="space-y-2 rounded-lg border p-4">
+                                                <h3 className="font-semibold text-center mb-2">App Data</h3>
+                                                <p>Total App Attendance: {aggregatedStats.totalAverageAttendance.app.toLocaleString()}</p>
+                                                <p>Total App Classes: {aggregatedStats.classCount.app.toLocaleString()}</p>
+                                                <p className="font-bold border-t pt-2 mt-2">
+                                                    Avg: {aggregatedStats.avgAttendance.app.toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2 rounded-lg border bg-muted/50 p-4 mt-4">
+                                             <h3 className="font-semibold text-center mb-2">Combined</h3>
+                                             <p>Total Combined Attendance: {aggregatedStats.totalAverageAttendance.total.toLocaleString()}</p>
+                                             <p>Total Combined Classes: {aggregatedStats.classCount.total.toLocaleString()}</p>
+                                             <p className="font-bold border-t pt-2 mt-2">
+                                                Overall Avg: {aggregatedStats.avgAttendance.total.toLocaleString()}
+                                             </p>
                                         </div>
                                     </DialogContent>
                                 }
@@ -453,7 +472,7 @@ export default function TeacherProfilePage() {
                                         <DialogHeader><DialogTitle>Highest Attendance Class</DialogTitle></DialogHeader>
                                         {aggregatedStats.highestAttendanceClass && (
                                             <div className="space-y-1 p-4">
-                                                <h4 className="font-semibold text-lg">{aggregatedStats.highestAttendanceClass.subject}</h4>
+                                                <h4 className="font-semibold text-lg">{aggregatedStats.highestAttendanceClass.subject ?? (aggregatedStats.highestAttendanceClass as AppClassEntry).classTopic}</h4>
                                                 <p className="text-sm">
                                                     by {aggregatedStats.highestAttendanceClass.teacher}
                                                 </p>
@@ -611,6 +630,8 @@ export default function TeacherProfilePage() {
     </div>
   );
 }
+
+    
 
     
 
