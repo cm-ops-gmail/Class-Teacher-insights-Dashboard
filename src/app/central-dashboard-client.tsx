@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Award, Clock, Star, Users, TrendingUp, LogOut, Info, Columns, X, Calendar } from 'lucide-react';
+import { Award, Clock, Star, Users, TrendingUp, LogOut, Info, Columns, X, Calendar, AlertTriangle } from 'lucide-react';
 import Navbar from '@/components/navbar';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -163,7 +163,7 @@ export default function CentralDashboard() {
   const issueTypes = useMemo(() => [...new Set(combinedData.map((item) => item.issuesType).filter(Boolean))], [combinedData]);
 
 
-  const filteredData = useMemo(() => {
+  const filteredDataWithoutIssues = useMemo(() => {
     return combinedData.filter(item => {
       // Date Filter
       const itemDate = parseDateString(item.date as string);
@@ -174,7 +174,6 @@ export default function CentralDashboard() {
       if (productFilters.length > 0 && !productFilters.includes(product!)) return false;
       if (subjectFilters.length > 0 && !subjectFilters.includes(item.subject!)) return false;
       if (teacherFilters.length > 0 && !teacherFilters.includes(item.teacher!)) return false;
-      if (issueTypeFilters.length > 0 && !issueTypeFilters.includes(item.issuesType!)) return false;
       
       if (globalFilter) {
           const lowercasedFilter = globalFilter.toLowerCase();
@@ -184,7 +183,14 @@ export default function CentralDashboard() {
       }
       return true;
     });
-  }, [combinedData, globalFilter, startDate, endDate, productFilters, subjectFilters, teacherFilters, issueTypeFilters]);
+  }, [combinedData, globalFilter, startDate, endDate, productFilters, subjectFilters, teacherFilters]);
+
+  const filteredData = useMemo(() => {
+    return filteredDataWithoutIssues.filter(item => {
+      if (issueTypeFilters.length > 0 && !issueTypeFilters.includes(item.issuesType!)) return false;
+      return true;
+    });
+  }, [filteredDataWithoutIssues, issueTypeFilters]);
 
   const summary = useMemo(() => {
     const activeData = filteredData;
@@ -240,6 +246,15 @@ export default function CentralDashboard() {
     return { classCount, totalDuration, avgAttendance, highestAttendance, avgRating, totalAttendance, ratedClassesCount };
   }, [filteredData]);
   
+  const issuePercentage = useMemo(() => {
+    const baseData = filteredDataWithoutIssues;
+    if (baseData.length === 0 || issueTypeFilters.length === 0) {
+      return 0;
+    }
+    const issueCount = baseData.filter(item => issueTypeFilters.includes(item.issuesType!)).length;
+    return (issueCount / baseData.length) * 100;
+  }, [filteredDataWithoutIssues, issueTypeFilters]);
+
   const clearAllFilters = () => {
     setGlobalFilter("");
     setStartDate(undefined);
@@ -386,6 +401,30 @@ export default function CentralDashboard() {
             </div>
         </section>
 
+        {issueTypeFilters.length > 0 && (
+          <section className="mt-8">
+            <h2 className="text-2xl font-bold tracking-tight mb-4">
+              Issue Percentage
+            </h2>
+            <Card className="border-destructive/50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Percentage of selected issues
+                </CardTitle>
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-destructive">
+                  {issuePercentage.toFixed(2)}%
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  of classes in the current view have the selected issue types.
+                </p>
+              </CardContent>
+            </Card>
+          </section>
+        )}
+
         <Separator className="my-8" />
         
         <section className="mb-12">
@@ -444,3 +483,5 @@ const allCombinedColumns: { key: keyof CombinedClassEntry; header: string; sorta
     { key: 'averageClassRating', header: 'Rating', sortable: true },
     { key: 'issuesType', header: 'Issue Type', sortable: true },
 ];
+
+    

@@ -200,7 +200,7 @@ export default function AppDashboard() {
     [data]
   );
 
-  const filteredData = useMemo(() => {
+  const filteredDataWithoutIssues = useMemo(() => {
     return data.filter(item => {
       // Date Filter
       if (startDate || endDate) {
@@ -229,9 +229,6 @@ export default function AppDashboard() {
       if (teacherFilters.length > 0 && !teacherFilters.includes(item.teacher)) {
           return false;
       }
-      if (issueTypeFilters.length > 0 && !issueTypeFilters.includes(item.issuesType)) {
-          return false;
-      }
       if (globalFilter) {
           const lowercasedFilter = globalFilter.toLowerCase();
           return Object.values(item).some(value =>
@@ -240,7 +237,16 @@ export default function AppDashboard() {
       }
       return true;
     });
-  }, [data, globalFilter, startDate, endDate, productFilters, subjectFilters, teacherFilters, issueTypeFilters]);
+  }, [data, globalFilter, startDate, endDate, productFilters, subjectFilters, teacherFilters]);
+
+  const filteredData = useMemo(() => {
+    return filteredDataWithoutIssues.filter(item => {
+      if (issueTypeFilters.length > 0 && !issueTypeFilters.includes(item.issuesType)) {
+          return false;
+      }
+      return true;
+    });
+  }, [filteredDataWithoutIssues, issueTypeFilters]);
 
 
   const summary = useMemo(() => {
@@ -280,6 +286,15 @@ export default function AppDashboard() {
     }
   }, [filteredData, data.length]);
   
+  const issuePercentage = useMemo(() => {
+    const baseData = filteredDataWithoutIssues;
+    if (baseData.length === 0 || issueTypeFilters.length === 0) {
+      return 0;
+    }
+    const issueCount = baseData.filter(item => issueTypeFilters.includes(item.issuesType)).length;
+    return (issueCount / baseData.length) * 100;
+  }, [filteredDataWithoutIssues, issueTypeFilters]);
+
   const clearAllFilters = () => {
     setGlobalFilter("");
     setStartDate(undefined);
@@ -931,6 +946,30 @@ export default function AppDashboard() {
           </div>
         </section>
 
+        {issueTypeFilters.length > 0 && (
+          <section className="mt-8">
+            <h2 className="text-2xl font-bold tracking-tight mb-4">
+              Issue Percentage
+            </h2>
+            <Card className="border-destructive/50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Percentage of selected issues
+                </CardTitle>
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-destructive">
+                  {issuePercentage.toFixed(2)}%
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  of classes in the current view have the selected issue types.
+                </p>
+              </CardContent>
+            </Card>
+          </section>
+        )}
+
         <Separator className="my-8" />
 
         <section className="mb-12">
@@ -1049,13 +1088,5 @@ const allColumns: {key: keyof AppClassEntry, header: string, sortable?: boolean}
   { key: "otherTechnicalIssues", header: "Other Technical Issues" },
   { key: "satisfaction", header: "Satisfaction" },
 ];
-
-    
-
-    
-
-    
-
-    
 
     
