@@ -9,6 +9,7 @@ export type ClassEntry = {
   productType: string;
   course: string;
   subject: string;
+  topic: string;
   teacher: string;
   teacher1Gmail: string;
   teacher2: string;

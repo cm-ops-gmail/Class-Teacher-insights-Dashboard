@@ -5,7 +5,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { DataTable } from "@/components/dashboard/data-table";
 import type { ClassEntry } from "@/lib/definitions";
 import { useToast } from "@/hooks/use-toast";
-import { BookOpen, BookCopy, Activity, Clock, TrendingUp, Users, Info, Columns, X, LogOut, Calendar } from "lucide-react";
+import { BookOpen, BookCopy, Activity, Clock, TrendingUp, Users, Info, Columns, X, LogOut, Calendar, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -82,6 +82,7 @@ export default function Dashboard() {
   const [courseFilters, setCourseFilters] = useState<string[]>([]);
   const [teacherFilters, setTeacherFilters] = useState<string[]>([]);
   const [subjectFilters, setSubjectFilters] = useState<string[]>([]);
+  const [issueTypeFilters, setIssueTypeFilters] = useState<string[]>([]);
 
   const [columnVisibility, setColumnVisibility] = React.useState<
     Record<string, boolean>
@@ -162,6 +163,10 @@ export default function Dashboard() {
     () => [...new Set(data.map((item) => item.subject).filter(Boolean))],
     [data]
   );
+  const issueTypes = useMemo(
+    () => [...new Set(data.map((item) => item.issuesType).filter(Boolean))],
+    [data]
+  );
 
   const filteredData = useMemo(() => {
     return data.filter(item => {
@@ -196,6 +201,9 @@ export default function Dashboard() {
       if (subjectFilters.length > 0 && !subjectFilters.includes(item.subject)) {
           return false;
       }
+      if (issueTypeFilters.length > 0 && !issueTypeFilters.includes(item.issuesType)) {
+          return false;
+      }
       if (globalFilter) {
           const lowercasedFilter = globalFilter.toLowerCase();
           return Object.values(item).some(value =>
@@ -204,7 +212,7 @@ export default function Dashboard() {
       }
       return true;
     });
-  }, [data, globalFilter, startDate, endDate, productTypeFilters, courseFilters, teacherFilters, subjectFilters]);
+  }, [data, globalFilter, startDate, endDate, productTypeFilters, courseFilters, teacherFilters, subjectFilters, issueTypeFilters]);
 
 
   const summary = useMemo(() => {
@@ -260,6 +268,7 @@ export default function Dashboard() {
     setCourseFilters([]);
     setTeacherFilters([]);
     setSubjectFilters([]);
+    setIssueTypeFilters([]);
   };
 
   const applyDateFilter = () => {
@@ -369,7 +378,8 @@ export default function Dashboard() {
     productTypeFilters.length > 0 ||
     courseFilters.length > 0 ||
     teacherFilters.length > 0 ||
-    subjectFilters.length > 0;
+    subjectFilters.length > 0 ||
+    issueTypeFilters.length > 0;
     
   const formatDuration = (totalMinutes: number) => {
     const hours = Math.floor(totalMinutes / 60);
@@ -385,7 +395,7 @@ export default function Dashboard() {
     return result.trim() || '0 min';
   };
 
-  const isFiltered = startDate !== undefined || endDate !== undefined || productTypeFilters.length > 0 || courseFilters.length > 0 || teacherFilters.length > 0 || subjectFilters.length > 0;
+  const isFiltered = hasActiveFilters;
 
   const handleLogout = () => {
     localStorage.removeItem("dashboard_session");
@@ -455,6 +465,16 @@ export default function Dashboard() {
                  <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">Subjects:</span>
                   {subjectFilters.map(filter => (
+                    <Badge key={filter} variant="secondary" className="pl-2">
+                      {filter}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {issueTypeFilters.length > 0 && (
+                 <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Issue Types:</span>
+                  {issueTypeFilters.map(filter => (
                     <Badge key={filter} variant="secondary" className="pl-2">
                       {filter}
                     </Badge>
@@ -811,6 +831,13 @@ export default function Dashboard() {
                 onSelectedValuesChange={setSubjectFilters}
                 triggerClassName="w-full md:w-auto"
               />
+              <MultiSelectFilter
+                title="Issue Types"
+                options={issueTypes.map(type => ({ value: type, label: type }))}
+                selectedValues={issueTypeFilters}
+                onSelectedValuesChange={setIssueTypeFilters}
+                triggerClassName="w-full md:w-auto"
+              />
 
               {isFiltered && (
                 <Button
@@ -924,6 +951,7 @@ const defaultVisibleColumns: (keyof ClassEntry)[] = [
   "highestAttendance",
   "averageAttendance",
   "totalDuration",
+  "issuesType",
 ];
 
 
@@ -938,6 +966,7 @@ const allColumns: {key: keyof ClassEntry, header: string, sortable?: boolean}[] 
   { key: "averageAttendance", header: "Average Attendance", sortable: true },
   { key: "totalComments", header: "Total Comments", sortable: true },
   { key: "totalDuration", header: "Total Duration (min)", sortable: true },
+  { key: "issuesType", header: "Issues Type", sortable: true },
   { key: "entryTime", header: "Entry Time" },
   { key: "slideQAC", header: "Slide QAC" },
   { key: "classStartTime", header: "Class Start Time" },
@@ -946,7 +975,6 @@ const allColumns: {key: keyof ClassEntry, header: string, sortable?: boolean}[] 
   { key: "teacher2Gmail", header: "Teacher 2 Gmail" },
   { key: "teacher3", header: "Teacher 3" },
   { key: "teacher3Gmail", header: "Teacher 3 Gmail" },
-  { key: "issuesType", header: "Issues Type" },
   { key: "issuesDetails", header: "Issues Details" },
   { key: "slideCommunication", header: "Slide Communication" },
   { key: "liveClassIssues", header: "Live Class Issues" },
