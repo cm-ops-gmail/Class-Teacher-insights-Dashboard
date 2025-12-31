@@ -23,7 +23,7 @@ export default function LoginPage() {
     if (username === "contentops" && password === "Speed&Scale") {
       // In a real app, you'd get a token from a server
       localStorage.setItem("dashboard_session", "true");
-      router.replace("/");
+      router.replace("/central-dashboard");
     } else {
       setError("Invalid username or password.");
     }

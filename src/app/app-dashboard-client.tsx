@@ -136,8 +136,23 @@ export default function AppDashboard() {
 
 
   useEffect(() => {
-    const handleImport = async (url: string) => {
+    const handleImport = async () => {
       setIsLoading(true);
+      const url = selectedYear === '2026' 
+        ? process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2026 
+        : process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2025;
+        
+      if (!url) {
+        toast({
+          variant: "destructive",
+          title: "Configuration Error",
+          description: `Google Sheet URL for ${selectedYear} is not configured.`,
+        });
+        setData([]);
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         const response = await fetch("/api/app-sheet", {
           method: "POST",
@@ -169,23 +184,7 @@ export default function AppDashboard() {
         setIsLoading(false);
       }
     };
-
-    const initialSheetUrl = selectedYear === '2026' 
-      ? process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2026 
-      : process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2025;
-      
-    if (initialSheetUrl) {
-      handleImport(initialSheetUrl);
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Configuration Error",
-        description:
-          `Google Sheet URL for ${selectedYear} is not configured in environment variables.`,
-      });
-      setData([]);
-      setIsLoading(false);
-    }
+    handleImport();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear]);
 
@@ -354,7 +353,7 @@ export default function AppDashboard() {
 
   const isSameDay = (date1: Date | undefined, date2: Date | null) => {
     if (!date1 || !date2) return false;
-    return date1.getDate() === date2.getMonth() &&
+    return date1.getDate() === date2.getDate() &&
            date1.getMonth() === date2.getMonth() &&
            date1.getFullYear() === date2.getFullYear();
   };
@@ -1151,5 +1150,3 @@ const allColumns: {key: keyof AppClassEntry, header: string, sortable?: boolean}
   { key: "otherTechnicalIssues", header: "Other Technical Issues" },
   { key: "satisfaction", header: "Satisfaction" },
 ];
-
-    

@@ -100,8 +100,23 @@ export default function Dashboard() {
 
 
   useEffect(() => {
-    const handleImport = async (url: string) => {
+    const handleImport = async () => {
       setIsLoading(true);
+      const url = selectedYear === '2026'
+        ? process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2026
+        : process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2025;
+        
+      if (!url) {
+        toast({
+          variant: "destructive",
+          title: "Configuration Error",
+          description: `Google Sheet URL for ${selectedYear} is not configured.`,
+        });
+        setData([]);
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         const response = await fetch("/api/sheet", {
           method: "POST",
@@ -133,23 +148,7 @@ export default function Dashboard() {
         setIsLoading(false);
       }
     };
-
-    const urlToFetch = selectedYear === '2026'
-      ? process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2026
-      : process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2025;
-      
-    if (urlToFetch) {
-      handleImport(urlToFetch);
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Configuration Error",
-        description:
-          `Google Sheet URL for ${selectedYear} is not configured in environment variables.`,
-      });
-      setData([]);
-      setIsLoading(false);
-    }
+    handleImport();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear]);
 
@@ -1082,10 +1081,3 @@ const allColumns: {key: keyof ClassEntry, header: string, sortable?: boolean}[] 
   { key: "satisfaction", header: "Satisfaction" },
   { key: "topic", header: "Topic" },
 ];
-
-    
-
-
-    
-
-

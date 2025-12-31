@@ -104,15 +104,23 @@ export default function TeacherProfilePage() {
 
     const handleImport = async () => {
       setIsLoading(true);
+      const url = selectedYear === '2026' 
+          ? process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2026
+          : process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2025;
+
+      if (!url) {
+        toast({
+          variant: "destructive",
+          title: "Configuration Error",
+          description: `Google Sheet URL for ${selectedYear} is not configured.`,
+        });
+        setFbData([]);
+        setAppData([]);
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const url = selectedYear === '2026' 
-            ? process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2026
-            : process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2025;
-
-        if (!url) {
-          throw new Error(`Google Sheet URL for ${selectedYear} is not configured in environment variables.`);
-        }
-
         const [fbResponse, appResponse] = await Promise.all([
             fetch('/api/sheet', {
                 method: 'POST',
@@ -513,7 +521,7 @@ export default function TeacherProfilePage() {
                                                     by {aggregatedStats.highestAttendanceClass.teacher}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {aggregatedStats.highestAttendanceClass.date} ({aggregatedStats.highestAttendanceClass.dataSource.toUpperCase()})
+                                                    {aggregatedStats.highestAttendanceClass.date} ({aggregatedStats.highestAttendanceClass.dataSource?.toUpperCase()})
                                                 </p>
                                             </div>
                                         )}
@@ -676,11 +684,3 @@ export default function TeacherProfilePage() {
     </div>
   );
 }
-
-    
-
-    
-
-    
-
-

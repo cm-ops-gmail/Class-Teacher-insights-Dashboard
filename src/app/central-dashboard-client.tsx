@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -31,6 +30,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useYear } from '@/contexts/year-context';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
   if (value === null || value === undefined) return 0;
@@ -105,6 +107,12 @@ export default function CentralDashboard() {
   const [globalFilter, setGlobalFilter] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+  const [tempStartDate, setTempStartDate] = useState<Date | undefined>();
+  const [tempEndDate, setTempEndDate] = useState<Date | undefined>();
+  const [showStartCalendar, setShowStartCalendar] = useState(false);
+  const [showEndCalendar, setShowEndCalendar] = useState(false);
+  const [startCalendarMonth, setStartCalendarMonth] = useState(new Date());
+  const [endCalendarMonth, setEndCalendarMonth] = useState(new Date());
   const [productFilters, setProductFilters] = useState<string[]>([]);
   const [subjectFilters, setSubjectFilters] = useState<string[]>([]);
   const [teacherFilters, setTeacherFilters] = useState<string[]>([]);
@@ -122,15 +130,23 @@ export default function CentralDashboard() {
   useEffect(() => {
     const handleImport = async () => {
       setIsLoading(true);
+      const url = selectedYear === '2026'
+          ? process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2026
+          : process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2025;
+
+      if (!url) {
+        toast({
+          variant: "destructive",
+          title: "Configuration Error",
+          description: `Google Sheet URL for ${selectedYear} is not configured.`,
+        });
+        setFbData([]);
+        setAppData([]);
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const url = selectedYear === '2026'
-            ? process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2026
-            : process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2025;
-
-        if (!url) {
-          throw new Error(`Google Sheet URL for ${selectedYear} is not configured.`);
-        }
-
         const [fbResponse, appResponse] = await Promise.all([
           fetch('/api/sheet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sheetUrl: url }) }),
           fetch('/api/app-sheet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sheetUrl: url }) })
@@ -150,6 +166,8 @@ export default function CentralDashboard() {
         toast({ title: "Success!", description: `Both Fb and App data for ${selectedYear} loaded.` });
       } catch (error: any) {
         toast({ variant: 'destructive', title: 'Data Loading Error', description: error.message });
+        setFbData([]);
+        setAppData([]);
       } finally {
         setIsLoading(false);
       }
@@ -172,9 +190,20 @@ export default function CentralDashboard() {
   const filteredDataWithoutIssues = useMemo(() => {
     return combinedData.filter(item => {
       // Date Filter
-      const itemDate = parseDateString(item.date as string);
-      if (startDate && (!itemDate || itemDate < startDate)) return false;
-      if (endDate && (!itemDate || itemDate > endDate)) return false;
+      if (startDate || endDate) {
+        const itemDate = parseDateString(item.date as string);
+        if (!itemDate) return false;
+        if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          if (itemDate < start) return false;
+        }
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          if (itemDate > end) return false;
+        }
+      }
       
       const product = isAppEntry(item) ? item.product : item.productType;
       if (productFilters.length > 0 && !productFilters.includes(product!)) return false;
@@ -278,15 +307,124 @@ export default function CentralDashboard() {
     setGlobalFilter("");
     setStartDate(undefined);
     setEndDate(undefined);
+    setTempStartDate(undefined);
+    setTempEndDate(undefined);
     setProductFilters([]);
     setSubjectFilters([]);
     setTeacherFilters([]);
     setIssueTypeFilters([]);
   };
 
+  const applyDateFilter = () => {
+    setStartDate(tempStartDate);
+    setEndDate(tempEndDate);
+    setShowStartCalendar(false);
+    setShowEndCalendar(false);
+  };
+  
   const handleLogout = () => {
     localStorage.removeItem("dashboard_session");
     router.replace("/login");
+  };
+
+  const hasActiveFilters =
+    startDate !== undefined ||
+    endDate !== undefined ||
+    productFilters.length > 0 ||
+    subjectFilters.length > 0 ||
+    teacherFilters.length > 0 ||
+    issueTypeFilters.length > 0;
+  
+  const formatDate = (date: Date | undefined) => {
+    if (!date) return "Select date";
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+  
+  const isSameDay = (date1: Date | undefined, date2: Date | null) => {
+    if (!date1 || !date2) return false;
+    return date1.getDate() === date2.getDate() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getFullYear() === date2.getFullYear();
+  };
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+    
+    const days = [];
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(new Date(year, month, i));
+    }
+    return days;
+  };
+
+  const CalendarPicker = ({ 
+    selectedDate, 
+    onSelectDate, 
+    currentMonth, 
+    setCurrentMonth 
+  }: { 
+    selectedDate: Date | undefined;
+    onSelectDate: (date: Date) => void;
+    currentMonth: Date;
+    setCurrentMonth: (date: Date) => void;
+  }) => {
+    const days = getDaysInMonth(currentMonth);
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    
+    const goToPreviousMonth = () => {
+      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+    };
+    
+    const goToNextMonth = () => {
+      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+    };
+
+    return (
+      <div className="bg-popover text-popover-foreground rounded-md border shadow-md p-3 w-[280px]">
+        <div className="flex items-center justify-between mb-2">
+          <Button variant="ghost" size="icon" onClick={goToPreviousMonth} className="h-7 w-7">
+            ←
+          </Button>
+          <div className="font-medium">
+            {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+          </div>
+          <Button variant="ghost" size="icon" onClick={goToNextMonth} className="h-7 w-7">
+            →
+          </Button>
+        </div>
+        <div className="grid grid-cols-7 gap-1 mb-1">
+          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+            <div key={day} className="text-center text-xs font-medium text-muted-foreground py-1">
+              {day}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {days.map((day, index) => (
+            <button
+              key={index}
+              onClick={() => day && onSelectDate(day)}
+              disabled={!day}
+              className={cn(
+                "h-8 w-8 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors",
+                !day && "invisible",
+                isSameDay(selectedDate, day) && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+              )}
+            >
+              {day?.getDate()}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -384,12 +522,66 @@ export default function CentralDashboard() {
         <section className="space-y-4">
            <h2 className="text-2xl font-bold tracking-tight">Advanced Filtering &amp; Column Selection</h2>
             <div className="flex flex-col gap-4">
+                 <div className="flex flex-col gap-4 md:flex-row md:items-end">
+                    <div className="grid w-full md:w-auto gap-1.5">
+                      <Label className="text-sm font-medium">Start Date</Label>
+                      <Popover open={showStartCalendar} onOpenChange={setShowStartCalendar}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full md:w-[240px] justify-start text-left font-normal"
+                          >
+                            <Calendar className="mr-2 h-4 w-4" />
+                            {formatDate(tempStartDate)}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarPicker
+                            selectedDate={tempStartDate}
+                            onSelectDate={setTempStartDate}
+                            currentMonth={startCalendarMonth}
+                            setCurrentMonth={setStartCalendarMonth}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="grid w-full md:w-auto gap-1.5">
+                      <Label className="text-sm font-medium">End Date</Label>
+                      <Popover open={showEndCalendar} onOpenChange={setShowEndCalendar}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full md:w-[240px] justify-start text-left font-normal"
+                          >
+                            <Calendar className="mr-2 h-4 w-4" />
+                            {formatDate(tempEndDate)}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarPicker
+                            selectedDate={tempEndDate}
+                            onSelectDate={setTempEndDate}
+                            currentMonth={endCalendarMonth}
+                            setCurrentMonth={setEndCalendarMonth}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    {(tempStartDate || tempEndDate) && (
+                      <Button
+                        onClick={applyDateFilter}
+                        className="h-10 w-full md:w-auto"
+                      >
+                        Apply Date Filter
+                      </Button>
+                    )}
+                 </div>
                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:flex-wrap">
                     <MultiSelectFilter title="Products" options={products.map(p => ({ value: p, label: p }))} selectedValues={productFilters} onSelectedValuesChange={setProductFilters} triggerClassName="w-full md:w-auto" />
                     <MultiSelectFilter title="Subjects" options={subjects.map(s => ({ value: s, label: s }))} selectedValues={subjectFilters} onSelectedValuesChange={setSubjectFilters} triggerClassName="w-full md:w-auto" />
                     <MultiSelectFilter title="Teachers" options={teachers.map(t => ({ value: t, label: t }))} selectedValues={teacherFilters} onSelectedValuesChange={setTeacherFilters} triggerClassName="w-full md:w-auto" />
                     <MultiSelectFilter title="Issue Types" options={issueTypes.map(i => ({ value: i, label: i }))} selectedValues={issueTypeFilters} onSelectedValuesChange={setIssueTypeFilters} triggerClassName="w-full md:w-auto" />
-                    {(productFilters.length > 0 || subjectFilters.length > 0 || teacherFilters.length > 0 || issueTypeFilters.length > 0) && (
+                    {hasActiveFilters && (
                         <Button variant="ghost" onClick={clearAllFilters} className="h-10 px-2 lg:px-3">
                             Clear Filters <X className="ml-2 h-4 w-4" />
                         </Button>
@@ -554,9 +746,3 @@ const allCombinedColumns: { key: keyof CombinedClassEntry; header: string; sorta
     { key: 'averageClassRating', header: 'Rating', sortable: true },
     { key: 'issuesType', header: 'Issue Type', sortable: true },
 ];
-
-    
-
-    
-
-    
