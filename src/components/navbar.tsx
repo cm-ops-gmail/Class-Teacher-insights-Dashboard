@@ -5,7 +5,7 @@ import React from 'react';
 import Logo from './logo';
 import { Button } from './ui/button';
 import Link from 'next/link';
-import { Home, User } from 'lucide-react';
+import { Home, User, AppWindow } from 'lucide-react';
 
 interface NavbarProps {
     children?: React.ReactNode;
@@ -25,6 +25,12 @@ const Navbar = ({ children }: NavbarProps) => {
              <Button variant="ghost">
                 <Home className="mr-2 h-4 w-4" />
                 Fb dashboard
+             </Button>
+           </Link>
+           <Link href="/app-dashboard" passHref>
+             <Button variant="ghost">
+                <AppWindow className="mr-2 h-4 w-4" />
+                APP Dashboard
              </Button>
            </Link>
            <Link href="/teacher-profile" passHref>
