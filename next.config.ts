@@ -31,7 +31,8 @@ const nextConfig: NextConfig = {
     ],
   },
   env: {
-    NEXT_PUBLIC_GOOGLE_SHEET_URL: process.env.GOOGLE_SHEET_URL,
+    NEXT_PUBLIC_GOOGLE_SHEET_URL_2025: process.env.GOOGLE_SHEET_URL_2025,
+    NEXT_PUBLIC_GOOGLE_SHEET_URL_2026: process.env.GOOGLE_SHEET_URL_2026,
   }
 };
 

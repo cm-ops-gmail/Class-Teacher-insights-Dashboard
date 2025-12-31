@@ -25,6 +25,7 @@ import { TeacherComparison } from '@/components/dashboard/teacher-comparison';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { useYear } from '@/contexts/year-context';
 
 const parseNumericValue = (
   value: string | number | undefined | null
@@ -92,6 +93,7 @@ export default function TeacherProfilePage() {
   const { toast } = useToast();
   const router = useRouter();
   const [selectedTeachers, setSelectedTeachers] = useState<string[]>([]);
+  const { selectedYear } = useYear();
 
   useEffect(() => {
     const session = localStorage.getItem('dashboard_session');
@@ -103,21 +105,24 @@ export default function TeacherProfilePage() {
     const handleImport = async () => {
       setIsLoading(true);
       try {
-        const initialSheetUrl = process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL;
-        if (!initialSheetUrl) {
-          throw new Error("Google Sheet URL is not configured in environment variables.");
+        const url = selectedYear === '2026' 
+            ? process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2026
+            : process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2025;
+
+        if (!url) {
+          throw new Error(`Google Sheet URL for ${selectedYear} is not configured in environment variables.`);
         }
 
         const [fbResponse, appResponse] = await Promise.all([
             fetch('/api/sheet', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sheetUrl: initialSheetUrl }),
+                body: JSON.stringify({ sheetUrl: url }),
             }),
             fetch('/api/app-sheet', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sheetUrl: initialSheetUrl }),
+                body: JSON.stringify({ sheetUrl: url }),
             }),
         ]);
 
@@ -135,6 +140,10 @@ export default function TeacherProfilePage() {
         
         setFbData(fbSheetData);
         setAppData(appSheetData);
+        toast({
+          title: "Success!",
+          description: `Data for ${selectedYear} loaded successfully.`,
+        });
 
       } catch (error: any) {
         toast({
@@ -151,7 +160,7 @@ export default function TeacherProfilePage() {
 
     handleImport();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
+  }, [selectedYear]);
   
   const combinedData = useMemo(() => {
     const fbMarked = fbData.map(d => ({ ...d, id: `fb-${d.id}`, dataSource: 'fb' as const }));
@@ -201,36 +210,39 @@ export default function TeacherProfilePage() {
         stats.classes.push(item);
         
         let peakAttendance = 0;
+        let courseName: string | undefined;
         
         if (isFbEntry(item)) {
             stats.classCount.fb += 1;
             stats.totalDuration.fb += parseNumericValue(item.totalDuration);
             stats.totalAverageAttendance.fb += parseNumericValue(item.averageAttendance);
             peakAttendance = parseNumericValue(item.highestAttendance);
-            if (item.course) {
-              if (!stats.courseBreakdown[item.course]) {
-                stats.courseBreakdown[item.course] = { fb: 0, app: 0, total: 0 };
+            courseName = item.course;
+            if (courseName) {
+              if (!stats.courseBreakdown[courseName]) {
+                stats.courseBreakdown[courseName] = { fb: 0, app: 0, total: 0 };
               }
-              stats.courseBreakdown[item.course].fb++;
-              stats.courseBreakdown[item.course].total++;
+              stats.courseBreakdown[courseName].fb++;
+              stats.courseBreakdown[courseName].total++;
             }
         } else if (isAppEntry(item)) {
             stats.classCount.app += 1;
             stats.totalDuration.app += parseNumericValue(item.classDuration);
             stats.totalAverageAttendance.app += parseNumericValue(item.totalAttendance);
             peakAttendance = parseNumericValue(item.totalAttendance);
+            courseName = item.subject;
             
             const rating = parseNumericValue(item.averageClassRating);
             if (rating > 0) {
                 totalRating += rating;
                 ratedClassesCount++;
             }
-            if (item.subject) {
-              if (!stats.courseBreakdown[item.subject]) {
-                stats.courseBreakdown[item.subject] = { fb: 0, app: 0, total: 0 };
+            if (courseName) {
+              if (!stats.courseBreakdown[courseName]) {
+                stats.courseBreakdown[courseName] = { fb: 0, app: 0, total: 0 };
               }
-              stats.courseBreakdown[item.subject].app++;
-              stats.courseBreakdown[item.subject].total++;
+              stats.courseBreakdown[courseName].app++;
+              stats.courseBreakdown[courseName].total++;
             }
         }
 
@@ -670,4 +682,5 @@ export default function TeacherProfilePage() {
     
 
     
+
 

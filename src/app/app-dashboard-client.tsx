@@ -35,6 +35,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { TeacherComparison } from "@/components/dashboard/teacher-comparison";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useYear } from "@/contexts/year-context";
 
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
@@ -105,6 +106,7 @@ export default function AppDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const router = useRouter();
+  const { selectedYear } = useYear();
 
   const [globalFilter, setGlobalFilter] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>();
@@ -152,7 +154,7 @@ export default function AppDashboard() {
         setData(sheetData);
         toast({
           title: "Success!",
-          description: "Data loaded from your Google Sheet.",
+          description: `Data for ${selectedYear} loaded from your Google Sheet.`,
         });
       } catch (error: any) {
         toast({
@@ -168,7 +170,10 @@ export default function AppDashboard() {
       }
     };
 
-    const initialSheetUrl = process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL;
+    const initialSheetUrl = selectedYear === '2026' 
+      ? process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2026 
+      : process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2025;
+      
     if (initialSheetUrl) {
       handleImport(initialSheetUrl);
     } else {
@@ -176,12 +181,13 @@ export default function AppDashboard() {
         variant: "destructive",
         title: "Configuration Error",
         description:
-          "Google Sheet URL is not configured in environment variables.",
+          `Google Sheet URL for ${selectedYear} is not configured in environment variables.`,
       });
+      setData([]);
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [selectedYear]);
 
   const products = useMemo(
     () => [...new Set(data.map((item) => item.product).filter(Boolean))],
@@ -348,7 +354,7 @@ export default function AppDashboard() {
 
   const isSameDay = (date1: Date | undefined, date2: Date | null) => {
     if (!date1 || !date2) return false;
-    return date1.getDate() === date2.getDate() &&
+    return date1.getDate() === date2.getMonth() &&
            date1.getMonth() === date2.getMonth() &&
            date1.getFullYear() === date2.getFullYear();
   };

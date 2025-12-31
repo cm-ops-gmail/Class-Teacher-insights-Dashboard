@@ -35,6 +35,7 @@ import Navbar from "@/components/navbar";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useYear } from "@/contexts/year-context";
 
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
@@ -68,6 +69,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const router = useRouter();
+  const { selectedYear } = useYear();
 
   const [globalFilter, setGlobalFilter] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>();
@@ -116,7 +118,7 @@ export default function Dashboard() {
         setData(sheetData);
         toast({
           title: "Success!",
-          description: "Data loaded from your Google Sheet.",
+          description: `Data for ${selectedYear} loaded from your Google Sheet.`,
         });
       } catch (error: any) {
         toast({
@@ -132,20 +134,24 @@ export default function Dashboard() {
       }
     };
 
-    const initialSheetUrl = process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL;
-    if (initialSheetUrl) {
-      handleImport(initialSheetUrl);
+    const urlToFetch = selectedYear === '2026'
+      ? process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2026
+      : process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2025;
+      
+    if (urlToFetch) {
+      handleImport(urlToFetch);
     } else {
       toast({
         variant: "destructive",
         title: "Configuration Error",
         description:
-          "Google Sheet URL is not configured in environment variables.",
+          `Google Sheet URL for ${selectedYear} is not configured in environment variables.`,
       });
+      setData([]);
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [selectedYear]);
 
   const productTypes = useMemo(
     () => [...new Set(data.map((item) => item.productType).filter(Boolean))],
@@ -1081,4 +1087,5 @@ const allColumns: {key: keyof ClassEntry, header: string, sortable?: boolean}[] 
 
 
     
+
 

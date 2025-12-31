@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Award, Clock, Star, Users, TrendingUp, LogOut, Info, Columns, X, Calendar, AlertTriangle } from 'lucide-react';
+import { Award, Clock, Star, Users, TrendingUp, LogOut, Info, Columns, X, Calendar, AlertTriangle, DropdownMenu } from 'lucide-react';
 import Navbar from '@/components/navbar';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -22,7 +22,6 @@ import { DataTable as CombinedDataTable } from "@/components/dashboard/combined-
 import { TopTeachers } from "@/components/dashboard/top-teachers";
 import { TeacherPerformanceCharts } from "@/components/dashboard/teacher-performance-charts";
 import {
-  DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
@@ -30,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useYear } from '@/contexts/year-context';
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
   if (value === null || value === undefined) return 0;
@@ -99,6 +99,7 @@ export default function CentralDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const router = useRouter();
+  const { selectedYear } = useYear();
 
   const [globalFilter, setGlobalFilter] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>();
@@ -121,14 +122,17 @@ export default function CentralDashboard() {
     const handleImport = async () => {
       setIsLoading(true);
       try {
-        const initialSheetUrl = process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL;
-        if (!initialSheetUrl) {
-          throw new Error("Google Sheet URL is not configured.");
+        const url = selectedYear === '2026'
+            ? process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2026
+            : process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL_2025;
+
+        if (!url) {
+          throw new Error(`Google Sheet URL for ${selectedYear} is not configured.`);
         }
 
         const [fbResponse, appResponse] = await Promise.all([
-          fetch('/api/sheet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sheetUrl: initialSheetUrl }) }),
-          fetch('/api/app-sheet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sheetUrl: initialSheetUrl }) })
+          fetch('/api/sheet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sheetUrl: url }) }),
+          fetch('/api/app-sheet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sheetUrl: url }) })
         ]);
 
         if (!fbResponse.ok || !appResponse.ok) {
@@ -142,7 +146,7 @@ export default function CentralDashboard() {
         
         setFbData(fbSheetData);
         setAppData(appSheetData);
-        toast({ title: "Success!", description: "Both Fb and App data loaded." });
+        toast({ title: "Success!", description: `Both Fb and App data for ${selectedYear} loaded.` });
       } catch (error: any) {
         toast({ variant: 'destructive', title: 'Data Loading Error', description: error.message });
       } finally {
@@ -150,7 +154,7 @@ export default function CentralDashboard() {
       }
     };
     handleImport();
-  }, []);
+  }, [selectedYear, toast]);
 
   const combinedData = useMemo(() => {
     const fbMarked = fbData.map(d => ({ ...d, id: `fb-${d.id}`, dataSource: 'fb' as const }));

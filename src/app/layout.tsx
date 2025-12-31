@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { YearProvider } from "@/contexts/year-context";
 
 export const metadata: Metadata = {
   title: "Facebook Dashboard",
@@ -24,7 +25,9 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased h-full">
-        {children}
+        <YearProvider>
+            {children}
+        </YearProvider>
         <Toaster />
       </body>
     </html>
