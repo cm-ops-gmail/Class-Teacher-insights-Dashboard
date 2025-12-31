@@ -442,7 +442,7 @@ export default function CentralDashboard() {
 
         <section className="mb-12">
           <h2 className="text-2xl font-bold tracking-tight mb-4">Overall Performance</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <StatCard icon={Award} title="Total Classes" stat={summary.classCount} colorClass="chart-1" popoverContent={
                 <DialogHeader><DialogTitle>Total Classes Breakdown</DialogTitle></DialogHeader>
             } />
