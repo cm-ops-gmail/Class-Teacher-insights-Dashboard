@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Award, Clock, Star, UserCheck, BookOpen, Users, LogOut, Package, Info, User, X, BarChart } from 'lucide-react';
+import { Award, Clock, Star, UserCheck, BookOpen, Users, LogOut, Package, Info, User, X, BarChart, TrendingUp, PieChart } from 'lucide-react';
 import Navbar from '@/components/navbar';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
@@ -67,6 +67,8 @@ type TeacherStats = {
   uniqueCourses: string[];
   uniqueProductTypes: string[];
   averageRating: number;
+  ratedClassesCount: number;
+  ratedClasses: (AppClassEntry & { dataSource: 'app' })[];
 };
 
 const formatDuration = (totalMinutes: number) => {
@@ -184,6 +186,26 @@ export default function TeacherProfilePage() {
     return Array.from(teacherSet).sort();
   }, [combinedData]);
 
+    const platformTotals = useMemo(() => {
+    const totals = {
+      classCount: combinedData.length,
+      totalDuration: 0,
+      totalAverageAttendance: 0,
+    };
+
+    combinedData.forEach(item => {
+      if (isFbEntry(item)) {
+        totals.totalDuration += parseNumericValue(item.totalDuration);
+        totals.totalAverageAttendance += parseNumericValue(item.averageAttendance);
+      } else if (isAppEntry(item)) {
+        totals.totalDuration += parseNumericValue(item.classDuration);
+        totals.totalAverageAttendance += parseNumericValue(item.totalAttendance);
+      }
+    });
+
+    return totals;
+  }, [combinedData]);
+
   const aggregatedStats = useMemo(() => {
     if (selectedTeachers.length === 0) {
       return null;
@@ -208,10 +230,11 @@ export default function TeacherProfilePage() {
       uniqueCourses: [],
       uniqueProductTypes: [],
       averageRating: 0,
+      ratedClassesCount: 0,
+      ratedClasses: [],
     };
 
     let totalRating = 0;
-    let ratedClassesCount = 0;
     let highestPeak = 0;
 
     relevantClasses.forEach(item => {
@@ -243,7 +266,8 @@ export default function TeacherProfilePage() {
             const rating = parseNumericValue(item.averageClassRating);
             if (rating > 0) {
                 totalRating += rating;
-                ratedClassesCount++;
+                stats.ratedClassesCount++;
+                stats.ratedClasses.push(item);
             }
             if (courseName) {
               if (!stats.courseBreakdown[courseName]) {
@@ -269,7 +293,7 @@ export default function TeacherProfilePage() {
     stats.avgAttendance.app = stats.classCount.app > 0 ? Math.round(stats.totalAverageAttendance.app / stats.classCount.app) : 0;
     stats.avgAttendance.total = stats.classCount.total > 0 ? Math.round(stats.totalAverageAttendance.total / stats.classCount.total) : 0;
     
-    stats.averageRating = ratedClassesCount > 0 ? totalRating / ratedClassesCount : 0;
+    stats.averageRating = stats.ratedClassesCount > 0 ? totalRating / stats.ratedClassesCount : 0;
     
     const allCourses = Object.keys(stats.courseBreakdown);
     stats.uniqueCourses = allCourses;
@@ -315,6 +339,38 @@ export default function TeacherProfilePage() {
                 {popoverContent}
             </Dialog>
         </div>
+    );
+};
+const ContributionListItem = ({ icon: Icon, title, teacherValue, platformTotal, colorClass }: { icon: React.ElementType, title: string, teacherValue: number, platformTotal: number, colorClass: string }) => {
+    const percentage = platformTotal > 0 ? (teacherValue / platformTotal) * 100 : 0;
+    
+    return (
+        <li className="flex items-center gap-4 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
+            <div className="flex items-center gap-3">
+                <Icon className={cn("h-5 w-5", `text-${colorClass}`)} />
+                <span className="font-medium">{title}</span>
+            </div>
+            <div className="flex items-center gap-2">
+                <span className={cn("text-lg font-bold", `text-${colorClass}`)}>{percentage.toFixed(2)}%</span>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6"><Info className="h-4 w-4 text-muted-foreground" /></Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Contribution Calculation</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4 text-sm">
+                            <div>Teacher's Total: <span className="font-bold">{teacherValue.toLocaleString()}</span></div>
+                            <div>Platform Total: <span className="font-bold">{platformTotal.toLocaleString()}</span></div>
+                            <p className="font-bold border-t pt-2 mt-1 text-base">
+                                ({teacherValue.toLocaleString()} / {platformTotal.toLocaleString()}) * 100 = {percentage.toFixed(2)}%
+                            </p>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            </div>
+        </li>
     );
 };
 
@@ -394,7 +450,32 @@ export default function TeacherProfilePage() {
                         <CardTitle className="text-2xl">{aggregatedStats.name}</CardTitle>
                         <CardDescription>Aggregated Performance Overview</CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-6">
+                        <ul className="space-y-3">
+                            <ContributionListItem
+                                icon={PieChart}
+                                title="Contributed to platform's total classes"
+                                teacherValue={aggregatedStats.classCount.total}
+                                platformTotal={platformTotals.classCount}
+                                colorClass="chart-1"
+                            />
+                            <ContributionListItem
+                                icon={Users}
+                                title="Contributed to platform's total avg attendance"
+                                teacherValue={aggregatedStats.totalAverageAttendance.total}
+                                platformTotal={platformTotals.totalAverageAttendance}
+                                colorClass="chart-2"
+                            />
+                            <ContributionListItem
+                                icon={Clock}
+                                title="Contributed to platform's total duration"
+                                teacherValue={aggregatedStats.totalDuration.total}
+                                platformTotal={platformTotals.totalDuration}
+                                colorClass="chart-4"
+                            />
+                        </ul>
+
+                        <Separator />
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                            <StatCard 
                                 icon={Award}
@@ -547,9 +628,29 @@ export default function TeacherProfilePage() {
                                 format={(val) => val.toFixed(2)}
                                 colorClass="chart-1"
                                 popoverContent={
-                                    <DialogContent className="sm:max-w-md">
-                                        <DialogHeader><DialogTitle>Average Rating</DialogTitle></DialogHeader>
-                                        <p className="text-sm text-muted-foreground p-4">Rating is based on APP Dashboard data only.</p>
+                                    <DialogContent className="sm:max-w-2xl">
+                                        <DialogHeader><DialogTitle>Average Rating for {aggregatedStats.name}</DialogTitle></DialogHeader>
+                                        <p className="text-sm text-muted-foreground px-6">Rating is based on {aggregatedStats.ratedClassesCount} rated classes from APP Dashboard only.</p>
+                                        <ScrollArea className="h-96 mt-4">
+                                          <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Date</TableHead>
+                                                    <TableHead>Class Topic</TableHead>
+                                                    <TableHead className="text-right">Rating</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {aggregatedStats.ratedClasses.sort((a,b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()).map(c => (
+                                                    <TableRow key={c.id}>
+                                                        <TableCell><Badge variant="secondary">{c.date}</Badge></TableCell>
+                                                        <TableCell className="font-medium max-w-xs truncate">{c.classTopic}</TableCell>
+                                                        <TableCell className="text-right font-bold">{parseNumericValue(c.averageClassRating).toFixed(2)}</TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                          </Table>
+                                        </ScrollArea>
                                     </DialogContent>
                                 }
                             />
@@ -645,7 +746,7 @@ export default function TeacherProfilePage() {
                                   <TableCell className="font-medium max-w-[200px] truncate">{isFbEntry(c) ? c.subject : c.classTopic}</TableCell>
                                    <TableCell>
                                     <Badge variant={c.dataSource === 'app' ? 'default' : 'secondary'}>
-                                        {c.dataSource.toUpperCase()}
+                                        {c.dataSource?.toUpperCase()}
                                     </Badge>
                                    </TableCell>
                                   <TableCell className="text-right">{parseNumericValue(isAppEntry(c) ? c.totalAttendance : c.averageAttendance).toLocaleString()}</TableCell>
