@@ -48,23 +48,7 @@ const parseNumericValue = (value: string | number | undefined | null): number =>
 
 const parseDateString = (dateStr: string): Date | null => {
   if (!dateStr) return null;
-  const formats = [
-    /^\w+,\s+\w+\s+\d+,\s+\d+$/, // "Wednesday, January 1, 2025"
-    /^\d{1,2}-\w{3}-\d{4}$/, // "1-Jan-2025"
-    /^\d{4}-\d{2}-\d{2}$/, // "2025-01-01"
-    /^\d{1,2}\/\d{1,2}\/\d{4}$/ // "01/01/2025"
-  ];
-  
-  for (const format of formats) {
-    if (format.test(dateStr)) {
-      const parsed = new Date(dateStr);
-      if (!isNaN(parsed.getTime())) {
-        return parsed;
-      }
-    }
-  }
-
-  // Fallback for just in case
+  // Handles formats like "Wednesday, January 1, 2025" and other common ones
   const parsed = new Date(dateStr);
   return isNaN(parsed.getTime()) ? null : parsed;
 };
@@ -100,7 +84,7 @@ export default function Dashboard() {
   const [subjectFilters, setSubjectFilters] = useState<string[]>([]);
 
   const [columnVisibility, setColumnVisibility] = React.useState<
-    Record<keyof ClassEntry, boolean>
+    Record<string, boolean>
   >(() => {
     const visibility: Record<string, boolean> = {};
     for (const col of allColumns) {
@@ -108,7 +92,7 @@ export default function Dashboard() {
         col.key as keyof ClassEntry
       );
     }
-    return visibility as Record<keyof ClassEntry, boolean>;
+    return visibility as Record<string, boolean>;
   });
 
 
@@ -855,7 +839,7 @@ export default function Dashboard() {
                       <DropdownMenuCheckboxItem
                         key={column.key}
                         className="capitalize"
-                        checked={columnVisibility[column.key as keyof ClassEntry]}
+                        checked={columnVisibility[column.key]}
                         onCheckedChange={(value) =>
                           setColumnVisibility((prev) => ({
                             ...prev,
@@ -943,7 +927,7 @@ const defaultVisibleColumns: (keyof ClassEntry)[] = [
 ];
 
 
-const allColumns = [
+const allColumns: {key: keyof ClassEntry, header: string, sortable?: boolean}[] = [
   { key: "date", header: "Date", sortable: true },
   { key: "scheduledTime", header: "Scheduled Time", sortable: true },
   { key: "productType", header: "Product Type", sortable: true },

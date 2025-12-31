@@ -25,7 +25,4 @@ export type ClassEntry = {
   liveClassIssues: string;
   otherTechnicalIssues: string;
   satisfaction: string;
-  // Deprecated fields, kept for safety but should not be used.
-  teacher1?: string; // Use 'teacher' instead
-  totalDurationMinutes?: string; // Use 'totalDuration' instead
 };

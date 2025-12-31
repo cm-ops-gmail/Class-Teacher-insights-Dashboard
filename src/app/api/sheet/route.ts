@@ -81,23 +81,14 @@ export async function POST(request: Request) {
 
     // Special mappings for headers that don't match the key names after normalization
     const specialHeaderMap: {[key: string]: keyof ClassEntry} = {
-        'teacher1': 'teacher',
-        'teacher1gmail': 'teacher1Gmail',
-        'teacher2doubtsolver1': 'teacher2',
-        'teacher2gmail': 'teacher2Gmail',
-        'teacher3doubtsolver2': 'teacher3',
-        'teacher3gmail': 'teacher3Gmail',
-        'totalduration': 'totalDuration',
-        'totalcommentsnumber': 'totalComments',
-        'issuestype': 'issuesType',
-        'issuesdetails': 'issuesDetails',
-        'slidecommunication': 'slideCommunication',
-        'whichissueshaveyoufacedduringtheliveclass': 'liveClassIssues',
-        'besidesmentionedissueshaveyouencounteredanyothertechnicalissues': 'otherTechnicalIssues',
-        'onascalof1to5howsatisfiedareyouwithyourinstudioexperienceSatisfaction': 'satisfaction',
         'entrytimet45t30': 'entryTime',
         'slideqact15': 'slideQAC',
-        'classstarttime': 'classStartTime'
+        'teacher2doubtsolver1': 'teacher2',
+        'teacher3doubtsolver2': 'teacher3',
+        'totalcommentsnumber': 'totalComments',
+        'whichissueshaveyoufacedduringtheliveclass': 'liveClassIssues',
+        'besidesmentionedissueshaveyouencounteredanyothertechnicalissues': 'otherTechnicalIssues',
+        'onascalof1to5howsatisfiedareyouwithyourinstudioexperiencesatisfaction': 'satisfaction'
     };
 
     const headerMap: { [key: number]: keyof ClassEntry } = {};

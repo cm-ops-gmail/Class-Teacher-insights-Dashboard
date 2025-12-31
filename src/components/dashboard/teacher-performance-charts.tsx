@@ -214,6 +214,7 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
                     tickMargin={10}
                     width={150}
                     className="text-xs"
+                    interval={0}
                   />
                   <XAxis dataKey="value" type="number" hide />
                   <ChartTooltip
