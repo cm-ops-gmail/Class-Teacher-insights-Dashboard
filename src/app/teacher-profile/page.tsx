@@ -40,7 +40,11 @@ const parseNumericValue = (
 type CombinedClassEntry = Partial<ClassEntry> & Partial<AppClassEntry> & { id: string, dataSource: 'fb' | 'app' };
 
 type CourseBreakdown = {
-  [courseName: string]: number;
+  [courseName: string]: {
+    fb: number;
+    app: number;
+    total: number;
+  };
 }
 
 type StatDetail = {
@@ -204,7 +208,11 @@ export default function TeacherProfilePage() {
             stats.totalAverageAttendance.fb += parseNumericValue(item.averageAttendance);
             peakAttendance = parseNumericValue(item.highestAttendance);
             if (item.course) {
-                stats.courseBreakdown[item.course] = (stats.courseBreakdown[item.course] || 0) + 1;
+              if (!stats.courseBreakdown[item.course]) {
+                stats.courseBreakdown[item.course] = { fb: 0, app: 0, total: 0 };
+              }
+              stats.courseBreakdown[item.course].fb++;
+              stats.courseBreakdown[item.course].total++;
             }
         } else if (isAppEntry(item)) {
             stats.classCount.app += 1;
@@ -216,6 +224,13 @@ export default function TeacherProfilePage() {
             if (rating > 0) {
                 totalRating += rating;
                 ratedClassesCount++;
+            }
+            if (item.subject) {
+              if (!stats.courseBreakdown[item.subject]) {
+                stats.courseBreakdown[item.subject] = { fb: 0, app: 0, total: 0 };
+              }
+              stats.courseBreakdown[item.subject].app++;
+              stats.courseBreakdown[item.subject].total++;
             }
         }
 
@@ -236,8 +251,8 @@ export default function TeacherProfilePage() {
     
     stats.averageRating = ratedClassesCount > 0 ? totalRating / ratedClassesCount : 0;
     
-    const allCourses = relevantClasses.map(c => isFbEntry(c) ? c.course : c.subject).filter(Boolean);
-    stats.uniqueCourses = [...new Set(allCourses)];
+    const allCourses = Object.keys(stats.courseBreakdown);
+    stats.uniqueCourses = allCourses;
 
     const allProductTypes = relevantClasses.map(c => isFbEntry(c) ? c.productType : c.product).filter(Boolean);
     stats.uniqueProductTypes = [...new Set(allProductTypes)];
@@ -526,29 +541,37 @@ export default function TeacherProfilePage() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Course Breakdown</CardTitle>
-                            <CardDescription>Based on Fb classes</CardDescription>
+                            <CardDescription>Number of classes taught per course/subject</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <ScrollArea className="h-96">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Course</TableHead>
+                                            <TableHead>Course / Subject</TableHead>
                                             <TableHead className="text-right">Classes Taught</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {Object.entries(aggregatedStats.courseBreakdown).sort(([, a], [, b]) => b - a).map(([course, count]) => (
+                                        {Object.entries(aggregatedStats.courseBreakdown).sort(([, a], [, b]) => b.total - a.total).map(([course, count]) => (
                                             <TableRow key={course}>
                                                 <TableCell className="font-medium">{course}</TableCell>
-                                                <TableCell className="text-right font-bold">{count}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <span className="font-bold">{count.total}</span>
+                                                        <div className="flex items-center text-xs text-muted-foreground gap-1">
+                                                            {count.fb > 0 && <Badge variant="secondary">Fb: {count.fb}</Badge>}
+                                                            {count.app > 0 && <Badge variant="default">App: {count.app}</Badge>}
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
                                     <TableFooter>
                                         <TableRow>
-                                            <TableCell className="font-bold">Total Fb Courses</TableCell>
-                                            <TableCell className="text-right font-bold">{aggregatedStats.classCount.fb}</TableCell>
+                                            <TableCell className="font-bold">Total Classes</TableCell>
+                                            <TableCell className="text-right font-bold">{aggregatedStats.classCount.total}</TableCell>
                                         </TableRow>
                                     </TableFooter>
                                 </Table>
@@ -558,8 +581,8 @@ export default function TeacherProfilePage() {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Recent Classes</CardTitle>
-                            <CardDescription>Latest 20 classes from both platforms</CardDescription>
+                            <CardTitle>All Classes</CardTitle>
+                            <CardDescription>All classes from both platforms</CardDescription>
                         </CardHeader>
                       <CardContent className="p-0">
                         <style>{`
@@ -595,7 +618,7 @@ export default function TeacherProfilePage() {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {aggregatedStats.classes.sort((a,b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()).slice(0, 20).map(c => (
+                              {aggregatedStats.classes.sort((a,b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()).map(c => (
                                 <TableRow key={c.id}>
                                   <TableCell><Badge variant="secondary">{c.date}</Badge></TableCell>
                                   <TableCell>{c.teacher}</TableCell>
@@ -647,3 +670,4 @@ export default function TeacherProfilePage() {
     
 
     
+
