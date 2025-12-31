@@ -5,7 +5,7 @@ import React from 'react';
 import Logo from './logo';
 import { Button } from './ui/button';
 import Link from 'next/link';
-import { Home, User, AppWindow } from 'lucide-react';
+import { Home, User, AppWindow, Combine } from 'lucide-react';
 
 interface NavbarProps {
     children?: React.ReactNode;
@@ -21,6 +21,12 @@ const Navbar = ({ children }: NavbarProps) => {
           </Link>
         </div>
         <div className="flex items-center gap-2">
+           <Link href="/central-dashboard" passHref>
+             <Button variant="ghost">
+                <Combine className="mr-2 h-4 w-4" />
+                Central Dashboard
+             </Button>
+           </Link>
            <Link href="/" passHref>
              <Button variant="ghost">
                 <Home className="mr-2 h-4 w-4" />

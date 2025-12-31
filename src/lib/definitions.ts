@@ -72,3 +72,5 @@ export type AppClassEntry = {
   satisfaction: string;
 };
 
+export type CombinedClassEntry = Partial<ClassEntry> & Partial<AppClassEntry> & { id: string; dataSource: 'fb' | 'app' };
+
