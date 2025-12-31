@@ -5,7 +5,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { DataTable } from "@/components/dashboard/app-data-table";
 import type { AppClassEntry } from "@/lib/definitions";
 import { useToast } from "@/hooks/use-toast";
-import { BookOpen, BookCopy, Activity, Clock, TrendingUp, Users, Info, Columns, X, LogOut, Calendar, AlertTriangle } from "lucide-react";
+import { BookCopy, Clock, TrendingUp, Users, Info, Columns, X, LogOut, Calendar, AlertTriangle, Percent, Watch, HelpCircle, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { TopTeachers } from "@/components/dashboard/top-teachers";
 import { Separator } from "@/components/ui/separator";
 import { MultiSelectFilter } from "@/components/dashboard/multi-select-filter";
@@ -204,36 +203,26 @@ export default function AppDashboard() {
 
   const summary = useMemo(() => {
     const activeData = filteredData;
-    const totalDuration = activeData.reduce((acc, item) => {
-      const duration = parseNumericValue(item.classDuration);
-      return acc + duration;
-    }, 0);
+    const count = activeData.length;
 
-    const totalAttendance = activeData.reduce((acc, item) => {
-      const attendance = parseNumericValue(item.totalAttendance);
-      return acc + attendance;
-    }, 0);
-
-    const totalEnrolled = activeData.reduce((acc, item) => {
-        return acc + parseNumericValue(item.currentlyEnrolledUser);
-    }, 0);
-
-    const totalRating = activeData.reduce((acc, item) => acc + parseNumericValue(item.averageClassRating), 0);
-    const classesWithRating = activeData.filter(item => parseNumericValue(item.averageClassRating) > 0).length;
-    const averageRating = classesWithRating > 0 ? totalRating / classesWithRating : 0;
-        
-    const uniqueProducts = [...new Set(activeData.map(item => item.product).filter(Boolean))];
-    const uniqueSubjects = [...new Set(activeData.map(item => item.subject).filter(Boolean))];
+    const totalDuration = activeData.reduce((acc, item) => acc + parseNumericValue(item.classDuration), 0);
+    const totalAttendance = activeData.reduce((acc, item) => acc + parseNumericValue(item.totalAttendance), 0);
+    const totalClassAttendancePercent = activeData.reduce((acc, item) => acc + parseNumericValue(item.classAttendancePercent), 0);
+    const totalAverageWatchtime = activeData.reduce((acc, item) => acc + parseNumericValue(item.averageWatchtime), 0);
+    const totalAverageWatchtimePercent = activeData.reduce((acc, item) => acc + parseNumericValue(item.averageWatchtimePercent), 0);
+    const totalDoubts = activeData.reduce((acc, item) => acc + parseNumericValue(item.totalDoubt), 0);
+    const totalDoubtResolvedPercent = activeData.reduce((acc, item) => acc + parseNumericValue(item.doubtResolvedPercent), 0);
 
     return {
       total: data.length,
-      filtered: activeData.length,
-      products: uniqueProducts,
-      subjects: uniqueSubjects,
+      filtered: count,
       totalDuration: Math.round(totalDuration),
       totalAttendance,
-      totalEnrolled,
-      averageRating
+      avgClassAttendancePercent: count > 0 ? totalClassAttendancePercent / count : 0,
+      avgWatchtime: count > 0 ? totalAverageWatchtime / count : 0,
+      avgWatchtimePercent: count > 0 ? totalAverageWatchtimePercent / count : 0,
+      totalDoubts,
+      avgDoubtResolvedPercent: count > 0 ? totalDoubtResolvedPercent / count : 0,
     }
   }, [filteredData, data.length]);
   
@@ -399,7 +388,7 @@ export default function AppDashboard() {
           <h2 className="text-2xl font-bold tracking-tight mb-4">
             Data Analysis of App Classes
           </h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card className="border-chart-1/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -408,23 +397,33 @@ export default function AppDashboard() {
                 <BookCopy className="h-4 w-4 text-chart-1" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-chart-1">{summary.filtered}</div>
+                <div className="flex items-center justify-between">
+                  <div className="text-2xl font-bold text-chart-1">{summary.filtered}</div>
+                   <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-5 w-5">
+                          <Info className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[625px]">
+                         <DialogHeader>
+                            <DialogTitle>Filtered Classes</DialogTitle>
+                         </DialogHeader>
+                        <ScrollArea className="h-72 mt-4">
+                          <div className="flex flex-col gap-2 text-sm pr-6">
+                            {filteredData.map(item => (
+                              <div key={item.id} className="flex justify-between items-center gap-4 border-b pb-2">
+                                <span className="text-muted-foreground">{item.date}</span>
+                                <span className="font-medium text-right truncate">{item.classTopic}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </DialogContent>
+                    </Dialog>
+                </div>
                  <p className="text-xs text-muted-foreground">
                   of {summary.total} total
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-chart-2/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Unique Products
-                </CardTitle>
-                <BookOpen className="h-4 w-4 text-chart-2" />
-              </CardHeader>
-              <CardContent>
-                 <div className="text-2xl font-bold text-chart-2">{summary.products.length}</div>
-                 <p className="text-xs text-muted-foreground">
-                  in current view
                 </p>
               </CardContent>
             </Card>
@@ -436,7 +435,21 @@ export default function AppDashboard() {
                 <Clock className="h-4 w-4 text-chart-4" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-chart-4">{summary.totalDuration.toLocaleString()}</div>
+                 <div className="flex items-center justify-between">
+                  <div className="text-2xl font-bold text-chart-4">{summary.totalDuration.toLocaleString()}</div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-5 w-5">
+                          <Info className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="text-sm w-auto" side="top" align="end">
+                        <div className="font-bold">
+                          {formatDuration(summary.totalDuration)}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                </div>
                  <p className="text-xs text-muted-foreground">
                   in current view
                 </p>
@@ -447,7 +460,7 @@ export default function AppDashboard() {
                 <CardTitle className="text-sm font-medium">
                   Total Attendance
                 </CardTitle>
-                <TrendingUp className="h-4 w-4 text-chart-5" />
+                <Users className="h-4 w-4 text-chart-5" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-chart-5">{summary.totalAttendance.toLocaleString()}</div>
@@ -456,31 +469,73 @@ export default function AppDashboard() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="border-chart-6/50">
+            <Card className="border-chart-2/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Total Enrolled
+                  Avg. Class Attendance %
                 </CardTitle>
-                <Users className="h-4 w-4 text-chart-6" />
+                <Percent className="h-4 w-4 text-chart-2" />
               </CardHeader>
               <CardContent>
-                  <div className="text-2xl font-bold text-chart-6">{summary.totalEnrolled.toLocaleString()}</div>
-                   <p className="text-xs text-muted-foreground">
-                    in current view
-                  </p>
+                <div className="text-2xl font-bold text-chart-2">{summary.avgClassAttendancePercent.toFixed(2)}%</div>
+                 <p className="text-xs text-muted-foreground">
+                  average for current view
+                </p>
               </CardContent>
             </Card>
             <Card className="border-chart-3/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Average Rating
+                  Avg. Watchtime (Min)
                 </CardTitle>
-                <Activity className="h-4 w-4 text-chart-3" />
+                <Watch className="h-4 w-4 text-chart-3" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-chart-3">{summary.averageRating.toFixed(2)}</div>
+                <div className="text-2xl font-bold text-chart-3">{summary.avgWatchtime.toFixed(2)}</div>
                  <p className="text-xs text-muted-foreground">
-                  across all rated classes
+                  average for current view
+                </p>
+              </CardContent>
+            </Card>
+             <Card className="border-chart-6/50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Avg. Watchtime %
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-chart-6" />
+              </CardHeader>
+              <CardContent>
+                  <div className="text-2xl font-bold text-chart-6">{summary.avgWatchtimePercent.toFixed(2)}%</div>
+                   <p className="text-xs text-muted-foreground">
+                    average for current view
+                  </p>
+              </CardContent>
+            </Card>
+            <Card className="border-destructive/50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Doubts
+                </CardTitle>
+                <HelpCircle className="h-4 w-4 text-destructive" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-destructive">{summary.totalDoubts.toLocaleString()}</div>
+                 <p className="text-xs text-muted-foreground">
+                  in current view
+                </p>
+              </CardContent>
+            </Card>
+             <Card className="border-green-500/50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Doubt Resolved %
+                </CardTitle>
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-500">{summary.avgDoubtResolvedPercent.toFixed(2)}%</div>
+                 <p className="text-xs text-muted-foreground">
+                  average for current view
                 </p>
               </CardContent>
             </Card>
@@ -742,6 +797,8 @@ const allColumns: {key: keyof AppClassEntry, header: string, sortable?: boolean}
   { key: "otherTechnicalIssues", header: "Other Technical Issues" },
   { key: "satisfaction", header: "Satisfaction" },
 ];
+
+    
 
     
 
