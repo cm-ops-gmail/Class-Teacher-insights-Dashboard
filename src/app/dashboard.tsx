@@ -428,7 +428,7 @@ export default function Dashboard() {
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="mb-8 space-y-2">
           <h1 className="text-3xl font-bold tracking-tight font-headline">
-            Facebook Dashboard
+            Fb dashboard
           </h1>
           <p className="text-muted-foreground">
             An interactive view of your Google Sheet data.

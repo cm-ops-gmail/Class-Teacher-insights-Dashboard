@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -23,7 +24,7 @@ const Navbar = ({ children }: NavbarProps) => {
            <Link href="/" passHref>
              <Button variant="ghost">
                 <Home className="mr-2 h-4 w-4" />
-                Dashboard
+                Fb dashboard
              </Button>
            </Link>
            <Link href="/teacher-profile" passHref>
