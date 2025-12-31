@@ -460,9 +460,9 @@ export default function Dashboard() {
                 <h2 className="text-lg font-semibold tracking-tight">
                   {teacherFilters.join(", ")}
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   Filtered Results
-                </p>
+                </div>
               </div>
             )}
             <div className="flex flex-wrap items-center gap-2">
@@ -580,9 +580,9 @@ export default function Dashboard() {
                       <PopoverContent className="w-auto max-w-[300px]" side="top" align="end">
                          <div className="space-y-2">
                             <h4 className="font-medium leading-none">Unique Courses</h4>
-                            <p className="text-xs text-muted-foreground">
+                            <div className="text-xs text-muted-foreground">
                                 List of unique courses in the current view.
-                            </p>
+                            </div>
                         </div>
                         <ScrollArea className="h-48 mt-4">
                           <div className="flex flex-col items-start gap-1">
@@ -618,9 +618,9 @@ export default function Dashboard() {
                       <PopoverContent className="w-auto" side="top" align="end">
                         <div className="space-y-2">
                             <h4 className="font-medium leading-none">Product Types</h4>
-                            <p className="text-xs text-muted-foreground">
+                            <div className="text-xs text-muted-foreground">
                                 List of unique product types in the current view.
-                            </p>
+                            </div>
                         </div>
                         <ScrollArea className="h-48 mt-4">
                           <div className="flex flex-col items-start gap-1">
