@@ -57,13 +57,13 @@ export async function POST(request: Request) {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: "Central_Class_OPS",
+      range: "Facebook_Dashboard",
     });
 
     const rows = response.data.values;
     if (!rows || rows.length < 2) { // Need at least a header and one data row
       return NextResponse.json(
-        { error: "No data found in the 'Central_Class_OPS' sheet." },
+        { error: "No data found in the 'Facebook_Dashboard' sheet." },
         { status: 404 }
       );
     }
