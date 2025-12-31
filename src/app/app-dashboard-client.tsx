@@ -937,7 +937,7 @@ export default function AppDashboard() {
           <h2 className="text-2xl font-bold tracking-tight mb-4">
             Top Teacher Performance
           </h2>
-          <TopTeachers data={filteredData} />
+          <TopTeachers data={data} />
         </section>
 
         <Separator className="my-8" />
@@ -964,7 +964,7 @@ export default function AppDashboard() {
           <h2 className="text-2xl font-bold tracking-tight mb-4">
             Teacher Performance Breakdown
           </h2>
-          <TeacherPerformanceCharts data={filteredData} />
+          <TeacherPerformanceCharts data={data} />
         </section>
         
         <Separator className="my-8" />
@@ -1058,3 +1058,4 @@ const allColumns: {key: keyof AppClassEntry, header: string, sortable?: boolean}
 
     
 
+    

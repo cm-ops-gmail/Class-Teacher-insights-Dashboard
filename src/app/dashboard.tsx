@@ -943,7 +943,7 @@ export default function Dashboard() {
               <DataTable
                 data={filteredData}
                 allColumns={allColumns}
-                columnVisibility={columnVisibility}
+                columnVisibility={columnVisibility as Record<keyof ClassEntry, boolean>}
                 isLoading={isLoading}
               />
             </CardContent>
@@ -1021,5 +1021,8 @@ const allColumns: {key: keyof ClassEntry, header: string, sortable?: boolean}[] 
   { key: "satisfaction", header: "Satisfaction" },
   { key: "topic", header: "Topic" },
 ];
+
+    
+
 
     
