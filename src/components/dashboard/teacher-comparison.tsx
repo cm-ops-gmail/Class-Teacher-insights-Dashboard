@@ -28,13 +28,19 @@ const parseNumericValue = (value: string | number | undefined | null): number =>
   return isNaN(numberValue) ? 0 : numberValue;
 };
 
+type StatDetail = {
+  fb: number;
+  app: number;
+  total: number;
+};
+
 type TeacherStats = {
   name: string;
-  classCount: number;
-  totalDuration: number;
-  totalAverageAttendance: number;
-  avgAttendance: number;
-  highestPeakAttendance: number;
+  classCount: StatDetail;
+  totalDuration: StatDetail;
+  totalAverageAttendance: StatDetail;
+  avgAttendance: StatDetail;
+  highestPeakAttendance: StatDetail;
   uniqueCourses: string[];
   uniqueProductTypes: string[];
   highestAttendanceClass: DataEntry | null;
@@ -49,64 +55,66 @@ const calculateTeacherGroupStats = (teacherNames: string[], allData: DataEntry[]
   if (!teacherNames || teacherNames.length === 0) return null;
 
   const teacherClasses = allData.filter(item => teacherNames.includes(item.teacher!));
-  if (teacherClasses.length === 0) {
-    return {
+  
+  const initialStat = { fb: 0, app: 0, total: 0 };
+  const stats: TeacherStats = {
       name: teacherNames.join(', '),
-      classCount: 0,
-      totalDuration: 0,
-      totalAverageAttendance: 0,
-      avgAttendance: 0,
-      highestPeakAttendance: 0,
+      classCount: { ...initialStat },
+      totalDuration: { ...initialStat },
+      totalAverageAttendance: { ...initialStat },
+      avgAttendance: { ...initialStat },
+      highestPeakAttendance: { ...initialStat },
       uniqueCourses: [],
       uniqueProductTypes: [],
       highestAttendanceClass: null,
-      classes: [],
-    };
+      classes: teacherClasses,
+  };
+
+  if (teacherClasses.length === 0) {
+    return stats;
   }
 
-  let totalAverageAttendance = 0;
-  let totalDuration = 0;
-  let highestPeakAttendance = 0;
-  let highestAttendanceClass: DataEntry | null = null;
-  
+  let highestPeak = 0;
+
   teacherClasses.forEach(item => {
     let peak = 0;
-    if (isAppEntry(item)) {
-        totalDuration += parseNumericValue(item.classDuration);
-        totalAverageAttendance += parseNumericValue(item.totalAttendance);
-        peak = parseNumericValue(item.totalAttendance);
-    } else if (isFbEntry(item)) {
-        totalDuration += parseNumericValue(item.totalDuration);
-        totalAverageAttendance += parseNumericValue(item.averageAttendance);
+    if (isFbEntry(item)) {
+        stats.classCount.fb += 1;
+        stats.totalDuration.fb += parseNumericValue(item.totalDuration);
+        stats.totalAverageAttendance.fb += parseNumericValue(item.averageAttendance);
         peak = parseNumericValue(item.highestAttendance);
+    } else if (isAppEntry(item)) {
+        stats.classCount.app += 1;
+        stats.totalDuration.app += parseNumericValue(item.classDuration);
+        stats.totalAverageAttendance.app += parseNumericValue(item.totalAttendance);
+        peak = parseNumericValue(item.totalAttendance);
     }
     
-    if (peak > highestPeakAttendance) {
-      highestPeakAttendance = peak;
-      highestAttendanceClass = item;
+    if (peak > highestPeak) {
+      highestPeak = peak;
+      stats.highestAttendanceClass = item;
     }
   });
 
-  const uniqueCourses = [...new Set(teacherClasses.filter(isFbEntry).map(c => c.course).filter(Boolean))];
+  stats.classCount.total = stats.classCount.fb + stats.classCount.app;
+  stats.totalDuration.total = stats.totalDuration.fb + stats.totalDuration.app;
+  stats.totalAverageAttendance.total = stats.totalAverageAttendance.fb + stats.totalAverageAttendance.app;
+  
+  stats.avgAttendance.fb = stats.classCount.fb > 0 ? Math.round(stats.totalAverageAttendance.fb / stats.classCount.fb) : 0;
+  stats.avgAttendance.app = stats.classCount.app > 0 ? Math.round(stats.totalAverageAttendance.app / stats.classCount.app) : 0;
+  stats.avgAttendance.total = stats.classCount.total > 0 ? Math.round(stats.totalAverageAttendance.total / stats.classCount.total) : 0;
+  
+  stats.highestPeakAttendance.total = highestPeak;
 
-  const uniqueProductTypes = [...new Set([
+  stats.uniqueCourses = [...new Set(teacherClasses.filter(isFbEntry).map(c => c.course).filter(Boolean))];
+
+  stats.uniqueProductTypes = [...new Set([
       ...teacherClasses.filter(isAppEntry).map(c => c.product).filter(Boolean),
       ...teacherClasses.filter(isFbEntry).map(c => c.productType).filter(Boolean)
     ])];
 
 
-  return {
-    name: teacherNames.join(', '),
-    classCount: teacherClasses.length,
-    totalDuration,
-    totalAverageAttendance,
-    avgAttendance: teacherClasses.length > 0 ? Math.round(totalAverageAttendance / teacherClasses.length) : 0,
-    highestPeakAttendance,
-    uniqueCourses,
-    uniqueProductTypes,
-    highestAttendanceClass,
-    classes: teacherClasses,
-  };
+  return stats;
 };
 
 const formatDuration = (totalMinutes: number) => {
@@ -123,71 +131,73 @@ const formatDuration = (totalMinutes: number) => {
     return result.trim() || '0 min';
   };
 
-const StatPopover = ({ details, statType }: { details: TeacherStats | null, statType: keyof TeacherStats | 'avgAttendance' }) => {
+const StatPopover = ({ details, statType }: { details: TeacherStats | null, statType: 'classCount' | 'avgAttendance' | 'highestPeakAttendance' | 'totalDuration' | 'uniqueCourses' | 'uniqueProductTypes' }) => {
     if (!details) return null;
 
     let content;
     let title;
-    let isDialog = false;
+    let isDialog = true; // All are dialogs now
 
     switch (statType) {
         case 'classCount':
-            isDialog = true;
             title = `Classes Taught by ${details.name}`;
             content = (
-                <ScrollArea className="h-96 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Fb Classes ({details.classCount.fb})</h3>
+                  <ScrollArea className="h-96 mt-4 pr-4">
                     <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Topic</TableHead>
-                                <TableHead>Source</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {details.classes.sort((a,b) => new Date(b.date!).getTime() - new Date(a.date!).getTime()).map(c => (
-                                <TableRow key={c.id}>
-                                    <TableCell><Badge variant="secondary">{c.date}</Badge></TableCell>
-                                    <TableCell className="font-medium max-w-[300px] truncate">{isFbEntry(c) ? c.subject : (c as AppClassEntry).classTopic}</TableCell>
-                                    <TableCell>
-                                      <Badge variant={c.dataSource === 'app' ? 'default' : 'secondary'}>
-                                          {c.dataSource?.toUpperCase()}
-                                      </Badge>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                         <TableFooter>
-                            <TableRow>
-                                <TableCell colSpan={2} className="font-bold">Total</TableCell>
-                                <TableCell className="font-bold text-right">{details.classCount}</TableCell>
-                            </TableRow>
-                        </TableFooter>
+                      <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Topic</TableHead></TableRow></TableHeader>
+                      <TableBody>
+                        {details.classes.filter(isFbEntry).sort((a,b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()).map(c => (
+                          <TableRow key={c.id}><TableCell><Badge variant="secondary">{c.date}</Badge></TableCell><TableCell className="font-medium max-w-xs truncate">{c.subject}</TableCell></TableRow>
+                        ))}
+                      </TableBody>
                     </Table>
-                </ScrollArea>
+                  </ScrollArea>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-2">APP Classes ({details.classCount.app})</h3>
+                  <ScrollArea className="h-96 mt-4 pr-4">
+                    <Table>
+                      <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Topic</TableHead></TableRow></TableHeader>
+                      <TableBody>
+                        {details.classes.filter(isAppEntry).sort((a,b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()).map(c => (
+                          <TableRow key={c.id}><TableCell><Badge variant="secondary">{c.date}</Badge></TableCell><TableCell className="font-medium max-w-xs truncate">{c.classTopic}</TableCell></TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
+                </div>
+              </div>
             );
             break;
         case 'avgAttendance':
-            isDialog = true;
             title = "Average Attendance Calculation"
             content = (
-                <div className="grid gap-4 py-4 text-sm mt-4">
-                    <p>Total Combined Attendance: {details.totalAverageAttendance.toLocaleString()}</p>
-                    <p>Total Classes: {details.classCount.toLocaleString()}</p>
-                    <p className="font-bold border-t pt-2 mt-1">
-                        {details.totalAverageAttendance.toLocaleString()} / {details.classCount > 0 ? details.classCount.toLocaleString() : 1} = {details.avgAttendance.toLocaleString()}
-                    </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 text-sm">
+                <div className="space-y-2 rounded-lg border p-4">
+                    <h3 className="font-semibold text-center mb-2">Fb Data</h3>
+                    <p>Total Fb Attendance: {details.totalAverageAttendance.fb.toLocaleString()}</p>
+                    <p>Total Fb Classes: {details.classCount.fb.toLocaleString()}</p>
+                    <p className="font-bold border-t pt-2 mt-2">Avg: {details.avgAttendance.fb.toLocaleString()}</p>
                 </div>
+                <div className="space-y-2 rounded-lg border p-4">
+                    <h3 className="font-semibold text-center mb-2">App Data</h3>
+                    <p>Total App Attendance: {details.totalAverageAttendance.app.toLocaleString()}</p>
+                    <p>Total App Classes: {details.classCount.app.toLocaleString()}</p>
+                    <p className="font-bold border-t pt-2 mt-2">Avg: {details.avgAttendance.app.toLocaleString()}</p>
+                </div>
+              </div>
             );
             break;
         case 'highestPeakAttendance':
-            isDialog = true;
             title = "Highest Attendance Class";
             content = (
                 <div className="text-sm p-4 space-y-1">
                     {details.highestAttendanceClass ? (
                         <>
-                            <h4 className="font-semibold">{details.name}</h4>
+                            <h4 className="font-semibold">{details.highestAttendanceClass.teacher}</h4>
                             <p className="font-bold text-base">{isFbEntry(details.highestAttendanceClass) ? details.highestAttendanceClass.subject : (details.highestAttendanceClass as AppClassEntry).classTopic}</p>
                             <p className="text-xs text-muted-foreground">{details.highestAttendanceClass.date} ({details.highestAttendanceClass.dataSource?.toUpperCase()})</p>
                         </>
@@ -196,13 +206,11 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
             );
             break;
         case 'totalDuration':
-             isDialog = true;
              title = "Total Duration";
-             content = <div className="font-bold text-lg p-4">{formatDuration(details.totalDuration)}</div>
+             content = <div className="font-bold text-lg p-4">{formatDuration(details.totalDuration.total)}</div>
              break;
         case 'uniqueCourses':
              if (details.uniqueCourses.length === 0) return null;
-             isDialog = true;
              title = `Unique Courses Taught by ${details.name} (Fb Only)`;
              content = (
                  <ScrollArea className="h-72 mt-4">
@@ -213,7 +221,6 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
              );
              break;
         case 'uniqueProductTypes':
-             isDialog = true;
              title = `Unique Product Types by ${details.name}`;
              content = (
                  <ScrollArea className="h-72 mt-4">
@@ -227,35 +234,19 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
             return null;
     }
 
-    if (isDialog) {
-        return (
-            <Dialog>
-                <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-xl">
-                    <DialogHeader>
-                        <DialogTitle>{title}</DialogTitle>
-                    </DialogHeader>
-                    {content}
-                </DialogContent>
-            </Dialog>
-        )
-    }
-
     return (
         <Dialog>
             <DialogTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
                 {content}
             </DialogContent>
         </Dialog>
-    );
+    )
 };
 
 
@@ -268,13 +259,13 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
   const teacherGroup1Stats = useMemo(() => calculateTeacherGroupStats(teacherGroup1, data), [teacherGroup1, data]);
   const teacherGroup2Stats = useMemo(() => calculateTeacherGroupStats(teacherGroup2, data), [teacherGroup2, data]);
 
-  const statsToCompare: { label: string; icon: React.ElementType; key: keyof TeacherStats; unit?: string }[] = [
+  const statsToCompare: { label: string; icon: React.ElementType; key: 'classCount' | 'avgAttendance' | 'highestPeakAttendance' | 'totalDuration' | 'uniqueCourses' | 'uniqueProductTypes'; unit?: string }[] = [
     { label: "Total Classes", icon: Award, key: "classCount" },
     { label: "Avg. Attendance", icon: Users, key: "avgAttendance" },
     { label: "Highest Peak Attendance", icon: Star, key: "highestPeakAttendance" },
     { label: "Total Duration", icon: Clock, key: "totalDuration", unit: " min" },
-    { label: "Unique Courses (Fb)", icon: BookOpen, key: "uniqueCourses", unit: ""},
-    { label: "Unique Product Types", icon: Package, key: "uniqueProductTypes", unit: "" },
+    { label: "Unique Courses (Fb)", icon: BookOpen, key: "uniqueCourses"},
+    { label: "Unique Product Types", icon: Package, key: "uniqueProductTypes" },
   ];
 
   return (
@@ -317,11 +308,17 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
                 </TableHeader>
                 <TableBody>
                    {statsToCompare.map((stat) => {
-                       const val1 = teacherGroup1Stats ? teacherGroup1Stats[stat.key] : null;
-                       const val2 = teacherGroup2Stats ? teacherGroup2Stats[stat.key] : null;
+                       const stat1 = teacherGroup1Stats ? teacherGroup1Stats[stat.key] : null;
+                       const stat2 = teacherGroup2Stats ? teacherGroup2Stats[stat.key] : null;
+                       
+                       const isDetailedStat = (s: any): s is StatDetail => typeof s === 'object' && s !== null && 'total' in s;
+                       const isArrayStat = Array.isArray;
 
-                       const displayVal1 = Array.isArray(val1) ? val1.length : (val1 as number)?.toLocaleString() ?? 'N/A';
-                       const displayVal2 = Array.isArray(val2) ? val2.length : (val2 as number)?.toLocaleString() ?? 'N/A';
+                       const val1 = isDetailedStat(stat1) ? stat1.total : isArrayStat(stat1) ? stat1.length : stat1;
+                       const val2 = isDetailedStat(stat2) ? stat2.total : isArrayStat(stat2) ? stat2.length : stat2;
+
+                       const displayVal1 = val1?.toLocaleString() ?? 'N/A';
+                       const displayVal2 = val2?.toLocaleString() ?? 'N/A';
                        
                        if(stat.key === 'uniqueCourses' && (teacherGroup1Stats?.uniqueCourses.length === 0 && teacherGroup2Stats?.uniqueCourses.length === 0)) {
                            return null;
@@ -336,14 +333,14 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
                             </TableCell>
                             <TableCell className="text-center">
                                 <div className="flex items-center justify-center gap-1">
-                                    <span className="font-bold">{displayVal1}{val1 !== null && !Array.isArray(val1) && stat.unit}</span>
-                                    <StatPopover details={teacherGroup1Stats} statType={stat.key as any} />
+                                    <span className="font-bold">{displayVal1}{stat.unit && val1 !== null ? stat.unit : ''}</span>
+                                    <StatPopover details={teacherGroup1Stats} statType={stat.key} />
                                 </div>
                             </TableCell>
                             <TableCell className="text-center">
                                 <div className="flex items-center justify-center gap-1">
-                                    <span className="font-bold">{displayVal2}{val2 !== null && !Array.isArray(val2) && stat.unit}</span>
-                                    <StatPopover details={teacherGroup2Stats} statType={stat.key as any} />
+                                    <span className="font-bold">{displayVal2}{stat.unit && val2 !== null ? stat.unit : ''}</span>
+                                    <StatPopover details={teacherGroup2Stats} statType={stat.key} />
                                 </div>
                             </TableCell>
                         </TableRow>
