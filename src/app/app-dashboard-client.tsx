@@ -34,6 +34,7 @@ import Navbar from "@/components/navbar";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { TeacherComparison } from "@/components/dashboard/teacher-comparison";
 
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
@@ -398,7 +399,7 @@ export default function AppDashboard() {
           <h2 className="text-2xl font-bold tracking-tight mb-4">
             Data Analysis of App Classes
           </h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card className="border-chart-1/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -450,6 +451,9 @@ export default function AppDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-chart-5">{summary.totalAttendance.toLocaleString()}</div>
+                 <p className="text-xs text-muted-foreground">
+                  in current view
+                </p>
               </CardContent>
             </Card>
             <Card className="border-chart-6/50">
@@ -461,6 +465,9 @@ export default function AppDashboard() {
               </CardHeader>
               <CardContent>
                   <div className="text-2xl font-bold text-chart-6">{summary.totalEnrolled.toLocaleString()}</div>
+                   <p className="text-xs text-muted-foreground">
+                    in current view
+                  </p>
               </CardContent>
             </Card>
             <Card className="border-chart-3/50">
@@ -472,6 +479,9 @@ export default function AppDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-chart-3">{summary.averageRating.toFixed(2)}</div>
+                 <p className="text-xs text-muted-foreground">
+                  across all rated classes
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -615,6 +625,15 @@ export default function AppDashboard() {
         </section>
 
         <Separator className="my-8" />
+
+        <section className="mb-12">
+          <h2 className="text-2xl font-bold tracking-tight mb-4">
+            Top Teacher Performance
+          </h2>
+          <TopTeachers data={filteredData} />
+        </section>
+
+        <Separator className="my-8" />
         
         <section>
           <h2 className="text-2xl font-bold tracking-tight mb-4">
@@ -631,6 +650,20 @@ export default function AppDashboard() {
             </CardContent>
           </Card>
         </section>
+
+        <Separator className="my-8" />
+        
+        <section>
+          <h2 className="text-2xl font-bold tracking-tight mb-4">
+            Teacher Performance Breakdown
+          </h2>
+          <TeacherPerformanceCharts data={filteredData} />
+        </section>
+        
+        <Separator className="my-8" />
+        
+        <TeacherComparison data={data} allTeachers={teachers} />
+
 
       </main>
       <footer className="border-t">
@@ -709,5 +742,7 @@ const allColumns: {key: keyof AppClassEntry, header: string, sortable?: boolean}
   { key: "otherTechnicalIssues", header: "Other Technical Issues" },
   { key: "satisfaction", header: "Satisfaction" },
 ];
+
+    
 
     

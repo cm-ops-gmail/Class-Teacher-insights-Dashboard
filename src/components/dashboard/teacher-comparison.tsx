@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import type { ClassEntry } from '@/lib/definitions';
+import type { ClassEntry, AppClassEntry } from '@/lib/definitions';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Award, Clock, Star, Users, BookOpen, Package, Info, UserSearch } from 'lucide-react';
@@ -12,8 +12,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { MultiSelectFilter } from './multi-select-filter';
 
+type DataEntry = ClassEntry | AppClassEntry;
+
 interface TeacherComparisonProps {
-  data: ClassEntry[];
+  data: DataEntry[];
   allTeachers: string[];
 }
 
@@ -35,11 +37,13 @@ type TeacherStats = {
   highestPeakAttendance: number;
   uniqueCourses: string[];
   uniqueProductTypes: string[];
-  highestAttendanceClass: ClassEntry | null;
-  classes: ClassEntry[];
+  highestAttendanceClass: DataEntry | null;
+  classes: DataEntry[];
 };
 
-const calculateTeacherGroupStats = (teacherNames: string[], allData: ClassEntry[]): TeacherStats | null => {
+const isAppEntry = (entry: DataEntry): entry is AppClassEntry => 'product' in entry;
+
+const calculateTeacherGroupStats = (teacherNames: string[], allData: DataEntry[]): TeacherStats | null => {
   if (!teacherNames || teacherNames.length === 0) return null;
 
   const teacherClasses = allData.filter(item => teacherNames.includes(item.teacher));
@@ -58,18 +62,37 @@ const calculateTeacherGroupStats = (teacherNames: string[], allData: ClassEntry[
     };
   }
 
-  const totalAverageAttendance = teacherClasses.reduce((acc, item) => acc + parseNumericValue(item.averageAttendance), 0);
-  const totalDuration = teacherClasses.reduce((acc, item) => acc + parseNumericValue(item.totalDuration), 0);
-  
+  let totalAverageAttendance = 0;
+  let totalDuration = 0;
   let highestPeakAttendance = 0;
-  let highestAttendanceClass: ClassEntry | null = null;
+  let highestAttendanceClass: DataEntry | null = null;
+  
   teacherClasses.forEach(item => {
-    const peak = parseNumericValue(item.highestAttendance);
+    let peak = 0;
+    if (isAppEntry(item)) {
+        totalDuration += parseNumericValue(item.classDuration);
+        totalAverageAttendance += parseNumericValue(item.totalAttendance);
+        peak = parseNumericValue(item.totalAttendance);
+    } else {
+        totalDuration += parseNumericValue(item.totalDuration);
+        totalAverageAttendance += parseNumericValue(item.averageAttendance);
+        peak = parseNumericValue(item.highestAttendance);
+    }
+    
     if (peak > highestPeakAttendance) {
       highestPeakAttendance = peak;
       highestAttendanceClass = item;
     }
   });
+
+  const uniqueCourses = isAppEntry(teacherClasses[0]) 
+    ? [] 
+    : [...new Set(teacherClasses.map(c => (c as ClassEntry).course).filter(Boolean))];
+
+  const uniqueProductTypes = isAppEntry(teacherClasses[0]) 
+    ? [...new Set(teacherClasses.map(c => (c as AppClassEntry).product).filter(Boolean))]
+    : [...new Set(teacherClasses.map(c => (c as ClassEntry).productType).filter(Boolean))];
+
 
   return {
     name: teacherNames.join(', '),
@@ -78,8 +101,8 @@ const calculateTeacherGroupStats = (teacherNames: string[], allData: ClassEntry[
     totalAverageAttendance,
     avgAttendance: teacherClasses.length > 0 ? Math.round(totalAverageAttendance / teacherClasses.length) : 0,
     highestPeakAttendance,
-    uniqueCourses: [...new Set(teacherClasses.map(c => c.course).filter(Boolean))],
-    uniqueProductTypes: [...new Set(teacherClasses.map(c => c.productType).filter(Boolean))],
+    uniqueCourses,
+    uniqueProductTypes,
     highestAttendanceClass,
     classes: teacherClasses,
   };
@@ -171,6 +194,7 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
              content = <div className="font-bold text-lg p-4">{formatDuration(details.totalDuration)}</div>
              break;
         case 'uniqueCourses':
+             if (details.uniqueCourses.length === 0) return null;
              isDialog = true;
              title = `Unique Courses Taught by ${details.name}`;
              content = (
@@ -291,6 +315,11 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
 
                        const displayVal1 = Array.isArray(val1) ? val1.length : (val1 as number)?.toLocaleString() ?? 'N/A';
                        const displayVal2 = Array.isArray(val2) ? val2.length : (val2 as number)?.toLocaleString() ?? 'N/A';
+                       
+                       if(stat.key === 'uniqueCourses' && (teacherGroup1Stats?.uniqueCourses.length === 0 && teacherGroup2Stats?.uniqueCourses.length === 0)) {
+                           return null;
+                       }
+
 
                        return (
                         <TableRow key={stat.key} className="transition-colors hover:bg-accent/20 group">
@@ -300,13 +329,13 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
                             </TableCell>
                             <TableCell className="text-center">
                                 <div className="flex items-center justify-center gap-1">
-                                    <span className="font-bold">{displayVal1}{val1 !== null && stat.unit}</span>
+                                    <span className="font-bold">{displayVal1}{val1 !== null && !Array.isArray(val1) && stat.unit}</span>
                                     <StatPopover details={teacherGroup1Stats} statType={stat.key as any} />
                                 </div>
                             </TableCell>
                             <TableCell className="text-center">
                                 <div className="flex items-center justify-center gap-1">
-                                    <span className="font-bold">{displayVal2}{val2 !== null && stat.unit}</span>
+                                    <span className="font-bold">{displayVal2}{val2 !== null && !Array.isArray(val2) && stat.unit}</span>
                                     <StatPopover details={teacherGroup2Stats} statType={stat.key as any} />
                                 </div>
                             </TableCell>
@@ -327,3 +356,5 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
     </Card>
   );
 }
+
+    

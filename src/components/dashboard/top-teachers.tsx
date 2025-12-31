@@ -2,7 +2,7 @@
 "use client";
 
 import { useMemo } from 'react';
-import type { ClassEntry } from '@/lib/definitions';
+import type { ClassEntry, AppClassEntry } from '@/lib/definitions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Award, Clock, Star, UserCheck, Info } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -10,8 +10,10 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
 
+type DataEntry = ClassEntry | AppClassEntry;
+
 interface TopTeachersProps {
-  data: ClassEntry[];
+  data: DataEntry[];
 }
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
@@ -30,9 +32,11 @@ type TeacherStats = {
   totalAverageAttendance: number;
   avgAttendance: number;
   highestPeakAttendance: number;
-  classes: ClassEntry[];
-  highestAttendanceClass: ClassEntry | null;
+  classes: DataEntry[];
+  highestAttendanceClass: DataEntry | null;
 };
+
+const isAppEntry = (entry: DataEntry): entry is AppClassEntry => 'product' in entry;
 
 export function TopTeachers({ data }: TopTeachersProps) {
   const { topTeachers, teacherDetails } = useMemo(() => {
@@ -66,16 +70,29 @@ export function TopTeachers({ data }: TopTeachersProps) {
           highestAttendanceClass: null,
         };
       }
-
+      
       teacherStats[teacherName].classCount += 1;
-      teacherStats[teacherName].totalDuration += parseNumericValue(item.totalDuration);
-      teacherStats[teacherName].totalAverageAttendance += parseNumericValue(item.averageAttendance);
       teacherStats[teacherName].classes.push(item);
       
-      const peakAttendance = parseNumericValue(item.highestAttendance);
-      if (peakAttendance > teacherStats[teacherName].highestPeakAttendance) {
-        teacherStats[teacherName].highestPeakAttendance = peakAttendance;
-        teacherStats[teacherName].highestAttendanceClass = item;
+      if (isAppEntry(item)) {
+        teacherStats[teacherName].totalDuration += parseNumericValue(item.classDuration);
+        teacherStats[teacherName].totalAverageAttendance += parseNumericValue(item.totalAttendance); // Using totalAttendance for App
+        
+        const peakAttendance = parseNumericValue(item.totalAttendance);
+        if (peakAttendance > teacherStats[teacherName].highestPeakAttendance) {
+            teacherStats[teacherName].highestPeakAttendance = peakAttendance;
+            teacherStats[teacherName].highestAttendanceClass = item;
+        }
+
+      } else {
+        teacherStats[teacherName].totalDuration += parseNumericValue(item.totalDuration);
+        teacherStats[teacherName].totalAverageAttendance += parseNumericValue(item.averageAttendance);
+        
+        const peakAttendance = parseNumericValue(item.highestAttendance);
+        if (peakAttendance > teacherStats[teacherName].highestPeakAttendance) {
+          teacherStats[teacherName].highestPeakAttendance = peakAttendance;
+          teacherStats[teacherName].highestAttendanceClass = item;
+        }
       }
     });
 
@@ -234,3 +251,5 @@ export function TopTeachers({ data }: TopTeachersProps) {
     </div>
   );
 }
+
+    

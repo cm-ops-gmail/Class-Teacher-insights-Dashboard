@@ -3,7 +3,7 @@
 
 import { useMemo } from 'react';
 import { Bar, BarChart, XAxis, YAxis, LabelList } from 'recharts';
-import type { ClassEntry } from '@/lib/definitions';
+import type { ClassEntry, AppClassEntry } from '@/lib/definitions';
 import {
   Card,
   CardContent,
@@ -17,8 +17,10 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 
+type DataEntry = ClassEntry | AppClassEntry;
+
 interface TeacherPerformanceChartsProps {
-  data: ClassEntry[];
+  data: DataEntry[];
 }
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
@@ -38,6 +40,9 @@ type TeacherStats = {
   avgAttendance: number;
   highestPeakAttendance: number;
 };
+
+const isAppEntry = (entry: DataEntry): entry is AppClassEntry => 'product' in entry;
+
 
 const COLORS = [
   "hsl(var(--chart-1))",
@@ -129,12 +134,22 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
       
       const currentStats = stats[teacherName];
       currentStats.classCount += 1;
-      currentStats.totalDuration += parseNumericValue(item.totalDuration);
-      currentStats.totalAverageAttendance += parseNumericValue(item.averageAttendance);
-      
-      const peakAttendance = parseNumericValue(item.highestAttendance);
-      if (peakAttendance > currentStats.highestPeakAttendance) {
-        currentStats.highestPeakAttendance = peakAttendance;
+
+      if (isAppEntry(item)) {
+        currentStats.totalDuration += parseNumericValue(item.classDuration);
+        currentStats.totalAverageAttendance += parseNumericValue(item.totalAttendance);
+        const peakAttendance = parseNumericValue(item.totalAttendance);
+        if (peakAttendance > currentStats.highestPeakAttendance) {
+            currentStats.highestPeakAttendance = peakAttendance;
+        }
+
+      } else {
+        currentStats.totalDuration += parseNumericValue(item.totalDuration);
+        currentStats.totalAverageAttendance += parseNumericValue(item.averageAttendance);
+        const peakAttendance = parseNumericValue(item.highestAttendance);
+        if (peakAttendance > currentStats.highestPeakAttendance) {
+          currentStats.highestPeakAttendance = peakAttendance;
+        }
       }
     });
 
@@ -243,3 +258,5 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
     </div>
   );
 }
+
+    
