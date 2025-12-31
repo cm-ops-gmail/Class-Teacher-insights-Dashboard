@@ -66,14 +66,14 @@ export async function POST(request: Request) {
     });
 
     const rows = response.data.values;
-    if (!rows || rows.length < 2) { // Need at least a header and one data row
+    if (!rows || rows.length < 3) { // Need at least header row (2) and one data row
       return NextResponse.json(
-        { error: "No data found in the 'Sheet28' sheet." },
+        { error: "No data found in the 'Sheet28' sheet. The header is expected on row 2." },
         { status: 404 }
       );
     }
     
-    const header = rows[0].map(h => h.trim());
+    const header = rows[1].map(h => h.trim()); // Header is on the second row
     const classEntryKeys = Object.keys(getInitialClassEntry()) as (keyof ClassEntry)[];
     
     // Create a map from a normalized header to the ClassEntry key
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
         }
     });
 
-    const data = rows.slice(1).map((row, index) => {
+    const data = rows.slice(2).map((row, index) => { // Data starts from the third row
       const entry: Partial<ClassEntry> = { id: String(index + 1) };
       row.forEach((cellValue, i) => {
           const key = headerMap[i];
