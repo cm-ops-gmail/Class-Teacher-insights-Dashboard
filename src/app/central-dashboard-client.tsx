@@ -28,6 +28,7 @@ import { TeacherPerformanceCharts } from "@/components/dashboard/teacher-perform
 import { TeacherComparison } from '@/components/dashboard/teacher-comparison';
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
   if (value === null || value === undefined) return 0;
@@ -409,3 +410,5 @@ const allCombinedColumns: { key: keyof CombinedClassEntry; header: string; sorta
     { key: 'issuesType', header: 'Issue Type', sortable: true },
 ];
 
+
+    
