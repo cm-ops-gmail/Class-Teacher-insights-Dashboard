@@ -58,6 +58,47 @@ const parseDateString = (dateStr: string): Date | null => {
   return isNaN(parsedWithYear.getTime()) ? null : parsedWithYear;
 };
 
+const NestedDetailDialog = ({ triggerText, title, data, valueKey, valueLabel }: { triggerText: React.ReactNode, title: string, data: AppClassEntry[], valueKey: keyof AppClassEntry, valueLabel: string }) => {
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="link" size="sm" className="p-0 h-auto text-sm">{triggerText}</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
+                <ScrollArea className="h-96 mt-4">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Class Topic</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">{valueLabel}</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {data.map(item => (
+                                <TableRow key={item.id}>
+                                    <TableCell className="font-medium max-w-xs truncate">{item.classTopic}</TableCell>
+                                    <TableCell>{item.date}</TableCell>
+                                    <TableCell className="text-right">{String(item[valueKey] ?? 0)}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                        <TableFooter>
+                            <TableRow>
+                                <TableCell colSpan={2} className="font-bold">Total</TableCell>
+                                <TableCell className="text-right font-bold">
+                                    {data.reduce((sum, item) => sum + parseNumericValue(item[valueKey]), 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                </TableCell>
+                            </TableRow>
+                        </TableFooter>
+                    </Table>
+                </ScrollArea>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 
 export default function AppDashboard() {
   const [data, setData] = useState<AppClassEntry[]>([]);
@@ -205,7 +246,9 @@ export default function AppDashboard() {
   const summary = useMemo(() => {
     const activeData = filteredData;
     const count = activeData.length;
-    let ratedClassesCount = 0;
+    
+    const ratedClasses = activeData.filter(item => parseNumericValue(item.averageClassRating) > 0);
+    const ratedClassesCount = ratedClasses.length;
 
     const totalDuration = activeData.reduce((acc, item) => acc + parseNumericValue(item.classDuration), 0);
     const totalAttendance = activeData.reduce((acc, item) => acc + parseNumericValue(item.totalAttendance), 0);
@@ -214,14 +257,7 @@ export default function AppDashboard() {
     const totalAverageWatchtimePercent = activeData.reduce((acc, item) => acc + parseNumericValue(item.averageWatchtimePercent), 0);
     const totalDoubts = activeData.reduce((acc, item) => acc + parseNumericValue(item.totalDoubt), 0);
     const totalDoubtResolvedPercent = activeData.reduce((acc, item) => acc + parseNumericValue(item.doubtResolvedPercent), 0);
-    const totalAverageClassRating = activeData.reduce((acc, item) => {
-        const rating = parseNumericValue(item.averageClassRating);
-        if (rating > 0) {
-            ratedClassesCount++;
-            return acc + rating;
-        }
-        return acc;
-    }, 0);
+    const totalAverageClassRating = ratedClasses.reduce((acc, item) => acc + parseNumericValue(item.averageClassRating), 0);
 
     return {
       total: data.length,
@@ -238,7 +274,9 @@ export default function AppDashboard() {
       totalDoubts,
       totalDoubtResolvedPercent,
       avgDoubtResolvedPercent: count > 0 ? totalDoubtResolvedPercent / count : 0,
+      totalAverageClassRating,
       avgClassRating: ratedClassesCount > 0 ? totalAverageClassRating / ratedClassesCount : 0,
+      ratedClassesCount,
     }
   }, [filteredData, data.length]);
   
@@ -423,7 +461,7 @@ export default function AppDashboard() {
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[625px]">
                          <DialogHeader>
-                            <DialogTitle>Filtered Classes</DialogTitle>
+                            <DialogTitle>Filtered Classes ({summary.filtered})</DialogTitle>
                          </DialogHeader>
                         <ScrollArea className="h-72 mt-4">
                           <div className="flex flex-col gap-2 text-sm pr-6">
@@ -485,10 +523,19 @@ export default function AppDashboard() {
                         <DialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
+                        <DialogContent className="sm:max-w-2xl">
                             <DialogHeader><DialogTitle>Average Attendance Calculation</DialogTitle></DialogHeader>
-                            <div className="grid gap-4 py-4 text-sm">
-                                <div>Total Attendance: {summary.totalAttendance.toLocaleString()}</div>
+                             <div className="grid gap-4 py-4 text-sm">
+                                <div className="flex items-center gap-1.5">
+                                    Total Attendance:
+                                    <NestedDetailDialog 
+                                        triggerText={`${summary.totalAttendance.toLocaleString()}`}
+                                        title="Total Attendance Breakdown"
+                                        data={filteredData}
+                                        valueKey="totalAttendance"
+                                        valueLabel="Attendance"
+                                    />
+                                </div>
                                 <div>Total Classes: {summary.filtered.toLocaleString()}</div>
                                 <p className="font-bold border-t pt-2 mt-1">
                                     {summary.totalAttendance.toLocaleString()} / {summary.filtered.toLocaleString()} = {summary.avgAttendance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
@@ -516,10 +563,19 @@ export default function AppDashboard() {
                         <DialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
+                         <DialogContent className="sm:max-w-2xl">
                             <DialogHeader><DialogTitle>Avg. Class Attendance % Calculation</DialogTitle></DialogHeader>
-                            <div className="grid gap-4 py-4 text-sm">
-                                <div>Total Attendance % Sum: {summary.totalClassAttendancePercent.toFixed(2)}%</div>
+                             <div className="grid gap-4 py-4 text-sm">
+                                <div className="flex items-center gap-1.5">
+                                    Total Attendance % Sum:
+                                    <NestedDetailDialog
+                                        triggerText={`${summary.totalClassAttendancePercent.toFixed(2)}%`}
+                                        title="Class Attendance % Breakdown"
+                                        data={filteredData}
+                                        valueKey="classAttendancePercent"
+                                        valueLabel="Attendance %"
+                                    />
+                                </div>
                                 <div>Total Classes: {summary.filtered.toLocaleString()}</div>
                                 <p className="font-bold border-t pt-2 mt-1">
                                     {summary.totalClassAttendancePercent.toFixed(2)}% / {summary.filtered.toLocaleString()} = {summary.avgClassAttendancePercent.toFixed(2)}%
@@ -547,10 +603,19 @@ export default function AppDashboard() {
                         <DialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
+                        <DialogContent className="sm:max-w-2xl">
                             <DialogHeader><DialogTitle>Avg. Watchtime (Min) Calculation</DialogTitle></DialogHeader>
                             <div className="grid gap-4 py-4 text-sm">
-                                <div>Total Watchtime Sum: {summary.totalAverageWatchtime.toFixed(2)}</div>
+                                <div className="flex items-center gap-1.5">
+                                    Total Watchtime Sum:
+                                     <NestedDetailDialog
+                                        triggerText={`${summary.totalAverageWatchtime.toFixed(2)}`}
+                                        title="Average Watchtime (Min) Breakdown"
+                                        data={filteredData}
+                                        valueKey="averageWatchtime"
+                                        valueLabel="Avg Watchtime (min)"
+                                    />
+                                </div>
                                 <div>Total Classes: {summary.filtered.toLocaleString()}</div>
                                 <p className="font-bold border-t pt-2 mt-1">
                                     {summary.totalAverageWatchtime.toFixed(2)} / {summary.filtered.toLocaleString()} = {summary.avgWatchtime.toFixed(2)}
@@ -578,10 +643,19 @@ export default function AppDashboard() {
                         <DialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
+                        <DialogContent className="sm:max-w-2xl">
                             <DialogHeader><DialogTitle>Avg. Watchtime % Calculation</DialogTitle></DialogHeader>
                             <div className="grid gap-4 py-4 text-sm">
-                                <div>Total Watchtime % Sum: {summary.totalAverageWatchtimePercent.toFixed(2)}%</div>
+                                 <div className="flex items-center gap-1.5">
+                                    Total Watchtime % Sum:
+                                     <NestedDetailDialog
+                                        triggerText={`${summary.totalAverageWatchtimePercent.toFixed(2)}%`}
+                                        title="Average Watchtime % Breakdown"
+                                        data={filteredData}
+                                        valueKey="averageWatchtimePercent"
+                                        valueLabel="Avg Watchtime %"
+                                    />
+                                </div>
                                 <div>Total Classes: {summary.filtered.toLocaleString()}</div>
                                 <p className="font-bold border-t pt-2 mt-1">
                                     {summary.totalAverageWatchtimePercent.toFixed(2)}% / {summary.filtered.toLocaleString()} = {summary.avgWatchtimePercent.toFixed(2)}%
@@ -651,10 +725,19 @@ export default function AppDashboard() {
                         <DialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
+                        <DialogContent className="sm:max-w-2xl">
                             <DialogHeader><DialogTitle>Avg. Doubt Resolved % Calculation</DialogTitle></DialogHeader>
                             <div className="grid gap-4 py-4 text-sm">
-                                <div>Total Doubt Resolved % Sum: {summary.totalDoubtResolvedPercent.toFixed(2)}%</div>
+                                <div className="flex items-center gap-1.5">
+                                    Total Doubt Resolved % Sum:
+                                      <NestedDetailDialog
+                                        triggerText={`${summary.totalDoubtResolvedPercent.toFixed(2)}%`}
+                                        title="Doubt Resolved % Breakdown"
+                                        data={filteredData}
+                                        valueKey="doubtResolvedPercent"
+                                        valueLabel="Resolved %"
+                                    />
+                                </div>
                                 <div>Total Classes: {summary.filtered.toLocaleString()}</div>
                                 <p className="font-bold border-t pt-2 mt-1">
                                     {summary.totalDoubtResolvedPercent.toFixed(2)}% / {summary.filtered.toLocaleString()} = {summary.avgDoubtResolvedPercent.toFixed(2)}%
@@ -678,14 +761,30 @@ export default function AppDashboard() {
               <CardContent>
                 <div className="flex items-center justify-between">
                     <div className="text-2xl font-bold text-yellow-500">{summary.avgClassRating.toFixed(2)}</div>
-                    <Popover>
-                        <PopoverTrigger asChild>
+                    <Dialog>
+                        <DialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto text-sm">
-                           Average rating across all classes that received a rating.
-                        </PopoverContent>
-                    </Popover>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-2xl">
+                            <DialogHeader><DialogTitle>Avg. Class Rating Calculation</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4 text-sm">
+                                <div className="flex items-center gap-1.5">
+                                    Total Rating Sum:
+                                    <NestedDetailDialog
+                                        triggerText={`${summary.totalAverageClassRating.toFixed(2)}`}
+                                        title="Class Rating Breakdown"
+                                        data={filteredData.filter(d => parseNumericValue(d.averageClassRating) > 0)}
+                                        valueKey="averageClassRating"
+                                        valueLabel="Rating"
+                                    />
+                                </div>
+                                <div>Total Rated Classes: {summary.ratedClassesCount.toLocaleString()}</div>
+                                <p className="font-bold border-t pt-2 mt-1">
+                                    {summary.totalAverageClassRating.toFixed(2)} / {summary.ratedClassesCount.toLocaleString()} = {summary.avgClassRating.toFixed(2)}
+                                </p>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </div>
                  <p className="text-xs text-muted-foreground">
                   average for rated classes
@@ -958,3 +1057,4 @@ const allColumns: {key: keyof AppClassEntry, header: string, sortable?: boolean}
     
 
     
+
