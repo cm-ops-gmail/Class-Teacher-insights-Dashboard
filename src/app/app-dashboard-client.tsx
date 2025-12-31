@@ -34,6 +34,7 @@ import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { TeacherComparison } from "@/components/dashboard/teacher-comparison";
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
@@ -227,10 +228,15 @@ export default function AppDashboard() {
       filtered: count,
       totalDuration: Math.round(totalDuration),
       totalAttendance,
+      avgAttendance: count > 0 ? totalAttendance / count : 0,
+      totalClassAttendancePercent,
       avgClassAttendancePercent: count > 0 ? totalClassAttendancePercent / count : 0,
+      totalAverageWatchtime,
       avgWatchtime: count > 0 ? totalAverageWatchtime / count : 0,
+      totalAverageWatchtimePercent,
       avgWatchtimePercent: count > 0 ? totalAverageWatchtimePercent / count : 0,
       totalDoubts,
+      totalDoubtResolvedPercent,
       avgDoubtResolvedPercent: count > 0 ? totalDoubtResolvedPercent / count : 0,
       avgClassRating: ratedClassesCount > 0 ? totalAverageClassRating / ratedClassesCount : 0,
     }
@@ -398,7 +404,7 @@ export default function AppDashboard() {
           <h2 className="text-2xl font-bold tracking-tight mb-4">
             Data Analysis of App Classes
           </h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card className="border-chart-1/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -468,12 +474,29 @@ export default function AppDashboard() {
              <Card className="border-chart-5/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Total Attendance
+                  Average Attendance
                 </CardTitle>
                 <Users className="h-4 w-4 text-chart-5" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-chart-5">{summary.totalAttendance.toLocaleString()}</div>
+                <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-chart-5">{summary.avgAttendance.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader><DialogTitle>Average Attendance Calculation</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4 text-sm">
+                                <div>Total Attendance: {summary.totalAttendance.toLocaleString()}</div>
+                                <div>Total Classes: {summary.filtered.toLocaleString()}</div>
+                                <p className="font-bold border-t pt-2 mt-1">
+                                    {summary.totalAttendance.toLocaleString()} / {summary.filtered.toLocaleString()} = {summary.avgAttendance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                </p>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   in current view
                 </p>
@@ -487,7 +510,24 @@ export default function AppDashboard() {
                 <Percent className="h-4 w-4 text-chart-2" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-chart-2">{summary.avgClassAttendancePercent.toFixed(2)}%</div>
+                <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-chart-2">{summary.avgClassAttendancePercent.toFixed(2)}%</div>
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader><DialogTitle>Avg. Class Attendance % Calculation</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4 text-sm">
+                                <div>Total Attendance % Sum: {summary.totalClassAttendancePercent.toFixed(2)}%</div>
+                                <div>Total Classes: {summary.filtered.toLocaleString()}</div>
+                                <p className="font-bold border-t pt-2 mt-1">
+                                    {summary.totalClassAttendancePercent.toFixed(2)}% / {summary.filtered.toLocaleString()} = {summary.avgClassAttendancePercent.toFixed(2)}%
+                                </p>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                </div>
                  <p className="text-xs text-muted-foreground">
                   average for current view
                 </p>
@@ -501,7 +541,24 @@ export default function AppDashboard() {
                 <Watch className="h-4 w-4 text-chart-3" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-chart-3">{summary.avgWatchtime.toFixed(2)}</div>
+                <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-chart-3">{summary.avgWatchtime.toFixed(2)}</div>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader><DialogTitle>Avg. Watchtime (Min) Calculation</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4 text-sm">
+                                <div>Total Watchtime Sum: {summary.totalAverageWatchtime.toFixed(2)}</div>
+                                <div>Total Classes: {summary.filtered.toLocaleString()}</div>
+                                <p className="font-bold border-t pt-2 mt-1">
+                                    {summary.totalAverageWatchtime.toFixed(2)} / {summary.filtered.toLocaleString()} = {summary.avgWatchtime.toFixed(2)}
+                                </p>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                </div>
                  <p className="text-xs text-muted-foreground">
                   average for current view
                 </p>
@@ -515,7 +572,24 @@ export default function AppDashboard() {
                 <TrendingUp className="h-4 w-4 text-chart-6" />
               </CardHeader>
               <CardContent>
-                  <div className="text-2xl font-bold text-chart-6">{summary.avgWatchtimePercent.toFixed(2)}%</div>
+                 <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-chart-6">{summary.avgWatchtimePercent.toFixed(2)}%</div>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader><DialogTitle>Avg. Watchtime % Calculation</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4 text-sm">
+                                <div>Total Watchtime % Sum: {summary.totalAverageWatchtimePercent.toFixed(2)}%</div>
+                                <div>Total Classes: {summary.filtered.toLocaleString()}</div>
+                                <p className="font-bold border-t pt-2 mt-1">
+                                    {summary.totalAverageWatchtimePercent.toFixed(2)}% / {summary.filtered.toLocaleString()} = {summary.avgWatchtimePercent.toFixed(2)}%
+                                </p>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                  </div>
                    <p className="text-xs text-muted-foreground">
                     average for current view
                   </p>
@@ -529,7 +603,35 @@ export default function AppDashboard() {
                 <HelpCircle className="h-4 w-4 text-destructive" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-destructive">{summary.totalDoubts.toLocaleString()}</div>
+                 <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-destructive">{summary.totalDoubts.toLocaleString()}</div>
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-xl">
+                            <DialogHeader><DialogTitle>Total Doubts Breakdown</DialogTitle></DialogHeader>
+                            <ScrollArea className="h-72 mt-4">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Class</TableHead>
+                                            <TableHead className="text-right">Doubts</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredData.filter(d => parseNumericValue(d.totalDoubt) > 0).map(item => (
+                                            <TableRow key={item.id}>
+                                                <TableCell className="max-w-sm truncate">{item.classTopic}</TableCell>
+                                                <TableCell className="text-right">{parseNumericValue(item.totalDoubt).toLocaleString()}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </ScrollArea>
+                        </DialogContent>
+                    </Dialog>
+                </div>
                  <p className="text-xs text-muted-foreground">
                   in current view
                 </p>
@@ -543,7 +645,24 @@ export default function AppDashboard() {
                 <CheckCircle className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-500">{summary.avgDoubtResolvedPercent.toFixed(2)}%</div>
+                <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-green-500">{summary.avgDoubtResolvedPercent.toFixed(2)}%</div>
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader><DialogTitle>Avg. Doubt Resolved % Calculation</DialogTitle></DialogHeader>
+                            <div className="grid gap-4 py-4 text-sm">
+                                <div>Total Doubt Resolved % Sum: {summary.totalDoubtResolvedPercent.toFixed(2)}%</div>
+                                <div>Total Classes: {summary.filtered.toLocaleString()}</div>
+                                <p className="font-bold border-t pt-2 mt-1">
+                                    {summary.totalDoubtResolvedPercent.toFixed(2)}% / {summary.filtered.toLocaleString()} = {summary.avgDoubtResolvedPercent.toFixed(2)}%
+                                </p>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                </div>
                  <p className="text-xs text-muted-foreground">
                   average for current view
                 </p>
@@ -557,7 +676,17 @@ export default function AppDashboard() {
                 <Star className="h-4 w-4 text-yellow-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-500">{summary.avgClassRating.toFixed(2)}</div>
+                <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-yellow-500">{summary.avgClassRating.toFixed(2)}</div>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto text-sm">
+                           Average rating across all classes that received a rating.
+                        </PopoverContent>
+                    </Popover>
+                </div>
                  <p className="text-xs text-muted-foreground">
                   average for rated classes
                 </p>
