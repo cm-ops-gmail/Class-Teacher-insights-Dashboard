@@ -33,6 +33,7 @@ import { useYear } from '@/contexts/year-context';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import Footer from '@/components/footer';
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
   if (value === null || value === undefined) return 0;
@@ -444,7 +445,19 @@ export default function CentralDashboard() {
           <h2 className="text-2xl font-bold tracking-tight mb-4">Overall Performance</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <StatCard icon={Award} title="Total Classes" stat={summary.classCount} colorClass="chart-1" popoverContent={
-                <DialogHeader><DialogTitle>Total Classes Breakdown</DialogTitle></DialogHeader>
+                 <>
+                    <DialogHeader><DialogTitle>Total Classes Breakdown ({summary.classCount.total})</DialogTitle></DialogHeader>
+                    <ScrollArea className="h-72 mt-4">
+                      <div className="flex flex-col gap-2 text-sm pr-6">
+                        {filteredData.map(item => (
+                          <div key={item.id} className="flex justify-between items-center gap-4 border-b pb-2">
+                            <span className="text-muted-foreground">{item.date}</span>
+                            <span className="font-medium text-right truncate">{isFbEntry(item) ? item.course : item.classTopic}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                 </>
             } />
              <StatCard icon={Clock} title="Total Duration (min)" stat={summary.totalDuration} colorClass="chart-4" popoverContent={
                 <>
@@ -497,7 +510,7 @@ export default function CentralDashboard() {
                     <DialogHeader><DialogTitle>Highest Attendance Class</DialogTitle></DialogHeader>
                     {summary.highestAttendance.class && 
                       <div className="p-4 text-sm">
-                        <p><strong>Topic:</strong> {summary.highestAttendance.class.subject || (summary.highestAttendance.class as AppClassEntry).classTopic}</p>
+                        <p><strong>Topic:</strong> {isFbEntry(summary.highestAttendance.class) ? summary.highestAttendance.class.subject : summary.highestAttendance.class.classTopic}</p>
                         <p><strong>Teacher:</strong> {summary.highestAttendance.class.teacher}</p>
                         <p><strong>Date:</strong> {summary.highestAttendance.class.date}</p>
                         <p><strong>Source:</strong> {summary.highestAttendance.class.dataSource?.toUpperCase()}</p>
@@ -710,22 +723,7 @@ export default function CentralDashboard() {
         </section>
 
       </main>
-      <footer className="border-t">
-        <div className="container mx-auto flex items-center justify-between px-4 py-6 text-sm text-muted-foreground">
-          <div>© 2025 10 MS Content Operations. All rights reserved.</div>
-          <div className="flex items-center gap-6">
-            <a href="#" className="transition-colors hover:text-foreground">
-              Policy Book
-            </a>
-            <a href="#" className="transition-colors hover:text-foreground">
-              Automation Projects
-            </a>
-            <a href="#" className="transition-colors hover:text-foreground">
-              Automation Project Documentation
-            </a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
