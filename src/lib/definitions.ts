@@ -1,3 +1,4 @@
+
 export type ClassEntry = {
   id: string;
   date: string;
@@ -8,34 +9,23 @@ export type ClassEntry = {
   productType: string;
   course: string;
   subject: string;
-  topic: string;
-  teacher1: string;
+  teacher: string;
+  teacher1Gmail: string;
   teacher2: string;
+  teacher2Gmail: string;
   teacher3: string;
-  studio: string;
-  studioCoordinator: string;
-  opsStakeholder: string;
-  lectureSlide: string;
-  title: string;
-  caption: string;
-  crossPost: string;
-  sourcePlatform: string;
-  teacherConfirmation: string;
-  zoomLink: string;
-  zoomCredentials: string;
-  moderatorLink: string;
-  annotatedSlideLink: string;
-  classStopTimestamps: string;
-  startDelayMinutes: string;
-  totalDurationMinutes: string;
-  viewCount10Min: string;
-  viewCount40_50Min: string;
-  viewCountBeforeEnd: string;
+  teacher3Gmail: string;
+  totalDuration: string;
   highestAttendance: string;
   averageAttendance: string;
   totalComments: string;
-  classLink: string;
-  recordingLink: string;
-  classQACFeedback: string;
-  remarks: string;
+  issuesType: string;
+  issuesDetails: string;
+  slideCommunication: string;
+  liveClassIssues: string;
+  otherTechnicalIssues: string;
+  satisfaction: string;
+  // Deprecated fields, kept for safety but should not be used.
+  teacher1?: string; // Use 'teacher' instead
+  totalDurationMinutes?: string; // Use 'totalDuration' instead
 };

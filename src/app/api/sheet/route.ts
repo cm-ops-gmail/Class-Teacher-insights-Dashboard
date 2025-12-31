@@ -9,6 +9,11 @@ function getSheetId(url: string): string | null {
   return match ? match[1] : null;
 }
 
+// Function to create a clean mapping key from a header string
+const normalizeHeader = (header: string): string => {
+    return header.toLowerCase().replace(/[^a-z0-9]/gi, '');
+}
+
 export async function POST(request: Request) {
   try {
     const { sheetUrl } = await request.json();
@@ -57,35 +62,51 @@ export async function POST(request: Request) {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: "Facebook_Dashboard",
+      range: "Sheet28",
     });
 
     const rows = response.data.values;
     if (!rows || rows.length < 2) { // Need at least a header and one data row
       return NextResponse.json(
-        { error: "No data found in the 'Facebook_Dashboard' sheet." },
+        { error: "No data found in the 'Sheet28' sheet." },
         { status: 404 }
       );
     }
-
+    
     const header = rows[0].map(h => h.trim());
     const classEntryKeys = Object.keys(getInitialClassEntry()) as (keyof ClassEntry)[];
     
-    // Create a map from spreadsheet header to ClassEntry key
-    const headerMap: { [key: number]: keyof ClassEntry } = {};
-    const lowerCaseKeyMap = new Map(classEntryKeys.map(k => [k.toLowerCase().replace(/[^a-z0-9]/gi, ''), k]));
+    // Create a map from a normalized header to the ClassEntry key
+    const normalizedKeyMap = new Map(classEntryKeys.map(k => [normalizeHeader(k), k]));
 
-    // A special map for headers that don't match the standard normalization
+    // Special mappings for headers that don't match the key names after normalization
     const specialHeaderMap: {[key: string]: keyof ClassEntry} = {
-      'totaldurationminute': 'totalDurationMinutes'
+        'teacher1': 'teacher',
+        'teacher1gmail': 'teacher1Gmail',
+        'teacher2doubtsolver1': 'teacher2',
+        'teacher2gmail': 'teacher2Gmail',
+        'teacher3doubtsolver2': 'teacher3',
+        'teacher3gmail': 'teacher3Gmail',
+        'totalduration': 'totalDuration',
+        'totalcommentsnumber': 'totalComments',
+        'issuestype': 'issuesType',
+        'issuesdetails': 'issuesDetails',
+        'slidecommunication': 'slideCommunication',
+        'whichissueshaveyoufacedduringtheliveclass': 'liveClassIssues',
+        'besidesmentionedissueshaveyouencounteredanyothertechnicalissues': 'otherTechnicalIssues',
+        'onascalof1to5howsatisfiedareyouwithyourinstudioexperienceSatisfaction': 'satisfaction',
+        'entrytimet45t30': 'entryTime',
+        'slideqact15': 'slideQAC',
+        'classstarttime': 'classStartTime'
     };
 
+    const headerMap: { [key: number]: keyof ClassEntry } = {};
     header.forEach((h, i) => {
-        const normalizedHeader = h.toLowerCase().replace(/[^a-z0-9]/gi, '');
+        const normalizedHeader = normalizeHeader(h);
         if (specialHeaderMap[normalizedHeader]) {
              headerMap[i] = specialHeaderMap[normalizedHeader];
-        } else if (lowerCaseKeyMap.has(normalizedHeader)) {
-            headerMap[i] = lowerCaseKeyMap.get(normalizedHeader)!;
+        } else if (normalizedKeyMap.has(normalizedHeader)) {
+            headerMap[i] = normalizedKeyMap.get(normalizedHeader)!;
         }
     });
 
@@ -97,7 +118,7 @@ export async function POST(request: Request) {
               (entry as any)[key] = cellValue || "";
           }
       });
-      // Fill any missing keys with empty strings
+      // Fill any missing keys with empty strings to ensure type consistency
       classEntryKeys.forEach(key => {
         if (!(key in entry)) {
           (entry as any)[key] = "";
@@ -144,35 +165,21 @@ function getInitialClassEntry(): ClassEntry {
       productType: '',
       course: '',
       subject: '',
-      topic: '',
-      teacher1: '',
+      teacher: '',
+      teacher1Gmail: '',
       teacher2: '',
+      teacher2Gmail: '',
       teacher3: '',
-      studio: '',
-      studioCoordinator: '',
-      opsStakeholder: '',
-      lectureSlide: '',
-      title: '',
-      caption: '',
-      crossPost: '',
-      sourcePlatform: '',
-      teacherConfirmation: '',
-      zoomLink: '',
-      zoomCredentials: '',
-      moderatorLink: '',
-      annotatedSlideLink: '',
-      classStopTimestamps: '',
-      startDelayMinutes: '',
-      totalDurationMinutes: '',
-      viewCount10Min: '',
-      viewCount40_50Min: '',
-      viewCountBeforeEnd: '',
+      teacher3Gmail: '',
+      totalDuration: '',
       highestAttendance: '',
       averageAttendance: '',
       totalComments: '',
-      classLink: '',
-      recordingLink: '',
-      classQACFeedback: '',
-      remarks: '',
+      issuesType: '',
+      issuesDetails: '',
+      slideCommunication: '',
+      liveClassIssues: '',
+      otherTechnicalIssues: '',
+      satisfaction: '',
     };
 }

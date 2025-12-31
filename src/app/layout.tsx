@@ -1,9 +1,10 @@
+
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "Run Sheet Data Visualization",
+  title: "Facebook Dashboard",
   description: "Dashboard for your Google Sheet data.",
 };
 

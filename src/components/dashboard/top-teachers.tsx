@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo } from 'react';
@@ -50,7 +51,7 @@ export function TopTeachers({ data }: TopTeachersProps) {
     const teacherStats: { [key: string]: TeacherStats } = {};
 
     data.forEach(item => {
-      const teacherName = item.teacher1;
+      const teacherName = item.teacher;
       if (!teacherName) return;
 
       if (!teacherStats[teacherName]) {
@@ -67,7 +68,7 @@ export function TopTeachers({ data }: TopTeachersProps) {
       }
 
       teacherStats[teacherName].classCount += 1;
-      teacherStats[teacherName].totalDuration += parseNumericValue(item.totalDurationMinutes);
+      teacherStats[teacherName].totalDuration += parseNumericValue(item.totalDuration);
       teacherStats[teacherName].totalAverageAttendance += parseNumericValue(item.averageAttendance);
       teacherStats[teacherName].classes.push(item);
       
@@ -108,7 +109,7 @@ export function TopTeachers({ data }: TopTeachersProps) {
                 <div className="flex flex-col gap-2 text-sm pr-4">
                   {details.classes.map(c => (
                     <div key={c.id} className="flex justify-between items-center border-b pb-1">
-                      <span className="truncate max-w-[150px]">{c.topic}</span>
+                      <span className="truncate max-w-[150px]">{c.subject}</span>
                       <Badge variant="secondary">{c.date}</Badge>
                     </div>
                   ))}
@@ -124,7 +125,7 @@ export function TopTeachers({ data }: TopTeachersProps) {
                 <div className="text-sm">
                     {details.highestAttendanceClass ? (
                         <>
-                            <p className="font-bold">{details.highestAttendanceClass.topic}</p>
+                            <p className="font-bold">{details.highestAttendanceClass.subject}</p>
                             <p className="text-xs text-muted-foreground">{details.highestAttendanceClass.date}</p>
                         </>
                     ) : 'No data'}

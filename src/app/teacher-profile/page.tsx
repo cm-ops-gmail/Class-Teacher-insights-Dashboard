@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -129,7 +130,7 @@ export default function TeacherProfilePage() {
   const allTeachers = useMemo(() => {
     const teacherSet = new Set<string>();
     data.forEach(item => {
-        if(item.teacher1) teacherSet.add(item.teacher1);
+        if(item.teacher) teacherSet.add(item.teacher);
     });
     return Array.from(teacherSet).sort();
   }, [data]);
@@ -139,7 +140,7 @@ export default function TeacherProfilePage() {
       return null;
     }
 
-    const relevantClasses = data.filter(item => selectedTeachers.includes(item.teacher1));
+    const relevantClasses = data.filter(item => selectedTeachers.includes(item.teacher));
 
     if (relevantClasses.length === 0) return null;
 
@@ -159,7 +160,7 @@ export default function TeacherProfilePage() {
 
     relevantClasses.forEach(item => {
         stats.classCount += 1;
-        stats.totalDuration += parseNumericValue(item.totalDurationMinutes);
+        stats.totalDuration += parseNumericValue(item.totalDuration);
         stats.totalAverageAttendance += parseNumericValue(item.averageAttendance);
         stats.classes.push(item);
         
@@ -296,7 +297,7 @@ export default function TeacherProfilePage() {
                                                         {aggregatedStats.classes.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(c => (
                                                             <TableRow key={c.id}>
                                                                 <TableCell><Badge variant="secondary">{c.date}</Badge></TableCell>
-                                                                <TableCell className="font-medium max-w-xs truncate">{c.topic}</TableCell>
+                                                                <TableCell className="font-medium max-w-xs truncate">{c.subject}</TableCell>
                                                                 <TableCell>{c.course}</TableCell>
                                                             </TableRow>
                                                         ))}
@@ -345,7 +346,7 @@ export default function TeacherProfilePage() {
                                                                     <TableBody>
                                                                         {aggregatedStats.classes.map(item => (
                                                                             <TableRow key={item.id}>
-                                                                                <TableCell className="font-medium max-w-xs truncate">{item.topic}</TableCell>
+                                                                                <TableCell className="font-medium max-w-xs truncate">{item.subject}</TableCell>
                                                                                 <TableCell>{item.course}</TableCell>
                                                                                 <TableCell className="text-right">{parseNumericValue(item.averageAttendance).toLocaleString()}</TableCell>
                                                                             </TableRow>
@@ -437,10 +438,10 @@ export default function TeacherProfilePage() {
                                                 <div className="space-y-1">
                                                   <h4 className="font-semibold">Highest Attendance Class</h4>
                                                   <p className="text-sm">
-                                                      {aggregatedStats.highestAttendanceClass.topic}
+                                                      {aggregatedStats.highestAttendanceClass.subject}
                                                   </p>
                                                   <p className="text-xs text-muted-foreground">
-                                                      by {aggregatedStats.highestAttendanceClass.teacher1} on {aggregatedStats.highestAttendanceClass.date}
+                                                      by {aggregatedStats.highestAttendanceClass.teacher} on {aggregatedStats.highestAttendanceClass.date}
                                                   </p>
                                                 </div>
                                             </PopoverContent>
@@ -541,8 +542,8 @@ export default function TeacherProfilePage() {
                               {aggregatedStats.classes.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(c => (
                                 <TableRow key={c.id}>
                                   <TableCell><Badge variant="secondary">{c.date}</Badge></TableCell>
-                                  <TableCell>{c.teacher1}</TableCell>
-                                  <TableCell className="font-medium max-w-[200px] truncate">{c.topic}</TableCell>
+                                  <TableCell>{c.teacher}</TableCell>
+                                  <TableCell className="font-medium max-w-[200px] truncate">{c.subject}</TableCell>
                                   <TableCell>{c.course}</TableCell>
                                   <TableCell className="text-right">{parseNumericValue(c.averageAttendance).toLocaleString()}</TableCell>
                                   <TableCell className="text-right">{parseNumericValue(c.highestAttendance).toLocaleString()}</TableCell>

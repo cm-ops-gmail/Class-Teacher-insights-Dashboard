@@ -113,7 +113,7 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
     const stats: { [key: string]: TeacherStats } = {};
 
     data.forEach(item => {
-      const teacherName = item.teacher1;
+      const teacherName = item.teacher;
       if (!teacherName) return;
 
       if (!stats[teacherName]) {
@@ -129,7 +129,7 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
       
       const currentStats = stats[teacherName];
       currentStats.classCount += 1;
-      currentStats.totalDuration += parseNumericValue(item.totalDurationMinutes);
+      currentStats.totalDuration += parseNumericValue(item.totalDuration);
       currentStats.totalAverageAttendance += parseNumericValue(item.averageAttendance);
       
       const peakAttendance = parseNumericValue(item.highestAttendance);
