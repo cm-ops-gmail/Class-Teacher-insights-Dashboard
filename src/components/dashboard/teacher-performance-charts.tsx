@@ -16,6 +16,11 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import { Button } from '../ui/button';
+import { Info } from 'lucide-react';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { ScrollArea } from '../ui/scroll-area';
 
 type DataEntry = ClassEntry | AppClassEntry;
 
@@ -84,10 +89,12 @@ const processChartData = (
   }
   
   // Assign colors
-  return chartData.map((item, index) => ({
+  const finalChartData = chartData.map((item, index) => ({
     ...item,
     fill: COLORS[index % COLORS.length],
   }));
+
+  return { chartData: finalChartData, othersData: others };
 };
 
 const CustomTooltipContent = ({ active, payload, label, total, metricLabel }: any) => {
@@ -177,23 +184,23 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
       return config;
   };
 
-  const classCountData = processChartData(teacherStats, 'classCount');
-  const avgAttendanceData = processChartData(teacherStats, 'avgAttendance');
-  const totalDurationData = processChartData(teacherStats, 'totalDuration');
+  const { chartData: classCountData, othersData: classCountOthers } = processChartData(teacherStats, 'classCount');
+  const { chartData: avgAttendanceData, othersData: avgAttendanceOthers } = processChartData(teacherStats, 'avgAttendance');
+  const { chartData: totalDurationData, othersData: totalDurationOthers } = processChartData(teacherStats, 'totalDuration');
 
   if (!data || data.length === 0) {
     return null;
   }
   
   const allChartCards = [
-    { title: "Classes Taught by Teacher", data: classCountData, total: totals.classCount, metricLabel: 'Classes' },
-    { title: "Average Attendance by Teacher", data: avgAttendanceData, total: totals.avgAttendance, metricLabel: 'Avg. Attendance' },
-    { title: "Total Duration (min) by Teacher", data: totalDurationData, total: totals.totalDuration, metricLabel: 'Duration (min)' },
+    { title: "Classes Taught by Teacher", data: classCountData, total: totals.classCount, metricLabel: 'Classes', othersData: classCountOthers, valueKey: 'classCount' as keyof TeacherStats },
+    { title: "Average Attendance by Teacher", data: avgAttendanceData, total: totals.avgAttendance, metricLabel: 'Avg. Attendance', othersData: avgAttendanceOthers, valueKey: 'avgAttendance' as keyof TeacherStats },
+    { title: "Total Duration (min) by Teacher", data: totalDurationData, total: totals.totalDuration, metricLabel: 'Duration (min)', othersData: totalDurationOthers, valueKey: 'totalDuration' as keyof TeacherStats },
   ];
 
   return (
     <div className="grid grid-cols-1 gap-6">
-      {allChartCards.map(({ title, data, total, metricLabel }) => {
+      {allChartCards.map(({ title, data, total, metricLabel, othersData, valueKey }) => {
         const top30Value = data.filter(d => d.name !== 'Others').reduce((acc, d) => acc + d.value, 0);
         const othersValue = data.find(d => d.name === 'Others')?.value ?? 0;
         const top30Percent = total > 0 ? ((top30Value / total) * 100).toFixed(1) : 0;
@@ -203,8 +210,41 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
           <Card key={title} className="flex flex-col">
             <CardHeader>
               <CardTitle>{title} ({total.toLocaleString()})</CardTitle>
-              <CardDescription>
-                Top 30 contribute {top30Percent}% of the total. Others contribute {othersPercent}%.
+              <CardDescription className="flex items-center gap-2">
+                <span>Top 30 contribute {top30Percent}% of the total.</span>
+                {othersData.length > 0 && (
+                   <div className="flex items-center gap-1">
+                        <span>Others contribute {othersPercent}%.</span>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4" /></Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md">
+                                <DialogHeader>
+                                    <DialogTitle>Teachers in "Others"</DialogTitle>
+                                </DialogHeader>
+                                <ScrollArea className="h-96 mt-4">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Teacher</TableHead>
+                                                <TableHead className="text-right">{metricLabel}</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {othersData.sort((a, b) => (b[valueKey] as number) - (a[valueKey] as number)).map(teacher => (
+                                                <TableRow key={teacher.name}>
+                                                    <TableCell className="font-medium">{teacher.name}</TableCell>
+                                                    <TableCell className="text-right">{(teacher[valueKey] as number).toLocaleString()}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </ScrollArea>
+                            </DialogContent>
+                        </Dialog>
+                   </div>
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pl-0 pr-6">
@@ -258,5 +298,3 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
     </div>
   );
 }
-
-    
