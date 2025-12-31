@@ -20,7 +20,7 @@ const Navbar = ({ children }: NavbarProps) => {
     <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-4">
-          <Link href="/" passHref>
+          <Link href="/central-dashboard" passHref>
              <Logo />
           </Link>
           <Tabs value={selectedYear} onValueChange={(value) => setSelectedYear(value as '2025' | '2026')}>
@@ -40,7 +40,7 @@ const Navbar = ({ children }: NavbarProps) => {
            <Link href="/" passHref>
              <Button variant="ghost">
                 <Home className="mr-2 h-4 w-4" />
-                FB Dashboard
+                Fb dashboard
              </Button>
            </Link>
            <Link href="/app-dashboard" passHref>
