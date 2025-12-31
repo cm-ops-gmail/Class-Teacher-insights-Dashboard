@@ -24,6 +24,7 @@ import { MultiSelectFilter } from '@/components/dashboard/multi-select-filter';
 import { TeacherComparison } from '@/components/dashboard/teacher-comparison';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 const parseNumericValue = (
   value: string | number | undefined | null
@@ -252,14 +253,17 @@ export default function TeacherProfilePage() {
   
   const isAnyTeacherSelected = selectedTeachers.length > 0;
 
-  const StatCard = ({ icon: Icon, title, stat, format, popoverContent }: { icon: React.ElementType, title: string, stat: StatDetail | number, format?: (value: number) => string, popoverContent: React.ReactNode }) => {
+  const StatCard = ({ icon: Icon, title, stat, format, popoverContent, colorClass }: { icon: React.ElementType, title: string, stat: StatDetail | number, format?: (value: number) => string, popoverContent: React.ReactNode, colorClass: string }) => {
     const isDetailed = typeof stat === 'object' && stat !== null;
     const total = isDetailed ? stat.total : stat;
     const formattedTotal = format ? format(total) : total.toLocaleString();
 
     return (
-        <div className="flex items-start gap-4 rounded-lg border p-4 transition-all duration-300 ease-in-out hover:shadow-lg border-chart-1/50 hover:border-chart-1 hover:-translate-y-1">
-            <Icon className="h-8 w-8 text-chart-1 mt-1" />
+        <div className={cn(
+            "flex items-start gap-4 rounded-lg border p-4 transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1",
+            `border-${colorClass}/50 hover:border-${colorClass}`
+        )}>
+            <Icon className={cn("h-8 w-8 mt-1", `text-${colorClass}`)} />
             <div className="flex-1">
                 <p className="text-muted-foreground">{title}</p>
                 <p className="text-2xl font-bold">{formattedTotal}</p>
@@ -361,6 +365,7 @@ export default function TeacherProfilePage() {
                                 icon={Award}
                                 title="Total Classes Taught"
                                 stat={aggregatedStats.classCount}
+                                colorClass="chart-1"
                                 popoverContent={
                                     <DialogContent className="max-w-4xl">
                                         <DialogHeader>
@@ -401,6 +406,7 @@ export default function TeacherProfilePage() {
                                 icon={Users}
                                 title="Combined Avg. Attendance"
                                 stat={aggregatedStats.avgAttendance}
+                                colorClass="chart-2"
                                 popoverContent={
                                     <DialogContent className="sm:max-w-2xl">
                                         <DialogHeader><DialogTitle>Average Attendance Calculation</DialogTitle></DialogHeader>
@@ -437,6 +443,7 @@ export default function TeacherProfilePage() {
                                 icon={BookOpen}
                                 title="Unique Courses Taught"
                                 stat={aggregatedStats.uniqueCourses.length}
+                                colorClass="chart-3"
                                 popoverContent={
                                     <DialogContent>
                                         <DialogHeader><DialogTitle>Unique Courses by {aggregatedStats.name}</DialogTitle></DialogHeader>
@@ -452,6 +459,7 @@ export default function TeacherProfilePage() {
                                 icon={Package}
                                 title="Unique Product Types"
                                 stat={aggregatedStats.uniqueProductTypes.length}
+                                colorClass="chart-4"
                                 popoverContent={
                                     <DialogContent>
                                         <DialogHeader><DialogTitle>Unique Product Types by {aggregatedStats.name}</DialogTitle></DialogHeader>
@@ -467,6 +475,7 @@ export default function TeacherProfilePage() {
                                 icon={Star}
                                 title="Highest Peak Attendance"
                                 stat={aggregatedStats.highestPeakAttendance.total}
+                                colorClass="chart-5"
                                 popoverContent={
                                      <DialogContent>
                                         <DialogHeader><DialogTitle>Highest Attendance Class</DialogTitle></DialogHeader>
@@ -488,6 +497,7 @@ export default function TeacherProfilePage() {
                                 icon={Clock}
                                 title="Total Duration (min)"
                                 stat={aggregatedStats.totalDuration}
+                                colorClass="chart-6"
                                 popoverContent={
                                      <DialogContent className="sm:max-w-md">
                                         <DialogHeader><DialogTitle>Total Duration</DialogTitle></DialogHeader>
@@ -500,6 +510,7 @@ export default function TeacherProfilePage() {
                                 title="Average Rating"
                                 stat={aggregatedStats.averageRating}
                                 format={(val) => val.toFixed(2)}
+                                colorClass="chart-1"
                                 popoverContent={
                                     <DialogContent className="sm:max-w-md">
                                         <DialogHeader><DialogTitle>Average Rating</DialogTitle></DialogHeader>
