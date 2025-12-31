@@ -12,6 +12,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -53,6 +54,17 @@ export function MultiSelectFilter({
     return `${selectedValues.length} selected`;
   };
 
+  const allValues = options.map(o => o.value);
+  const allSelected = selectedValues.length === allValues.length;
+
+  const handleSelectAll = () => {
+    if (allSelected) {
+      onSelectedValuesChange([]);
+    } else {
+      onSelectedValuesChange(allValues);
+    }
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -83,6 +95,10 @@ export function MultiSelectFilter({
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>
+              <CommandItem onSelect={handleSelectAll} className="font-semibold">
+                {allSelected ? "Deselect All" : "Select All"}
+              </CommandItem>
+              <CommandSeparator />
               {options.map((option) => (
                 <CommandItem
                   key={option.value}

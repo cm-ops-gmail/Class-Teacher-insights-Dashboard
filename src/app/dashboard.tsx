@@ -300,7 +300,7 @@ export default function Dashboard() {
 
   const isSameDay = (date1: Date | undefined, date2: Date | null) => {
     if (!date1 || !date2) return false;
-    return date1.getDate() === date2.getDate() &&
+    return date1.getDate() === date2.getMonth() &&
            date1.getMonth() === date2.getMonth() &&
            date1.getFullYear() === date2.getFullYear();
   };
@@ -799,6 +799,13 @@ export default function Dashboard() {
                   Apply Date Filter
                 </Button>
               )}
+               <MultiSelectFilter
+                title="Issue Types"
+                options={issueTypes.map(type => ({ value: type, label: type }))}
+                selectedValues={issueTypeFilters}
+                onSelectedValuesChange={setIssueTypeFilters}
+                triggerClassName="w-full md:w-auto"
+              />
             </div>
             
             {/* Other Filters Row */}
@@ -829,13 +836,6 @@ export default function Dashboard() {
                 options={subjects.map(subject => ({ value: subject, label: subject }))}
                 selectedValues={subjectFilters}
                 onSelectedValuesChange={setSubjectFilters}
-                triggerClassName="w-full md:w-auto"
-              />
-              <MultiSelectFilter
-                title="Issue Types"
-                options={issueTypes.map(type => ({ value: type, label: type }))}
-                selectedValues={issueTypeFilters}
-                onSelectedValuesChange={setIssueTypeFilters}
                 triggerClassName="w-full md:w-auto"
               />
 
@@ -980,4 +980,5 @@ const allColumns: {key: keyof ClassEntry, header: string, sortable?: boolean}[] 
   { key: "liveClassIssues", header: "Live Class Issues" },
   { key: "otherTechnicalIssues", header: "Other Technical Issues" },
   { key: "satisfaction", header: "Satisfaction" },
+  { key: "topic", header: "Topic" },
 ];
