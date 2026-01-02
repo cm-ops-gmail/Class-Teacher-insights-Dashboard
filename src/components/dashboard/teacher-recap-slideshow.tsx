@@ -331,9 +331,9 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
       return;
     }
 
-    // CARDS (10-80s) - 10s per card (5s motivation + 5s card) x 7 = 70s
+    // CARDS (10-94s) - 12s per card (4s motivation before + 4s card + 4s motivation after) x 7 = 84s
     const cardSequenceStart = 10;
-    const timePerCard = 10;
+    const timePerCard = 12;
     
     if (currentStage >= cardSequenceStart && currentStage < cardSequenceStart + (timePerCard * cards.length)) {
       const relativeTime = currentStage - cardSequenceStart;
@@ -343,9 +343,9 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
       if (cardIndex < cards.length) {
         const card = cards[cardIndex];
         
-        // MOTIVATION BEFORE (0-5s) - LONGER
-        if (cardPhase < 5) {
-          const motivProgress = cardPhase / 5;
+        // MOTIVATION BEFORE (0-4s)
+        if (cardPhase < 4) {
+          const motivProgress = cardPhase / 4;
           const motivOpacity = motivProgress < 0.2 ? motivProgress / 0.2 : (motivProgress > 0.8 ? (1 - motivProgress) / 0.2 : 1);
           
           const particles = createParticles(60, cardPhase, card.gradient);
@@ -374,13 +374,13 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
           return;
         }
         
-        // CARD DISPLAY + MOTIVATION AFTER (5-10s)
-        if (cardPhase >= 5) {
-          const cardDisplayPhase = cardPhase - 5;
+        // CARD DISPLAY + MOTIVATION AFTER (4-12s)
+        if (cardPhase >= 4) {
+          const cardDisplayPhase = cardPhase - 4;
           
-          // Show card for first 3 seconds (5-8s)
-          if (cardDisplayPhase < 3) {
-            const cardProgress = Math.min(cardDisplayPhase / 3, 1);
+          // Show card for first 4 seconds (4-8s)
+          if (cardDisplayPhase < 4) {
+            const cardProgress = Math.min(cardDisplayPhase / 4, 1);
             
             const particles = createParticles(30, currentStage, card.gradient);
             particles.forEach(p => {
@@ -459,9 +459,9 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
             return;
           }
           
-          // MOTIVATION AFTER (8-10s) - LONGER 2 SECONDS
-          const afterPhase = cardDisplayPhase - 3;
-          const afterProgress = afterPhase / 2;
+          // MOTIVATION AFTER (8-12s) - 4 SECONDS
+          const afterPhase = cardDisplayPhase - 4;
+          const afterProgress = afterPhase / 4;
           const afterOpacity = afterProgress < 0.2 ? afterProgress / 0.2 : (afterProgress > 0.8 ? (1 - afterProgress) / 0.2 : 1);
           
           const particles = createParticles(50, cardPhase, card.gradient);
@@ -497,7 +497,7 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
       return;
     }
 
-    // FINAL OVERVIEW (80-85s)
+    // FINAL OVERVIEW (94-99s)
     const overviewStart = cardSequenceStart + (timePerCard * cards.length);
     if (currentStage >= overviewStart && currentStage < overviewStart + 5) {
       const overviewProgress = (currentStage - overviewStart) / 5;
@@ -626,7 +626,7 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
       return;
     }
 
-    // OUTRO (85-92s)
+    // OUTRO (99-106s)
     const outroStart = overviewStart + 5;
     if (currentStage >= outroStart) {
       const outroProgress = (currentStage - outroStart) / 7;
@@ -716,7 +716,7 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
     mediaRecorderRef.current.start();
     setIsRecording(true);
 
-    const duration = 92000;
+    const duration = 106000;
     const startTime = performance.now();
     let lastFrameTime = startTime;
 
@@ -733,7 +733,7 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
       
       const elapsed = currentTime - startTime;
       const progress = Math.min(Math.max(elapsed / duration, 0), 1);
-      const currentStage = progress * 92;
+      const currentStage = progress * 106;
 
       setStage(currentStage);
       drawFrame(ctx, canvas, currentStage);
@@ -771,7 +771,7 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
     };
   }, []);
 
-  const totalDuration = 92;
+  const totalDuration = 106;
   const currentTime = Math.max(0, Math.floor(stage));
   const progress = Math.max(0, Math.min((currentTime / totalDuration) * 100, 100));
 
@@ -833,10 +833,10 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
             </h4>
             <ul className="text-sm space-y-1.5 list-disc list-inside text-muted-foreground">
               <li>✅ <strong>Clean single edge:</strong> No shadows/glow - just 3px solid border</li>
-              <li>✅ <strong>Cards faster:</strong> 10s per card (5s motivation + 3s card + 2s after)</li>
-              <li>✅ <strong>Longer motivations:</strong> 5 seconds before card, 2 seconds after</li>
+              <li>✅ <strong>Cards faster:</strong> 12s per card (4s motivation + 4s card + 4s after)</li>
+              <li>✅ <strong>Longer motivations:</strong> 4 seconds before card, 4 seconds after</li>
               <li>✅ <strong>Smooth 60fps:</strong> Frame delta timing + 16 Mbps bitrate</li>
-              <li>✅ <strong>Total duration:</strong> 92 seconds</li>
+              <li>✅ <strong>Total duration:</strong> 106 seconds</li>
               <li>📍 <strong>Button placement:</strong> Put RecapButton under teacher profile card (not with stats)</li>
             </ul>
           </div>
