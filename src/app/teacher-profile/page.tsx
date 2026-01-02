@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -13,20 +12,20 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Award, Clock, Star, UserCheck, BookOpen, Users, LogOut, Package, Info, User, X, BarChart, TrendingUp, PieChart } from 'lucide-react';
+import { Award, Clock, Star, Users, LogOut, Package, Info, User, X, BarChart, BookOpen, TrendingUp, Presentation } from 'lucide-react';
 import Navbar from '@/components/navbar';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MultiSelectFilter } from '@/components/dashboard/multi-select-filter';
 import { TeacherComparison } from '@/components/dashboard/teacher-comparison';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useYear } from '@/contexts/year-context';
 import Footer from '@/components/footer';
+import { RecapButton } from '@/components/dashboard/teacher-recap-slideshow';
 
 const parseNumericValue = (
   value: string | number | undefined | null
@@ -39,9 +38,9 @@ const parseNumericValue = (
   return isNaN(numberValue) ? 0 : numberValue;
 };
 
-type CombinedClassEntry = Partial<ClassEntry> & Partial<AppClassEntry> & { id: string, dataSource: 'fb' | 'app' };
+export type CombinedClassEntry = Partial<ClassEntry> & Partial<AppClassEntry> & { id: string, dataSource: 'fb' | 'app' };
 
-type CourseBreakdown = {
+export type CourseBreakdown = {
   [courseName: string]: {
     fb: number;
     app: number;
@@ -49,13 +48,13 @@ type CourseBreakdown = {
   };
 }
 
-type StatDetail = {
+export type StatDetail = {
   fb: number;
   app: number;
   total: number;
 };
 
-type TeacherStats = {
+export type TeacherStats = {
   name: string;
   classCount: StatDetail;
   totalDuration: StatDetail;
@@ -72,7 +71,7 @@ type TeacherStats = {
   ratedClasses: (AppClassEntry & { dataSource: 'app' })[];
 };
 
-const formatDuration = (totalMinutes: number) => {
+export const formatDuration = (totalMinutes: number) => {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     
@@ -305,7 +304,7 @@ export default function TeacherProfilePage() {
 
     return stats;
   }, [selectedTeachers, combinedData]);
-
+  
   const handleLogout = () => {
     localStorage.removeItem('dashboard_session');
     router.replace('/login');
@@ -448,13 +447,17 @@ const ContributionListItem = ({ icon: Icon, title, teacherValue, platformTotal, 
             <div className="space-y-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-2xl">{aggregatedStats.name}</CardTitle>
-                        <CardDescription>Aggregated Performance Overview</CardDescription>
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle className="text-2xl">{aggregatedStats.name}</CardTitle>
+                                <CardDescription>Aggregated Performance Overview</CardDescription>
+                            </div>
+                        </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <ul className="space-y-3">
                             <ContributionListItem
-                                icon={PieChart}
+                                icon={TrendingUp}
                                 title="Contributed to platform's total classes"
                                 teacherValue={aggregatedStats.classCount.total}
                                 platformTotal={platformTotals.classCount}
@@ -475,6 +478,10 @@ const ContributionListItem = ({ icon: Icon, title, teacherValue, platformTotal, 
                                 colorClass="chart-4"
                             />
                         </ul>
+
+                        <div className="flex justify-center mt-6">
+                          <RecapButton stats={aggregatedStats} platformTotals={platformTotals} />
+                        </div>
 
                         <Separator />
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
@@ -556,7 +563,7 @@ const ContributionListItem = ({ icon: Icon, title, teacherValue, platformTotal, 
                                     </DialogContent>
                                 }
                             />
-                            <StatCard
+                            <StatCard 
                                 icon={BookOpen}
                                 title="Unique Courses Taught"
                                 stat={aggregatedStats.uniqueCourses.length}
@@ -571,8 +578,8 @@ const ContributionListItem = ({ icon: Icon, title, teacherValue, platformTotal, 
                                         </ScrollArea>
                                     </DialogContent>
                                 }
-                            />
-                            <StatCard
+                           />
+                           <StatCard
                                 icon={Package}
                                 title="Unique Product Types"
                                 stat={aggregatedStats.uniqueProductTypes.length}
@@ -637,6 +644,7 @@ const ContributionListItem = ({ icon: Icon, title, teacherValue, platformTotal, 
                                             <TableHeader>
                                                 <TableRow>
                                                     <TableHead>Date</TableHead>
+
                                                     <TableHead>Class Topic</TableHead>
                                                     <TableHead className="text-right">Rating</TableHead>
                                                 </TableRow>
