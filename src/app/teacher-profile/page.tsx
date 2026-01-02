@@ -658,6 +658,9 @@ const ContributionListItem = ({ icon: Icon, title, teacherValue, platformTotal, 
                         </div>
                     </CardContent>
                 </Card>
+               <div className="flex justify-center">
+                  <RecapButton stats={aggregatedStats} platformTotals={platformTotals} />
+                </div>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <Card>
