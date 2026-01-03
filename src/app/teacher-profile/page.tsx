@@ -58,6 +58,7 @@ export type TeacherStats = {
   name: string;
   classCount: StatDetail;
   totalDuration: StatDetail;
+  avgDuration: StatDetail;
   totalAverageAttendance: StatDetail;
   avgAttendance: StatDetail;
   highestPeakAttendance: StatDetail;
@@ -221,6 +222,7 @@ export default function TeacherProfilePage() {
       name: selectedTeachers.join(', '),
       classCount: { ...initialStat },
       totalDuration: { ...initialStat },
+      avgDuration: { ...initialStat },
       totalAverageAttendance: { ...initialStat },
       avgAttendance: { ...initialStat },
       highestPeakAttendance: { ...initialStat },
@@ -292,6 +294,10 @@ export default function TeacherProfilePage() {
     stats.avgAttendance.fb = stats.classCount.fb > 0 ? Math.round(stats.totalAverageAttendance.fb / stats.classCount.fb) : 0;
     stats.avgAttendance.app = stats.classCount.app > 0 ? Math.round(stats.totalAverageAttendance.app / stats.classCount.app) : 0;
     stats.avgAttendance.total = stats.classCount.total > 0 ? Math.round(stats.totalAverageAttendance.total / stats.classCount.total) : 0;
+    
+    stats.avgDuration.fb = stats.classCount.fb > 0 ? Math.round(stats.totalDuration.fb / stats.classCount.fb) : 0;
+    stats.avgDuration.app = stats.classCount.app > 0 ? Math.round(stats.totalDuration.app / stats.classCount.app) : 0;
+    stats.avgDuration.total = stats.classCount.total > 0 ? Math.round(stats.totalDuration.total / stats.classCount.total) : 0;
     
     stats.averageRating = stats.ratedClassesCount > 0 ? totalRating / stats.ratedClassesCount : 0;
     
@@ -626,6 +632,44 @@ const ContributionListItem = ({ icon: Icon, title, teacherValue, platformTotal, 
                                 }
                             />
                             <StatCard
+                                icon={Clock}
+                                title="Average Duration (min)"
+                                stat={aggregatedStats.avgDuration}
+                                format={(val) => val.toLocaleString()}
+                                colorClass="chart-2"
+                                popoverContent={
+                                    <DialogContent className="sm:max-w-2xl">
+                                        <DialogHeader><DialogTitle>Average Duration Calculation</DialogTitle></DialogHeader>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 text-sm">
+                                            <div className="space-y-2 rounded-lg border p-4">
+                                                <h3 className="font-semibold text-center mb-2">Fb Data</h3>
+                                                <p>Total Fb Duration: {aggregatedStats.totalDuration.fb.toLocaleString()} min</p>
+                                                <p>Total Fb Classes: {aggregatedStats.classCount.fb.toLocaleString()}</p>
+                                                <p className="font-bold border-t pt-2 mt-2">
+                                                    Avg: {aggregatedStats.avgDuration.fb.toLocaleString()} min
+                                                </p>
+                                            </div>
+                                            <div className="space-y-2 rounded-lg border p-4">
+                                                <h3 className="font-semibold text-center mb-2">App Data</h3>
+                                                <p>Total App Duration: {aggregatedStats.totalDuration.app.toLocaleString()} min</p>
+                                                <p>Total App Classes: {aggregatedStats.classCount.app.toLocaleString()}</p>
+                                                <p className="font-bold border-t pt-2 mt-2">
+                                                    Avg: {aggregatedStats.avgDuration.app.toLocaleString()} min
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2 rounded-lg border bg-muted/50 p-4 mt-4">
+                                             <h3 className="font-semibold text-center mb-2">Combined</h3>
+                                             <p>Total Combined Duration: {aggregatedStats.totalDuration.total.toLocaleString()} min</p>
+                                             <p>Total Combined Classes: {aggregatedStats.classCount.total.toLocaleString()}</p>
+                                             <p className="font-bold border-t pt-2 mt-2">
+                                                Overall Avg: {aggregatedStats.avgDuration.total.toLocaleString()} min
+                                             </p>
+                                        </div>
+                                    </DialogContent>
+                                }
+                            />
+                            <StatCard
                                 icon={BarChart}
                                 title="Average Rating"
                                 stat={aggregatedStats.averageRating}
@@ -662,8 +706,8 @@ const ContributionListItem = ({ icon: Icon, title, teacherValue, platformTotal, 
                         </div>
                     </CardContent>
                 </Card>
-               <div className="flex justify-center">
-                  <RecapButton stats={aggregatedStats} platformTotals={platformTotals} />
+                <div className="flex justify-center">
+                    <RecapButton stats={aggregatedStats} platformTotals={platformTotals} />
                 </div>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
