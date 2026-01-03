@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Award, Clock, Star, Users, BookOpen, Package, Info, UserSearch } from 'lucide-react';
 import { Table, TableBody, TableCell, TableRow, TableHead, TableHeader, TableFooter } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '../ui/scroll-area';
+import { Badge } from '../ui/badge';
 import { MultiSelectFilter } from './multi-select-filter';
 
 type DataEntry = (ClassEntry | AppClassEntry) & { dataSource?: 'fb' | 'app' };
@@ -45,6 +45,11 @@ type TeacherStats = {
   uniqueProductTypes: string[];
   highestAttendanceClass: DataEntry | null;
   classes: DataEntry[];
+  avgDuration: {
+    fb: number;
+    app: number;
+    total: number;
+  };
 };
 
 const isAppEntry = (entry: DataEntry): entry is AppClassEntry & {dataSource: 'app'} => 'product' in entry && 'averageClassRating' in entry && entry.dataSource === 'app';
@@ -68,6 +73,7 @@ const calculateTeacherGroupStats = (teacherNames: string[], allData: DataEntry[]
       uniqueProductTypes: [],
       highestAttendanceClass: null,
       classes: teacherClasses,
+      avgDuration: { ...initialStat },
   };
 
   if (teacherClasses.length === 0) {
@@ -103,6 +109,10 @@ const calculateTeacherGroupStats = (teacherNames: string[], allData: DataEntry[]
   stats.avgAttendance.fb = stats.classCount.fb > 0 ? Math.round(stats.totalAverageAttendance.fb / stats.classCount.fb) : 0;
   stats.avgAttendance.app = stats.classCount.app > 0 ? Math.round(stats.totalAverageAttendance.app / stats.classCount.app) : 0;
   stats.avgAttendance.total = stats.classCount.total > 0 ? Math.round(stats.totalAverageAttendance.total / stats.classCount.total) : 0;
+
+  stats.avgDuration.fb = stats.classCount.fb > 0 ? Math.round(stats.totalDuration.fb / stats.classCount.fb) : 0;
+  stats.avgDuration.app = stats.classCount.app > 0 ? Math.round(stats.totalDuration.app / stats.classCount.app) : 0;
+  stats.avgDuration.total = stats.classCount.total > 0 ? Math.round(stats.totalDuration.total / stats.classCount.total) : 0;
   
   stats.highestPeakAttendance.total = highestPeak;
 
@@ -136,7 +146,7 @@ const formatDuration = (totalMinutes: number) => {
     return result.trim() || '0 min';
   };
 
-const StatPopover = ({ details, statType }: { details: TeacherStats | null, statType: 'classCount' | 'avgAttendance' | 'highestPeakAttendance' | 'totalDuration' | 'uniqueCourses' | 'uniqueProductTypes' }) => {
+const StatPopover = ({ details, statType }: { details: TeacherStats | null, statType: 'classCount' | 'avgAttendance' | 'highestPeakAttendance' | 'totalDuration' | 'avgDurationApp' | 'avgDurationFb' }) => {
     if (!details) return null;
 
     let content;
@@ -228,27 +238,28 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
               </div>
              );
              break;
-        case 'uniqueCourses':
-             if (details.uniqueCourses.length === 0) return null;
-             title = `Unique Courses Taught by ${details.name}`;
-             content = (
-                 <ScrollArea className="h-72 mt-4">
-                    <div className="flex flex-wrap gap-2 p-1">
-                        {details.uniqueCourses.map(c => <Badge key={c} variant="secondary" className="text-base">{c}</Badge>)}
-                    </div>
-                </ScrollArea>
-             );
-             break;
-        case 'uniqueProductTypes':
-             title = `Unique Product Types by ${details.name}`;
-             content = (
-                 <ScrollArea className="h-72 mt-4">
-                    <div className="flex flex-wrap gap-2 p-1">
-                        {details.uniqueProductTypes.map(p => <Badge key={p} variant="secondary" className="text-base">{p}</Badge>)}
-                    </div>
-                 </ScrollArea>
-             );
-             break;
+        case 'avgDurationApp':
+            title = `Average App Class Duration for ${details.name}`;
+            content = (
+                 <div className="space-y-2 rounded-lg border p-4 m-4">
+                    <h3 className="font-semibold text-center mb-2">App Data</h3>
+                    <p>Total App Duration: {details.totalDuration.app.toLocaleString()} min</p>
+                    <p>Total App Classes: {details.classCount.app.toLocaleString()}</p>
+                    <p className="font-bold border-t pt-2 mt-2">Avg Duration: {details.avgDuration.app.toLocaleString()} min</p>
+                </div>
+            );
+            break;
+        case 'avgDurationFb':
+            title = `Average Fb Class Duration for ${details.name}`;
+            content = (
+                 <div className="space-y-2 rounded-lg border p-4 m-4">
+                    <h3 className="font-semibold text-center mb-2">Fb Data</h3>
+                    <p>Total Fb Duration: {details.totalDuration.fb.toLocaleString()} min</p>
+                    <p>Total Fb Classes: {details.classCount.fb.toLocaleString()}</p>
+                    <p className="font-bold border-t pt-2 mt-2">Avg Duration: {details.avgDuration.fb.toLocaleString()} min</p>
+                </div>
+            );
+            break;
         default:
             return null;
     }
@@ -278,13 +289,13 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
   const teacherGroup1Stats = useMemo(() => calculateTeacherGroupStats(teacherGroup1, data), [teacherGroup1, data]);
   const teacherGroup2Stats = useMemo(() => calculateTeacherGroupStats(teacherGroup2, data), [teacherGroup2, data]);
 
-  const statsToCompare: { label: string; icon: React.ElementType; key: 'classCount' | 'avgAttendance' | 'highestPeakAttendance' | 'totalDuration' | 'uniqueCourses' | 'uniqueProductTypes'; unit?: string }[] = [
+  const statsToCompare: { label: string; icon: React.ElementType; key: 'classCount' | 'avgAttendance' | 'highestPeakAttendance' | 'totalDuration' | 'avgDurationApp' | 'avgDurationFb'; unit?: string }[] = [
     { label: "Total Classes", icon: Award, key: "classCount" },
     { label: "Avg. Attendance", icon: Users, key: "avgAttendance" },
     { label: "Highest Peak Attendance", icon: Star, key: "highestPeakAttendance" },
     { label: "Total Duration", icon: Clock, key: "totalDuration", unit: " min" },
-    { label: "Unique Courses", icon: BookOpen, key: "uniqueCourses"},
-    { label: "Unique Product Types", icon: Package, key: "uniqueProductTypes" },
+    { label: "Avg Duration (App)", icon: Clock, key: "avgDurationApp", unit: " min" },
+    { label: "Avg Duration (Fb)", icon: Clock, key: "avgDurationFb", unit: " min" },
   ];
 
   return (
@@ -327,23 +338,26 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
                 </TableHeader>
                 <TableBody>
                    {statsToCompare.map((stat) => {
-                       const stat1 = teacherGroup1Stats ? teacherGroup1Stats[stat.key] : null;
-                       const stat2 = teacherGroup2Stats ? teacherGroup2Stats[stat.key] : null;
+                       const stat1 = teacherGroup1Stats ? teacherGroup1Stats[stat.key.startsWith('avgDuration') ? 'avgDuration' : (stat.key as keyof TeacherStats)] : null;
+                       const stat2 = teacherGroup2Stats ? teacherGroup2Stats[stat.key.startsWith('avgDuration') ? 'avgDuration' : (stat.key as keyof TeacherStats)] : null;
                        
                        const isDetailedStat = (s: any): s is StatDetail => typeof s === 'object' && s !== null && 'total' in s;
-                       const isArrayStat = Array.isArray;
-
-                       const val1 = isDetailedStat(stat1) ? stat1.total : isArrayStat(stat1) ? stat1.length : stat1;
-                       const val2 = isDetailedStat(stat2) ? stat2.total : isArrayStat(stat2) ? stat2.length : stat2;
+                       
+                       let val1, val2;
+                       if (stat.key === 'avgDurationApp') {
+                           val1 = isDetailedStat(stat1) ? stat1.app : null;
+                           val2 = isDetailedStat(stat2) ? stat2.app : null;
+                       } else if (stat.key === 'avgDurationFb') {
+                            val1 = isDetailedStat(stat1) ? stat1.fb : null;
+                            val2 = isDetailedStat(stat2) ? stat2.fb : null;
+                       } else {
+                           val1 = isDetailedStat(stat1) ? stat1.total : null;
+                           val2 = isDetailedStat(stat2) ? stat2.total : null;
+                       }
 
                        const displayVal1 = val1?.toLocaleString() ?? 'N/A';
                        const displayVal2 = val2?.toLocaleString() ?? 'N/A';
                        
-                       if(stat.key === 'uniqueCourses' && (teacherGroup1Stats?.uniqueCourses.length === 0 && teacherGroup2Stats?.uniqueCourses.length === 0)) {
-                           return null;
-                       }
-
-
                        return (
                         <TableRow key={stat.key} className="transition-colors hover:bg-accent/20 group">
                             <TableCell className="font-medium flex items-center gap-2">
