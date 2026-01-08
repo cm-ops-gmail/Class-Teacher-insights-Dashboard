@@ -290,9 +290,9 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
       return;
     }
 
-    // TEACHER NAME (5-10s)
-    if (currentStage >= 5 && currentStage < 10) {
-      const nameProgress = (currentStage - 5) / 5;
+    // TEACHER NAME (5-11s) - CHANGED FROM 10 TO 11
+    if (currentStage >= 5 && currentStage < 11) {
+      const nameProgress = (currentStage - 5) / 6; // CHANGED FROM / 5 TO / 6
       const nameOpacity = nameProgress < 0.25 ? nameProgress * 4 : (nameProgress > 0.8 ? (1 - nameProgress) * 5 : 1);
       
       const particles = createParticles(40, currentStage, ['#60a5fa', '#34d399', '#a78bfa']);
@@ -331,8 +331,8 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
       const nameScale = 1 + Math.sin(nameProgress * Math.PI * 2) * 0.05;
       const teacherName = stats.name || 'Teacher';
       const maxWidth = hasImage ? 1050 : 1400;
-      const fontSize = 85; // Reduced from 100
-      const lineHeight = 95; // Reduced from 110
+      const fontSize = 85;
+      const lineHeight = 95;
       
       ctx.save();
       ctx.font = `900 ${fontSize}px "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif`;
@@ -376,7 +376,7 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
         drawCrispText(ctx, 'Aggregated Performance Overview', textX, subtitleY, 40, '#94a3b8', hasImage ? 'left' : 'center', '700');
         
         // Adjust contributions to start below subtitle
-        const contribStart = (currentStage - 6.5) / 3.5;
+        const contribStart = (currentStage - 7) / 4; // CHANGED FROM 6.5 TO 7 AND 3.5 TO 4
         if (contribStart > 0) {
           const contribStartY = subtitleY + 80;
           
@@ -414,7 +414,7 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
         
         drawCrispText(ctx, 'Aggregated Performance Overview', textX, canvas.height / 2 - 100, 40, '#94a3b8', hasImage ? 'left' : 'center', '700');
         
-        const contribStart = (currentStage - 6.5) / 3.5;
+        const contribStart = (currentStage - 7) / 4; // CHANGED FROM 6.5 TO 7 AND 3.5 TO 4
         if (contribStart > 0) {
           contributions.forEach((contrib, i) => {
             const itemProgress = Math.max(0, Math.min(1, (contribStart - i * 0.25) * 3));
@@ -447,8 +447,8 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
       return;
     }
 
-    // CARDS (10-94s) - 12s per card (4s motivation before + 4s card + 4s motivation after) x 7 = 84s
-    const cardSequenceStart = 10;
+    // CARDS (11-95s) - CHANGED FROM 10 TO 11
+    const cardSequenceStart = 11; // CHANGED FROM 10 TO 11
     const timePerCard = 12;
     
     if (currentStage >= cardSequenceStart && currentStage < cardSequenceStart + (timePerCard * cards.length)) {
@@ -626,7 +626,7 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
       return;
     }
 
-    // FINAL OVERVIEW (94-99s)
+    // FINAL OVERVIEW (95-100s)
     const overviewStart = cardSequenceStart + (timePerCard * cards.length);
     if (currentStage >= overviewStart && currentStage < overviewStart + 5) {
       const overviewProgress = (currentStage - overviewStart) / 5;
@@ -759,7 +759,7 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
       return;
     }
 
-    // OUTRO (99-106s)
+    // OUTRO (100-107s)
     const outroStart = overviewStart + 5;
     if (currentStage >= outroStart) {
       const outroProgress = (currentStage - outroStart) / 7;
@@ -849,7 +849,7 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
     mediaRecorderRef.current.start();
     setIsRecording(true);
 
-    const duration = 106000;
+    const duration = 107000; // CHANGED FROM 106000 TO 107000
     const startTime = performance.now();
     let lastFrameTime = startTime;
 
@@ -866,7 +866,7 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
       
       const elapsed = currentTime - startTime;
       const progress = Math.min(Math.max(elapsed / duration, 0), 1);
-      const currentStage = progress * 106;
+      const currentStage = progress * 107; // CHANGED FROM 106 TO 107
 
       setStage(currentStage);
       drawFrame(ctx, canvas, currentStage);
@@ -904,7 +904,7 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
     };
   }, []);
 
-  const totalDuration = 106;
+  const totalDuration = 107; // CHANGED FROM 106 TO 107
   const currentTime = Math.max(0, Math.floor(stage));
   const progress = Math.max(0, Math.min((currentTime / totalDuration) * 100, 100));
 
