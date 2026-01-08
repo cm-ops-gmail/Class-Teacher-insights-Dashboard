@@ -197,11 +197,13 @@ export default function TeacherProfilePage() {
 
   const allTeachers = useMemo(() => {
     const teacherSet = new Set<string>();
-    combinedData.forEach(item => {
-        if(item.teacher) teacherSet.add(item.teacher);
+    [...fbData, ...appData].forEach(item => {
+        if(item.teacher) {
+            teacherSet.add(item.teacher);
+        }
     });
     return Array.from(teacherSet).sort();
-  }, [combinedData]);
+  }, [fbData, appData]);
 
     const platformTotals = useMemo(() => {
     const totals = {
@@ -233,9 +235,11 @@ export default function TeacherProfilePage() {
     if (relevantClasses.length === 0) return null;
     
     const initialStat = { fb: 0, app: 0, total: 0 };
+    
+    const firstTeacher = selectedTeachers[0];
 
     const stats: TeacherStats = {
-      name: selectedTeachers.join(', '),
+      name: firstTeacher,
       classCount: { ...initialStat },
       totalDuration: { ...initialStat },
       avgDuration: { ...initialStat },
@@ -250,7 +254,7 @@ export default function TeacherProfilePage() {
       averageRating: 0,
       ratedClassesCount: 0,
       ratedClasses: [],
-      imageUrl: selectedTeachers.length === 1 ? teacherImages[selectedTeachers[0]] : undefined
+      imageUrl: teacherImages[firstTeacher]
     };
 
     let totalRating = 0;
@@ -470,8 +474,8 @@ const ContributionListItem = ({ icon: Icon, title, teacherValue, platformTotal, 
           <div>
             <Card>
                 <CardHeader>
-                    <div className="flex items-start justify-between gap-8">
-                        <div className="flex-grow">
+                    <div className="grid grid-cols-3 items-start justify-between">
+                        <div className="col-span-2">
                             <CardTitle className="text-2xl">{aggregatedStats.name}</CardTitle>
                             <CardDescription>Aggregated Performance Overview</CardDescription>
                             <div className="mt-6">
@@ -502,7 +506,7 @@ const ContributionListItem = ({ icon: Icon, title, teacherValue, platformTotal, 
                         </div>
 
                         {aggregatedStats.imageUrl && (
-                            <div className="relative aspect-square w-48 rounded-lg overflow-hidden shadow-md border-2 border-muted flex-shrink-0">
+                            <div className="relative aspect-square w-48 rounded-lg overflow-hidden shadow-md border-2 border-muted flex-shrink-0 justify-self-end">
                                 <Image
                                     src={aggregatedStats.imageUrl}
                                     alt={aggregatedStats.name}
@@ -514,6 +518,7 @@ const ContributionListItem = ({ icon: Icon, title, teacherValue, platformTotal, 
                     </div>
                 </CardHeader>
                 <CardContent>
+                    <Separator className="my-0" />
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                        <StatCard 
                             icon={Award}
@@ -742,10 +747,12 @@ const ContributionListItem = ({ icon: Icon, title, teacherValue, platformTotal, 
         
         <Separator />
         
-        <TeacherComparison data={combinedData} allTeachers={allTeachers} />
+        <TeacherComparison data={combinedData} allTeachers={allTeachers} teacherImages={teacherImages} />
 
       </main>
       <Footer />
     </div>
   );
 }
+
+
