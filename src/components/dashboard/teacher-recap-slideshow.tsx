@@ -464,100 +464,133 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
           const cardDisplayPhase = cardPhase - 4;
           
           // Show card for first 4 seconds (4-8s)
-          // Inside the CARD DISPLAY section (around line 520-620), replace the card drawing code:
-
-if (cardDisplayPhase < 4) {
-  const cardProgress = Math.min(cardDisplayPhase / 4, 1);
-  
-  const particles = createParticles(30, currentStage, card.gradient);
-  particles.forEach(p => {
-    ctx.globalAlpha = p.opacity * 0.3;
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(canvas.width / 2 + p.x * 1.5, canvas.height / 2 + p.y * 1.5, p.size, 0, Math.PI * 2);
-    ctx.fill();
-  });
-  
-  const entranceProgress = Math.min(cardProgress * 2, 1);
-  const anim = getCardAnimation(card.animationType, entranceProgress);
-  
-  ctx.save();
-  ctx.globalAlpha = anim.opacity || 1;
-  
-  const cardW = 1100;
-  const cardH = 650;
-  
-  ctx.translate(canvas.width / 2, canvas.height / 2);
-  ctx.translate(anim.translateX || 0, anim.translateY || 0);
-  ctx.scale(anim.scale || 1, anim.scale || 1);
-  if (anim.rotate) ctx.rotate((anim.rotate * Math.PI) / 180);
-  
-  // Create path once for both fill and stroke
-  const cardPath = new Path2D();
-  cardPath.roundRect(-cardW/2, -cardH/2, cardW, cardH, 25);
-  
-  // Fill background
-  const bgGradient = ctx.createLinearGradient(-cardW/2, -cardH/2, -cardW/2, cardH/2);
-  bgGradient.addColorStop(0, '#1e293b');
-  bgGradient.addColorStop(1, '#0f172a');
-  ctx.fillStyle = bgGradient;
-  ctx.fill(cardPath);
-  
-  // Single clean border
-  ctx.strokeStyle = card.color;
-  ctx.lineWidth = 3;
-  ctx.stroke(cardPath);
-  
-  // Accent gradient bar at top
-  const accentGradient = ctx.createLinearGradient(-cardW/2, 0, cardW/2, 0);
-  card.gradient.forEach((c, i) => accentGradient.addColorStop(i / (card.gradient.length - 1), c));
-  ctx.fillStyle = accentGradient;
-  
-  // Draw accent bar with rounded top corners only
-  ctx.beginPath();
-  ctx.moveTo(-cardW/2 + 25, -cardH/2);
-  ctx.lineTo(cardW/2 - 25, -cardH/2);
-  ctx.arcTo(cardW/2, -cardH/2, cardW/2, -cardH/2 + 25, 25);
-  ctx.lineTo(cardW/2, -cardH/2 + 12);
-  ctx.lineTo(-cardW/2, -cardH/2 + 12);
-  ctx.lineTo(-cardW/2, -cardH/2 + 25);
-  ctx.arcTo(-cardW/2, -cardH/2, -cardW/2 + 25, -cardH/2, 25);
-  ctx.closePath();
-  ctx.fill();
-  
-  drawCrispText(ctx, card.title, 0, -cardH/2 + 80, 44, '#ffffff', 'center', '800');
-  
-  if (cardProgress > 0.1) {
-    drawCrispText(ctx, card.value, 0, -10, 180, card.color, 'center', '900');
-  }
-  
-  if (cardProgress > 0.3 && card.showPlatformSplit && card.fb !== undefined && card.app !== undefined) {
-    const platformProgress = Math.min((cardProgress - 0.3) / 0.2, 1);
-    ctx.globalAlpha = (anim.opacity || 1) * platformProgress;
-    
-    drawCrispText(ctx, 'Facebook', -220, 145, 38, '#cbd5e1', 'center', '700');
-    drawCrispText(ctx, card.fb.toLocaleString(), -220, 200, 58, '#60a5fa', 'center', '900');
-    
-    ctx.strokeStyle = '#64748b';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(0, 135);
-    ctx.lineTo(0, 215);
-    ctx.stroke();
-    
-    drawCrispText(ctx, 'App', 220, 145, 38, '#cbd5e1', 'center', '700');
-    drawCrispText(ctx, card.app.toLocaleString(), 220, 200, 58, '#34d399', 'center', '900');
-  }
-  
-  if (cardProgress > 0.5) {
-    const detailProgress = Math.min((cardProgress - 0.5) / 0.15, 1);
-    ctx.globalAlpha = (anim.opacity || 1) * detailProgress;
-    drawCrispText(ctx, card.detail, 0, card.showPlatformSplit ? 250 : 160, 30, '#94a3b8', 'center', '600');
-  }
-  
-  ctx.restore();
-  return;
-}
+          if (cardDisplayPhase < 4) {
+            const cardProgress = Math.min(cardDisplayPhase / 4, 1);
+            
+            const particles = createParticles(30, currentStage, card.gradient);
+            particles.forEach(p => {
+              ctx.globalAlpha = p.opacity * 0.3;
+              ctx.fillStyle = p.color;
+              ctx.beginPath();
+              ctx.arc(canvas.width / 2 + p.x * 1.5, canvas.height / 2 + p.y * 1.5, p.size, 0, Math.PI * 2);
+              ctx.fill();
+            });
+            
+            const entranceProgress = Math.min(cardProgress * 2, 1);
+            const anim = getCardAnimation(card.animationType, entranceProgress);
+            
+            ctx.save();
+            ctx.globalAlpha = anim.opacity || 1;
+            
+            const cardW = 1100;
+            const cardH = 650;
+            
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.translate(anim.translateX || 0, anim.translateY || 0);
+            ctx.scale(anim.scale || 1, anim.scale || 1);
+            if (anim.rotate) ctx.rotate((anim.rotate * Math.PI) / 180);
+            
+            // Create path once for both fill and stroke
+            const cardPath = new Path2D();
+            cardPath.roundRect(-cardW/2, -cardH/2, cardW, cardH, 25);
+            
+            // Fill background
+            const bgGradient = ctx.createLinearGradient(-cardW/2, -cardH/2, -cardW/2, cardH/2);
+            bgGradient.addColorStop(0, '#1e293b');
+            bgGradient.addColorStop(1, '#0f172a');
+            ctx.fillStyle = bgGradient;
+            ctx.fill(cardPath);
+            
+            // Single clean border
+            ctx.strokeStyle = card.color;
+            ctx.lineWidth = 3;
+            ctx.stroke(cardPath);
+            
+            // Accent gradient bar at top
+            const accentGradient = ctx.createLinearGradient(-cardW/2, 0, cardW/2, 0);
+            card.gradient.forEach((c, i) => accentGradient.addColorStop(i / (card.gradient.length - 1), c));
+            ctx.fillStyle = accentGradient;
+            
+            // Draw accent bar with rounded top corners only
+            ctx.beginPath();
+            ctx.moveTo(-cardW/2 + 25, -cardH/2);
+            ctx.lineTo(cardW/2 - 25, -cardH/2);
+            ctx.arcTo(cardW/2, -cardH/2, cardW/2, -cardH/2 + 25, 25);
+            ctx.lineTo(cardW/2, -cardH/2 + 12);
+            ctx.lineTo(-cardW/2, -cardH/2 + 12);
+            ctx.lineTo(-cardW/2, -cardH/2 + 25);
+            ctx.arcTo(-cardW/2, -cardH/2, -cardW/2 + 25, -cardH/2, 25);
+            ctx.closePath();
+            ctx.fill();
+            
+            drawCrispText(ctx, card.title, 0, -cardH/2 + 80, 44, '#ffffff', 'center', '800');
+            
+            if (cardProgress > 0.1) {
+              drawCrispText(ctx, card.value, 0, -10, 180, card.color, 'center', '900');
+            }
+            
+            if (cardProgress > 0.3 && card.showPlatformSplit && card.fb !== undefined && card.app !== undefined) {
+              const platformProgress = Math.min((cardProgress - 0.3) / 0.2, 1);
+              ctx.globalAlpha = (anim.opacity || 1) * platformProgress;
+              
+              drawCrispText(ctx, 'Facebook', -220, 145, 38, '#cbd5e1', 'center', '700');
+              drawCrispText(ctx, card.fb.toLocaleString(), -220, 200, 58, '#60a5fa', 'center', '900');
+              
+              ctx.strokeStyle = '#64748b';
+              ctx.lineWidth = 3;
+              ctx.beginPath();
+              ctx.moveTo(0, 135);
+              ctx.lineTo(0, 215);
+              ctx.stroke();
+              
+              drawCrispText(ctx, 'App', 220, 145, 38, '#cbd5e1', 'center', '700');
+              drawCrispText(ctx, card.app.toLocaleString(), 220, 200, 58, '#34d399', 'center', '900');
+            }
+            
+            if (cardProgress > 0.5) {
+              const detailProgress = Math.min((cardProgress - 0.5) / 0.15, 1);
+              ctx.globalAlpha = (anim.opacity || 1) * detailProgress;
+              drawCrispText(ctx, card.detail, 0, card.showPlatformSplit ? 250 : 160, 30, '#94a3b8', 'center', '600');
+            }
+            
+            ctx.restore();
+            return;
+          }
+          
+          // MOTIVATION AFTER (8-12s) - 4 SECONDS
+          const afterPhase = cardDisplayPhase - 4;
+          const afterProgress = afterPhase / 4;
+          const afterOpacity = afterProgress < 0.2 ? afterProgress / 0.2 : (afterProgress > 0.8 ? (1 - afterProgress) / 0.2 : 1);
+          
+          const particles = createParticles(50, cardPhase, card.gradient);
+          particles.forEach(p => {
+            ctx.globalAlpha = p.opacity * afterOpacity * 0.4;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2 + p.x, canvas.height / 2 + p.y, p.size * 1.2, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          
+          ctx.globalAlpha = afterOpacity;
+          
+          drawCrispText(ctx, card.motivationAfter, canvas.width / 2, canvas.height / 2, 52, card.color, 'center', '800');
+          
+          for (let i = 0; i < 15; i++) {
+            const angle = (i / 15) * Math.PI * 2 + afterProgress * Math.PI * 3;
+            const radius = 350 + Math.sin(afterProgress * Math.PI * 2) * 50;
+            const x = canvas.width / 2 + Math.cos(angle) * radius;
+            const y = canvas.height / 2 + Math.sin(angle) * radius;
+            const size = 4 + Math.sin(afterProgress * Math.PI * 5 + i) * 2;
+            
+            ctx.fillStyle = card.color;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          ctx.globalAlpha = 1;
+          return;
+        }
       }
       return;
     }
@@ -611,18 +644,20 @@ if (cardDisplayPhase < 4) {
           ctx.translate(x + cardW / 2, y + cardH / 2);
           ctx.scale(scale, scale);
           
+          // Use Path2D for clean border
+          const smallCardPath = new Path2D();
+          smallCardPath.roundRect(-cardW/2, -cardH/2, cardW, cardH, 18);
+          
           const gradient = ctx.createLinearGradient(-cardW/2, -cardH/2, -cardW/2, cardH/2);
           gradient.addColorStop(0, '#1e293b');
           gradient.addColorStop(1, '#0f172a');
           ctx.fillStyle = gradient;
-          ctx.beginPath();
-          ctx.roundRect(-cardW/2, -cardH/2, cardW, cardH, 18);
-          ctx.fill();
+          ctx.fill(smallCardPath);
           
           // CLEAN SINGLE EDGE
           ctx.strokeStyle = card.color;
           ctx.lineWidth = 3;
-          ctx.stroke();
+          ctx.stroke(smallCardPath);
           
           const accentGradient = ctx.createLinearGradient(-cardW/2, 0, cardW/2, 0);
           card.gradient.forEach((c, i) => accentGradient.addColorStop(i / (card.gradient.length - 1), c));
@@ -657,18 +692,20 @@ if (cardDisplayPhase < 4) {
           ctx.translate(x + cardW / 2, y + cardH / 2);
           ctx.scale(scale, scale);
           
+          // Use Path2D for clean border
+          const smallCardPath = new Path2D();
+          smallCardPath.roundRect(-cardW/2, -cardH/2, cardW, cardH, 18);
+          
           const gradient = ctx.createLinearGradient(-cardW/2, -cardH/2, -cardW/2, cardH/2);
           gradient.addColorStop(0, '#1e293b');
           gradient.addColorStop(1, '#0f172a');
           ctx.fillStyle = gradient;
-          ctx.beginPath();
-          ctx.roundRect(-cardW/2, -cardH/2, cardW, cardH, 18);
-          ctx.fill();
+          ctx.fill(smallCardPath);
           
           // CLEAN SINGLE EDGE
           ctx.strokeStyle = card.color;
           ctx.lineWidth = 3;
-          ctx.stroke();
+          ctx.stroke(smallCardPath);
           
           const accentGradient = ctx.createLinearGradient(-cardW/2, 0, cardW/2, 0);
           card.gradient.forEach((c, i) => accentGradient.addColorStop(i / (card.gradient.length - 1), c));
