@@ -21,6 +21,7 @@ type TeacherStats = {
   averageRating: number;
   ratedClassesCount: number;
   imageUrl?: string;
+  ratedClasses: any[]; // Add this if it's missing
 };
 
 type PlatformTotals = {
@@ -309,12 +310,12 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
       ctx.globalAlpha = nameOpacity;
       
       const hasImage = !!teacherImageRef.current;
-      const textX = hasImage ? canvas.width / 2 + 100 : canvas.width / 2;
+      const textX = hasImage ? canvas.width / 2 - 250 : canvas.width / 2;
 
       if (hasImage) {
         const img = teacherImageRef.current!;
         const imgSize = 300;
-        const imgX = canvas.width / 2 - imgSize / 2 - 750; // Moved even further left
+        const imgX = canvas.width / 2 - imgSize / 2 - 750;
         const imgY = canvas.height / 2 - imgSize / 2;
         
         ctx.save();
@@ -349,36 +350,19 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
           const y = canvas.height / 2 + 60 + i * 90;
           const slideIn = (1 - easeProgress) * 100;
           
-          // Fixed layout with proper spacing
-          // Text label on the left, percentage on the right with enough gap
-          const leftMargin = hasImage ? textX - 100 : (canvas.width - 1100) / 2;
-          const percentageRightMargin = hasImage ? canvas.width - 250 : (canvas.width + 1100) / 2;
+          const textStartX = hasImage ? textX : (canvas.width - 900) / 2;
+          const percentageStartX = hasImage ? textX + 900 : (canvas.width + 900) / 2;
           
-          // Draw text label on the left
-          drawCrispText(ctx, contrib.title, leftMargin + slideIn, y, 30, '#cbd5e1', 'left', '600');
-          
-          // Draw percentage on the far right
-          drawCrispText(ctx, `${contrib.value}%`, percentageRightMargin - slideIn, y, 52, contrib.color, 'right', '800');
-          
-          // Progress bar spans between them with padding
-          const barWidth = percentageRightMargin - leftMargin - 200; // Leave 200px gap for percentage
-          const barHeight = 12;
-          const barX = leftMargin;
-          const barY = y + 10;
-          
-          ctx.fillStyle = 'rgba(51, 65, 85, 0.5)';
+          const bulletX = textStartX + slideIn;
+          const textRenderX = bulletX + 20;
+
+          ctx.fillStyle = contrib.color;
           ctx.beginPath();
-          ctx.roundRect(barX, barY, barWidth, barHeight, 6);
+          ctx.arc(bulletX, y, 6, 0, Math.PI*2);
           ctx.fill();
-          
-          const progressWidth = (barWidth * parseFloat(contrib.value)) / 100 * easeProgress;
-          const progressGradient = ctx.createLinearGradient(barX, barY, barX + progressWidth, barY);
-          progressGradient.addColorStop(0, contrib.gradient[0]);
-          progressGradient.addColorStop(1, contrib.gradient[1]);
-          ctx.fillStyle = progressGradient;
-          ctx.beginPath();
-          ctx.roundRect(barX, barY, progressWidth, barHeight, 6);
-          ctx.fill();
+
+          drawCrispText(ctx, contrib.title, textRenderX, y, 30, '#cbd5e1', 'left', '600');
+          drawCrispText(ctx, `${contrib.value}%`, percentageStartX, y, 52, contrib.color, 'right', '800');
         });
       }
       ctx.globalAlpha = 1;
@@ -880,18 +864,6 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
               </div>
             )}
           </div>
-
-          <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-lg p-4">
-            <h4 className="font-semibold mb-2 flex items-center gap-2 text-lg">
-              ✨ Layout Fixed!
-            </h4>
-            <ul className="text-sm space-y-1.5 list-disc list-inside text-muted-foreground">
-              <li>✅ <strong>Teacher image:</strong> Moved further left (750px offset)</li>
-              <li>✅ <strong>Text positioning:</strong> Adjusted to prevent overlap with percentages</li>
-              <li>✅ <strong>Bar width:</strong> Increased to 750px/900px for better spacing</li>
-              <li>✅ <strong>Text alignment:</strong> Name and overview moved right when image present</li>
-            </ul>
-          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -918,3 +890,4 @@ export const RecapButton: React.FC<{ stats: TeacherStats; platformTotals: Platfo
 };
 
 export default TeacherRecapSlideshow;
+    
