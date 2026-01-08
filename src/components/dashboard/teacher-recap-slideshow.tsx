@@ -349,17 +349,21 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
           const y = canvas.height / 2 + 60 + i * 90;
           const slideIn = (1 - easeProgress) * 100;
           
-          // When image present: text starts at textX-50, percentage at textX+680
-          // When no image: centered layout with 1000px total width
-          const textStartX = hasImage ? textX - 50 : (canvas.width - 1000) / 2;
-          const percentageStartX = hasImage ? textX + 680 : (canvas.width + 1000) / 2;
+          // Fixed layout with proper spacing
+          // Text label on the left, percentage on the right with enough gap
+          const leftMargin = hasImage ? textX - 100 : (canvas.width - 1100) / 2;
+          const percentageRightMargin = hasImage ? canvas.width - 250 : (canvas.width + 1100) / 2;
           
-          drawCrispText(ctx, contrib.title, textStartX + slideIn, y, 30, '#cbd5e1', 'left', '600');
-          drawCrispText(ctx, `${contrib.value}%`, percentageStartX - slideIn, y, 52, contrib.color, 'right', '800');
+          // Draw text label on the left
+          drawCrispText(ctx, contrib.title, leftMargin + slideIn, y, 30, '#cbd5e1', 'left', '600');
           
-          const barWidth = hasImage ? 730 : 1000;
+          // Draw percentage on the far right
+          drawCrispText(ctx, `${contrib.value}%`, percentageRightMargin - slideIn, y, 52, contrib.color, 'right', '800');
+          
+          // Progress bar spans between them with padding
+          const barWidth = percentageRightMargin - leftMargin - 200; // Leave 200px gap for percentage
           const barHeight = 12;
-          const barX = textStartX;
+          const barX = leftMargin;
           const barY = y + 10;
           
           ctx.fillStyle = 'rgba(51, 65, 85, 0.5)';
