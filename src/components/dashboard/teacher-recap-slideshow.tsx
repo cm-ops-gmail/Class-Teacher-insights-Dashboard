@@ -21,7 +21,7 @@ type TeacherStats = {
   averageRating: number;
   ratedClassesCount: number;
   imageUrl?: string;
-  ratedClasses: any[]; // Add this if it's missing
+  ratedClasses: any[];
 };
 
 type PlatformTotals = {
@@ -53,9 +53,6 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
     if (stats.imageUrl) {
       const img = new Image();
       img.crossOrigin = "anonymous";
-      // To prevent CORS issues if the image is from another domain and the canvas is tainted.
-      // A proxy might be needed if the image server doesn't provide CORS headers.
-      // For Google User Content, this sometimes requires a special URL or just works.
       img.src = stats.imageUrl;
       img.onload = () => {
         teacherImageRef.current = img;
@@ -310,12 +307,12 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
       ctx.globalAlpha = nameOpacity;
       
       const hasImage = !!teacherImageRef.current;
-      const textX = hasImage ? canvas.width / 2 - 250 : canvas.width / 2;
+      const textX = hasImage ? canvas.width / 2 - 200 : canvas.width / 2;
 
       if (hasImage) {
         const img = teacherImageRef.current!;
         const imgSize = 300;
-        const imgX = canvas.width / 2 - imgSize / 2 - 750;
+        const imgX = canvas.width / 2 - imgSize / 2 - 580;
         const imgY = canvas.height / 2 - imgSize / 2;
         
         ctx.save();
@@ -330,14 +327,64 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
         ctx.restore();
       }
       
+      // Handle long names with text wrapping
       const nameScale = 1 + Math.sin(nameProgress * Math.PI * 2) * 0.05;
-      ctx.save();
-      ctx.translate(textX, canvas.height / 2 - 150);
-      ctx.scale(nameScale, nameScale);
-      drawCrispText(ctx, stats.name || 'Teacher', 0, 0, 100, '#ffffff', hasImage ? 'left' : 'center', '900');
-      ctx.restore();
+      const teacherName = stats.name || 'Teacher';
+      const maxWidth = hasImage ? 1050 : 1400;
+      const fontSize = 100;
+      const lineHeight = 110;
       
-      drawCrispText(ctx, 'Aggregated Performance Overview', textX, canvas.height / 2 - 50, 40, '#94a3b8', hasImage ? 'left' : 'center', '700');
+      ctx.save();
+      ctx.font = `900 ${fontSize}px "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif`;
+      
+      // Check if text needs wrapping
+      const textWidth = ctx.measureText(teacherName).width;
+      
+      if (textWidth > maxWidth) {
+        // Split into words and wrap
+        const words = teacherName.split(' ');
+        const lines: string[] = [];
+        let currentLine = words[0];
+        
+        for (let i = 1; i < words.length; i++) {
+          const testLine = currentLine + ' ' + words[i];
+          const testWidth = ctx.measureText(testLine).width;
+          
+          if (testWidth > maxWidth) {
+            lines.push(currentLine);
+            currentLine = words[i];
+          } else {
+            currentLine = testLine;
+          }
+        }
+        lines.push(currentLine);
+        
+        // Draw wrapped lines
+        const totalHeight = lines.length * lineHeight;
+        const startY = canvas.height / 2 - 150 - (totalHeight / 2) + (lineHeight / 2);
+        
+        lines.forEach((line, index) => {
+          ctx.save();
+          ctx.translate(textX, startY + index * lineHeight);
+          ctx.scale(nameScale, nameScale);
+          drawCrispText(ctx, line, 0, 0, fontSize, '#ffffff', hasImage ? 'left' : 'center', '900');
+          ctx.restore();
+        });
+        
+        // Adjust subtitle position based on number of lines
+        drawCrispText(ctx, 'Aggregated Performance Overview', textX, canvas.height / 2 - 150 + totalHeight + 30, 40, '#94a3b8', hasImage ? 'left' : 'center', '700');
+      } else {
+        // Single line - original behavior
+        ctx.save();
+        ctx.translate(textX, canvas.height / 2 - 150);
+        ctx.scale(nameScale, nameScale);
+        drawCrispText(ctx, teacherName, 0, 0, fontSize, '#ffffff', hasImage ? 'left' : 'center', '900');
+        ctx.restore();
+        
+        drawCrispText(ctx, 'Aggregated Performance Overview', textX, canvas.height / 2 - 50, 40, '#94a3b8', hasImage ? 'left' : 'center', '700');
+      }
+      
+      ctx.restore();
       
       const contribStart = (currentStage - 6.5) / 3.5;
       if (contribStart > 0) {
@@ -844,7 +891,7 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
             <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 border border-blue-500/20 rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">Recording Progress</span>
-                <span className="text-sm font-mono">{currentTime}s / ${totalDuration}s ({progress.toFixed(1)}%)</span>
+                <span className="text-sm font-mono">{currentTime}s / {totalDuration}s ({progress.toFixed(1)}%)</span>
               </div>
               <div className="w-full bg-gray-700 rounded-full h-3">
                 <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 h-3 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
@@ -890,4 +937,3 @@ export const RecapButton: React.FC<{ stats: TeacherStats; platformTotals: Platfo
 };
 
 export default TeacherRecapSlideshow;
-    
