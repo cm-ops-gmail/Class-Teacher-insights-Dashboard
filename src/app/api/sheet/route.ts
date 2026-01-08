@@ -62,13 +62,13 @@ export async function POST(request: Request) {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: "Sheet28",
+      range: "Facebook_Dashboard",
     });
 
     const rows = response.data.values;
     if (!rows || rows.length < 3) { // Need at least header row (2) and one data row
       return NextResponse.json(
-        { error: "No data found in the 'Sheet28' sheet. The header is expected on row 2." },
+        { error: "No data found in the 'Facebook_Dashboard' sheet. The header is expected on row 2." },
         { status: 404 }
       );
     }
