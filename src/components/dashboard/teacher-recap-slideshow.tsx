@@ -20,6 +20,7 @@ type TeacherStats = {
   uniqueProductTypes: string[];
   averageRating: number;
   ratedClassesCount: number;
+  imageUrl?: string;
 };
 
 type PlatformTotals = {
@@ -44,6 +45,29 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const animationFrameRef = useRef<number | null>(null);
+  const teacherImageRef = useRef<HTMLImageElement | null>(null);
+
+
+  useEffect(() => {
+    if (stats.imageUrl) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      // To prevent CORS issues if the image is from another domain and the canvas is tainted.
+      // A proxy might be needed if the image server doesn't provide CORS headers.
+      // For Google User Content, this sometimes requires a special URL or just works.
+      img.src = stats.imageUrl;
+      img.onload = () => {
+        teacherImageRef.current = img;
+      };
+      img.onerror = () => {
+        console.error("Failed to load teacher image.");
+        teacherImageRef.current = null;
+      };
+    } else {
+        teacherImageRef.current = null;
+    }
+  }, [stats.imageUrl]);
+
 
   if (!stats || !platformTotals) {
     return null;
@@ -284,14 +308,35 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
       
       ctx.globalAlpha = nameOpacity;
       
+      const hasImage = !!teacherImageRef.current;
+      const textX = hasImage ? canvas.width / 2 + 100 : canvas.width / 2;
+
+      if (hasImage) {
+        const img = teacherImageRef.current!;
+        const imgSize = 300;
+        const imgX = canvas.width / 2 - imgSize / 2 - 750; // Moved even further left
+        const imgY = canvas.height / 2 - imgSize / 2;
+        
+        ctx.save();
+        ctx.globalAlpha = nameOpacity * easeOutQuart(Math.min(nameProgress * 2, 1));
+        ctx.beginPath();
+        ctx.arc(imgX + imgSize / 2, imgY + imgSize / 2, imgSize / 2, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(img, imgX, imgY, imgSize, imgSize);
+        ctx.strokeStyle = '#60a5fa';
+        ctx.lineWidth = 8;
+        ctx.stroke();
+        ctx.restore();
+      }
+      
       const nameScale = 1 + Math.sin(nameProgress * Math.PI * 2) * 0.05;
       ctx.save();
-      ctx.translate(canvas.width / 2, canvas.height / 2 - 150);
+      ctx.translate(textX, canvas.height / 2 - 150);
       ctx.scale(nameScale, nameScale);
-      drawCrispText(ctx, stats.name || 'Teacher', 0, 0, 100, '#ffffff', 'center', '900');
+      drawCrispText(ctx, stats.name || 'Teacher', 0, 0, 100, '#ffffff', hasImage ? 'left' : 'center', '900');
       ctx.restore();
       
-      drawCrispText(ctx, 'Aggregated Performance Overview', canvas.width / 2, canvas.height / 2 - 50, 40, '#94a3b8', 'center', '700');
+      drawCrispText(ctx, 'Aggregated Performance Overview', textX, canvas.height / 2 - 50, 40, '#94a3b8', hasImage ? 'left' : 'center', '700');
       
       const contribStart = (currentStage - 6.5) / 3.5;
       if (contribStart > 0) {
@@ -304,12 +349,15 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
           const y = canvas.height / 2 + 60 + i * 90;
           const slideIn = (1 - easeProgress) * 100;
           
-          drawCrispText(ctx, contrib.title, 200 + slideIn, y, 30, '#cbd5e1', 'left', '600');
-          drawCrispText(ctx, `${contrib.value}%`, canvas.width - 200 - slideIn, y, 52, contrib.color, 'right', '800');
+          const textStartX = hasImage ? textX : (canvas.width - 900) / 2;
+          const percentageStartX = hasImage ? textX + 750 : (canvas.width + 900) / 2;
           
-          const barWidth = 600;
+          drawCrispText(ctx, contrib.title, textStartX + slideIn, y, 30, '#cbd5e1', 'left', '600');
+          drawCrispText(ctx, `${contrib.value}%`, percentageStartX - slideIn, y, 52, contrib.color, 'right', '800');
+          
+          const barWidth = hasImage ? 750 : 900;
           const barHeight = 12;
-          const barX = canvas.width - 200 - barWidth;
+          const barX = textStartX;
           const barY = y + 10;
           
           ctx.fillStyle = 'rgba(51, 65, 85, 0.5)';
@@ -630,7 +678,7 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
     const outroStart = overviewStart + 5;
     if (currentStage >= outroStart) {
       const outroProgress = (currentStage - outroStart) / 7;
-      const outroOpacity = outroProgress < 0.25 ? outroProgress * 4 : (outroProgress > 0.8 ? (1 - outroProgress) * 5 : 1);
+      const outroOpacity = outroProgress < 0.25 ? outroProgress * 4 : (outroProgress > 0.8 ? (1 - outroProgress) / 0.2 : 1);
       
       for (let i = 0; i < 50; i++) {
         const angle = (i / 50) * Math.PI * 2 + outroProgress * Math.PI * 3;
@@ -806,7 +854,7 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
             <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 border border-blue-500/20 rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">Recording Progress</span>
-                <span className="text-sm font-mono">{currentTime}s / {totalDuration}s ({progress.toFixed(1)}%)</span>
+                <span className="text-sm font-mono">{currentTime}s / ${totalDuration}s ({progress.toFixed(1)}%)</span>
               </div>
               <div className="w-full bg-gray-700 rounded-full h-3">
                 <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 h-3 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
@@ -829,15 +877,13 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
 
           <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-lg p-4">
             <h4 className="font-semibold mb-2 flex items-center gap-2 text-lg">
-              ✨ FINAL PERFECT Version!
+              ✨ Layout Fixed!
             </h4>
             <ul className="text-sm space-y-1.5 list-disc list-inside text-muted-foreground">
-              <li>✅ <strong>Clean single edge:</strong> No shadows/glow - just 3px solid border</li>
-              <li>✅ <strong>Cards faster:</strong> 12s per card (4s motivation + 4s card + 4s after)</li>
-              <li>✅ <strong>Longer motivations:</strong> 4 seconds before card, 4 seconds after</li>
-              <li>✅ <strong>Smooth 60fps:</strong> Frame delta timing + 16 Mbps bitrate</li>
-              <li>✅ <strong>Total duration:</strong> 106 seconds</li>
-              <li>📍 <strong>Button placement:</strong> Put RecapButton under teacher profile card (not with stats)</li>
+              <li>✅ <strong>Teacher image:</strong> Moved further left (750px offset)</li>
+              <li>✅ <strong>Text positioning:</strong> Adjusted to prevent overlap with percentages</li>
+              <li>✅ <strong>Bar width:</strong> Increased to 750px/900px for better spacing</li>
+              <li>✅ <strong>Text alignment:</strong> Name and overview moved right when image present</li>
             </ul>
           </div>
         </div>
