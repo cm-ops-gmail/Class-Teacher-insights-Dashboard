@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import Image from 'next/image';
 import type { ClassEntry, AppClassEntry } from '@/lib/definitions';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ type DataEntry = (ClassEntry | AppClassEntry) & { dataSource?: 'fb' | 'app' };
 interface TeacherComparisonProps {
   data: DataEntry[];
   allTeachers: string[];
+  teacherImages: { [key: string]: string };
 }
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
@@ -53,20 +55,23 @@ type TeacherStats = {
   ratedClassesCount: number;
   ratedClasses: (AppClassEntry & { dataSource: 'app' })[];
   totalRating: number;
+  imageUrl?: string;
 };
 
 const isAppEntry = (entry: DataEntry): entry is AppClassEntry & {dataSource: 'app'} => 'product' in entry && 'averageClassRating' in entry && entry.dataSource === 'app';
 const isFbEntry = (entry: DataEntry): entry is ClassEntry & {dataSource: 'fb'} => 'productType' in entry && entry.dataSource === 'fb';
 
 
-const calculateTeacherGroupStats = (teacherNames: string[], allData: DataEntry[]): TeacherStats | null => {
+const calculateTeacherGroupStats = (teacherNames: string[], allData: DataEntry[], teacherImages: { [key: string]: string }): TeacherStats | null => {
   if (!teacherNames || teacherNames.length === 0) return null;
 
   const teacherClasses = allData.filter(item => teacherNames.includes(item.teacher!));
   
   const initialStat = { fb: 0, app: 0, total: 0 };
+  const firstTeacher = teacherNames[0];
+
   const stats: TeacherStats = {
-      name: teacherNames.join(', '),
+      name: firstTeacher,
       classCount: { ...initialStat },
       totalDuration: { ...initialStat },
       totalAverageAttendance: { ...initialStat },
@@ -79,6 +84,7 @@ const calculateTeacherGroupStats = (teacherNames: string[], allData: DataEntry[]
       ratedClassesCount: 0,
       ratedClasses: [],
       totalRating: 0,
+      imageUrl: teacherImages[firstTeacher]
   };
 
   if (teacherClasses.length === 0) {
@@ -315,14 +321,14 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
 };
 
 
-export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps) {
+export function TeacherComparison({ data, allTeachers, teacherImages }: TeacherComparisonProps) {
   const [teacherGroup1, setTeacherGroup1] = useState<string[]>([]);
   const [teacherGroup2, setTeacherGroup2] = useState<string[]>([]);
   
   const teacherOptions = useMemo(() => allTeachers.map(t => ({ value: t, label: t })), [allTeachers]);
 
-  const teacherGroup1Stats = useMemo(() => calculateTeacherGroupStats(teacherGroup1, data), [teacherGroup1, data]);
-  const teacherGroup2Stats = useMemo(() => calculateTeacherGroupStats(teacherGroup2, data), [teacherGroup2, data]);
+  const teacherGroup1Stats = useMemo(() => calculateTeacherGroupStats(teacherGroup1, data, teacherImages), [teacherGroup1, data, teacherImages]);
+  const teacherGroup2Stats = useMemo(() => calculateTeacherGroupStats(teacherGroup2, data, teacherImages), [teacherGroup2, data, teacherImages]);
 
   const statsToCompare: { label: string; icon: React.ElementType; key: 'classCount' | 'avgAttendance' | 'highestPeakAttendance' | 'totalDuration' | 'avgDurationApp' | 'avgDurationFb' | 'avgRating'; unit?: string; formatter?: (value: number) => string; }[] = [
     { label: "Total Classes", icon: Award, key: "classCount" },
@@ -365,10 +371,20 @@ export function TeacherComparison({ data, allTeachers }: TeacherComparisonProps)
                     <TableRow>
                         <TableHead className="w-[200px]">Metric</TableHead>
                         <TableHead className="text-center w-1/3 break-words">
-                            {teacherGroup1Stats?.name || 'Group 1'}
+                            <div className="flex flex-col items-center gap-2">
+                                {teacherGroup1Stats?.imageUrl && (
+                                    <Image src={teacherGroup1Stats.imageUrl} alt={teacherGroup1Stats.name} width={64} height={64} className="rounded-full object-cover h-16 w-16" />
+                                )}
+                                {teacherGroup1Stats?.name || 'Group 1'}
+                            </div>
                         </TableHead>
                         <TableHead className="text-center w-1/3 break-words">
-                            {teacherGroup2Stats?.name || 'Group 2'}
+                             <div className="flex flex-col items-center gap-2">
+                                {teacherGroup2Stats?.imageUrl && (
+                                    <Image src={teacherGroup2Stats.imageUrl} alt={teacherGroup2Stats.name} width={64} height={64} className="rounded-full object-cover h-16 w-16" />
+                                )}
+                                {teacherGroup2Stats?.name || 'Group 2'}
+                            </div>
                         </TableHead>
                     </TableRow>
                 </TableHeader>
