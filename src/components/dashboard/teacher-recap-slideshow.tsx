@@ -349,13 +349,15 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
           const y = canvas.height / 2 + 60 + i * 90;
           const slideIn = (1 - easeProgress) * 100;
           
-          const textStartX = hasImage ? textX : (canvas.width - 900) / 2;
-          const percentageStartX = hasImage ? textX + 750 : (canvas.width + 900) / 2;
+          // When image present: text starts at textX-50, percentage at textX+680
+          // When no image: centered layout with 1000px total width
+          const textStartX = hasImage ? textX - 50 : (canvas.width - 1000) / 2;
+          const percentageStartX = hasImage ? textX + 680 : (canvas.width + 1000) / 2;
           
           drawCrispText(ctx, contrib.title, textStartX + slideIn, y, 30, '#cbd5e1', 'left', '600');
           drawCrispText(ctx, `${contrib.value}%`, percentageStartX - slideIn, y, 52, contrib.color, 'right', '800');
           
-          const barWidth = hasImage ? 750 : 900;
+          const barWidth = hasImage ? 730 : 1000;
           const barHeight = 12;
           const barX = textStartX;
           const barY = y + 10;
