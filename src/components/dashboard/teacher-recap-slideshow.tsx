@@ -331,8 +331,8 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
       const nameScale = 1 + Math.sin(nameProgress * Math.PI * 2) * 0.05;
       const teacherName = stats.name || 'Teacher';
       const maxWidth = hasImage ? 1050 : 1400;
-      const fontSize = 100;
-      const lineHeight = 110;
+      const fontSize = 85; // Reduced from 100
+      const lineHeight = 95; // Reduced from 110
       
       ctx.save();
       ctx.font = `900 ${fontSize}px "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif`;
@@ -359,9 +359,9 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
         }
         lines.push(currentLine);
         
-        // Draw wrapped lines
-        const totalHeight = lines.length * lineHeight;
-        const startY = canvas.height / 2 - 150 - (totalHeight / 2) + (lineHeight / 2);
+        // Draw wrapped lines - centered vertically around original position
+        const totalHeight = (lines.length - 1) * lineHeight;
+        const startY = canvas.height / 2 - 200 - (totalHeight / 2);
         
         lines.forEach((line, index) => {
           ctx.save();
@@ -371,47 +371,78 @@ const TeacherRecapSlideshow: React.FC<TeacherRecapSlideshowProps> = ({ stats, pl
           ctx.restore();
         });
         
-        // Adjust subtitle position based on number of lines
-        drawCrispText(ctx, 'Aggregated Performance Overview', textX, canvas.height / 2 - 150 + totalHeight + 30, 40, '#94a3b8', hasImage ? 'left' : 'center', '700');
+        // Adjust subtitle position to be below the last line
+        const subtitleY = startY + totalHeight + 50;
+        drawCrispText(ctx, 'Aggregated Performance Overview', textX, subtitleY, 40, '#94a3b8', hasImage ? 'left' : 'center', '700');
+        
+        // Adjust contributions to start below subtitle
+        const contribStart = (currentStage - 6.5) / 3.5;
+        if (contribStart > 0) {
+          const contribStartY = subtitleY + 80;
+          
+          contributions.forEach((contrib, i) => {
+            const itemProgress = Math.max(0, Math.min(1, (contribStart - i * 0.25) * 3));
+            const easeProgress = easeOutQuart(itemProgress);
+            
+            ctx.globalAlpha = itemProgress * nameOpacity;
+            
+            const y = contribStartY + i * 90;
+            const slideIn = (1 - easeProgress) * 100;
+            
+            const textStartX = hasImage ? textX : (canvas.width - 900) / 2;
+            const percentageStartX = hasImage ? textX + 900 : (canvas.width + 900) / 2;
+            
+            const bulletX = textStartX + slideIn;
+            const textRenderX = bulletX + 20;
+
+            ctx.fillStyle = contrib.color;
+            ctx.beginPath();
+            ctx.arc(bulletX, y, 6, 0, Math.PI*2);
+            ctx.fill();
+
+            drawCrispText(ctx, contrib.title, textRenderX, y, 30, '#cbd5e1', 'left', '600');
+            drawCrispText(ctx, `${contrib.value}%`, percentageStartX, y, 52, contrib.color, 'right', '800');
+          });
+        }
       } else {
         // Single line - original behavior
         ctx.save();
-        ctx.translate(textX, canvas.height / 2 - 150);
+        ctx.translate(textX, canvas.height / 2 - 200);
         ctx.scale(nameScale, nameScale);
         drawCrispText(ctx, teacherName, 0, 0, fontSize, '#ffffff', hasImage ? 'left' : 'center', '900');
         ctx.restore();
         
-        drawCrispText(ctx, 'Aggregated Performance Overview', textX, canvas.height / 2 - 50, 40, '#94a3b8', hasImage ? 'left' : 'center', '700');
+        drawCrispText(ctx, 'Aggregated Performance Overview', textX, canvas.height / 2 - 100, 40, '#94a3b8', hasImage ? 'left' : 'center', '700');
+        
+        const contribStart = (currentStage - 6.5) / 3.5;
+        if (contribStart > 0) {
+          contributions.forEach((contrib, i) => {
+            const itemProgress = Math.max(0, Math.min(1, (contribStart - i * 0.25) * 3));
+            const easeProgress = easeOutQuart(itemProgress);
+            
+            ctx.globalAlpha = itemProgress * nameOpacity;
+            
+            const y = canvas.height / 2 + 60 + i * 90;
+            const slideIn = (1 - easeProgress) * 100;
+            
+            const textStartX = hasImage ? textX : (canvas.width - 900) / 2;
+            const percentageStartX = hasImage ? textX + 900 : (canvas.width + 900) / 2;
+            
+            const bulletX = textStartX + slideIn;
+            const textRenderX = bulletX + 20;
+
+            ctx.fillStyle = contrib.color;
+            ctx.beginPath();
+            ctx.arc(bulletX, y, 6, 0, Math.PI*2);
+            ctx.fill();
+
+            drawCrispText(ctx, contrib.title, textRenderX, y, 30, '#cbd5e1', 'left', '600');
+            drawCrispText(ctx, `${contrib.value}%`, percentageStartX, y, 52, contrib.color, 'right', '800');
+          });
+        }
       }
       
       ctx.restore();
-      
-      const contribStart = (currentStage - 6.5) / 3.5;
-      if (contribStart > 0) {
-        contributions.forEach((contrib, i) => {
-          const itemProgress = Math.max(0, Math.min(1, (contribStart - i * 0.25) * 3));
-          const easeProgress = easeOutQuart(itemProgress);
-          
-          ctx.globalAlpha = itemProgress * nameOpacity;
-          
-          const y = canvas.height / 2 + 60 + i * 90;
-          const slideIn = (1 - easeProgress) * 100;
-          
-          const textStartX = hasImage ? textX : (canvas.width - 900) / 2;
-          const percentageStartX = hasImage ? textX + 900 : (canvas.width + 900) / 2;
-          
-          const bulletX = textStartX + slideIn;
-          const textRenderX = bulletX + 20;
-
-          ctx.fillStyle = contrib.color;
-          ctx.beginPath();
-          ctx.arc(bulletX, y, 6, 0, Math.PI*2);
-          ctx.fill();
-
-          drawCrispText(ctx, contrib.title, textRenderX, y, 30, '#cbd5e1', 'left', '600');
-          drawCrispText(ctx, `${contrib.value}%`, percentageStartX, y, 52, contrib.color, 'right', '800');
-        });
-      }
       ctx.globalAlpha = 1;
       return;
     }
