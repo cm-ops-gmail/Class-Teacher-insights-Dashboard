@@ -270,6 +270,20 @@ export default function AppDashboard() {
     const totalDoubtResolvedPercent = activeData.reduce((acc, item) => acc + parseNumericValue(item.doubtResolvedPercent), 0);
     const totalAverageClassRating = ratedClasses.reduce((acc, item) => acc + parseNumericValue(item.averageClassRating), 0);
 
+    const lateClasses = activeData.filter(item => {
+        if (!item.scheduleTime || !item.teacherEntryTime) return false;
+        
+        const scheduleDate = new Date(`1/1/2000 ${item.scheduleTime}`);
+        const entryDate = new Date(`1/1/2000 ${item.teacherEntryTime}`);
+
+        if (isNaN(scheduleDate.getTime()) || isNaN(entryDate.getTime())) return false;
+
+        const diffMinutes = (scheduleDate.getTime() - entryDate.getTime()) / (1000 * 60);
+        return diffMinutes < 30;
+    });
+
+    const latePercentage = count > 0 ? (lateClasses.length / count) * 100 : 0;
+
     return {
       total: data.length,
       filtered: count,
@@ -288,6 +302,9 @@ export default function AppDashboard() {
       totalAverageClassRating,
       avgClassRating: ratedClassesCount > 0 ? totalAverageClassRating / ratedClassesCount : 0,
       ratedClassesCount,
+      lateCount: lateClasses.length,
+      lateClasses: lateClasses,
+      latePercentage,
     }
   }, [filteredData, data.length]);
   
@@ -745,6 +762,59 @@ export default function AppDashboard() {
                 </p>
               </CardContent>
             </Card>
+            <Card className="border-destructive/50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Late Entries
+                </CardTitle>
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+              </CardHeader>
+              <CardContent>
+                 <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-destructive">
+                      {summary.lateCount}{' '}
+                      <span className="text-base font-normal text-muted-foreground">
+                        ({summary.latePercentage.toFixed(1)}%)
+                      </span>
+                    </div>
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-2xl">
+                           <DialogHeader>
+                               <DialogTitle>Late Entries ({summary.lateCount})</DialogTitle>
+                           </DialogHeader>
+                            <ScrollArea className="h-72 mt-4">
+                               <Table>
+                                 <TableHeader>
+                                   <TableRow>
+                                       <TableHead>Teacher</TableHead>
+                                       <TableHead>Class Topic</TableHead>
+                                       <TableHead>Scheduled</TableHead>
+                                       <TableHead>Entered</TableHead>
+                                   </TableRow>
+                                 </TableHeader>
+                                 <TableBody>
+                                     {summary.lateClasses.map(item => (
+                                         <TableRow key={item.id}>
+                                             <TableCell>{item.teacher}</TableCell>
+                                             <TableCell className="font-medium max-w-xs truncate">{item.classTopic}</TableCell>
+                                             <TableCell>{item.scheduleTime}</TableCell>
+                                             <TableCell>{item.teacherEntryTime}</TableCell>
+                                         </TableRow>
+                                     ))}
+                                 </TableBody>
+                               </Table>
+                            </ScrollArea>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+                 <p className="text-xs text-muted-foreground">
+                  Entered &lt;30 mins before class start
+                </p>
+              </CardContent>
+            </Card>
              <Card className="border-green-500/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -1130,4 +1200,3 @@ const allColumns: {key: keyof AppClassEntry, header: string, sortable?: boolean}
   { key: "otherTechnicalIssues", header: "Other Technical Issues" },
   { key: "satisfaction", header: "Satisfaction" },
 ];
-
