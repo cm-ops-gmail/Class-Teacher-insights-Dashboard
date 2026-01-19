@@ -257,6 +257,20 @@ export default function Dashboard() {
     const uniqueCourses = [...new Set(activeData.map(item => item.course).filter(Boolean))];
     const uniqueProductTypes = [...new Set(activeData.map(item => item.productType).filter(Boolean))];
 
+    const lateClasses = activeData.filter(item => {
+        if (!item.scheduledTime || !item.entryTime) return false;
+        
+        const scheduleDate = new Date(`1/1/2000 ${item.scheduledTime}`);
+        const entryDate = new Date(`1/1/2000 ${item.entryTime}`);
+
+        if (isNaN(scheduleDate.getTime()) || isNaN(entryDate.getTime())) return false;
+
+        const diffMinutes = (scheduleDate.getTime() - entryDate.getTime()) / (1000 * 60);
+        return diffMinutes < 30;
+    });
+
+    const latePercentage = activeData.length > 0 ? (lateClasses.length / activeData.length) * 100 : 0;
+
     return {
       total: data.length,
       filtered: activeData.length,
@@ -267,6 +281,9 @@ export default function Dashboard() {
       topClass: topClass,
       totalAttendance: totalAttendance,
       averageAttendance: averageAttendance,
+      lateCount: lateClasses.length,
+      lateClasses: lateClasses,
+      latePercentage: latePercentage,
     }
   }, [filteredData, data.length]);
 
@@ -765,6 +782,59 @@ export default function Dashboard() {
                 </div>
                  <p className="text-xs text-muted-foreground">
                   in current view
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-destructive/50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Late Entries
+                </CardTitle>
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-destructive">
+                      {summary.lateCount}{' '}
+                      <span className="text-base font-normal text-muted-foreground">
+                          ({summary.latePercentage.toFixed(1)}%)
+                      </span>
+                    </div>
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-2xl">
+                           <DialogHeader>
+                               <DialogTitle>Late Entries ({summary.lateCount})</DialogTitle>
+                           </DialogHeader>
+                            <ScrollArea className="h-72 mt-4">
+                               <Table>
+                                 <TableHeader>
+                                   <TableRow>
+                                       <TableHead>Teacher</TableHead>
+                                       <TableHead>Course</TableHead>
+                                       <TableHead>Scheduled</TableHead>
+                                       <TableHead>Entered</TableHead>
+                                   </TableRow>
+                                 </TableHeader>
+                                 <TableBody>
+                                     {summary.lateClasses.map(item => (
+                                         <TableRow key={item.id}>
+                                             <TableCell>{item.teacher}</TableCell>
+                                             <TableCell className="font-medium max-w-xs truncate">{item.course}</TableCell>
+                                             <TableCell>{item.scheduledTime}</TableCell>
+                                             <TableCell>{item.entryTime}</TableCell>
+                                         </TableRow>
+                                     ))}
+                                 </TableBody>
+                               </Table>
+                            </ScrollArea>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+                 <p className="text-xs text-muted-foreground">
+                  Entered &lt;30 mins before class start
                 </p>
               </CardContent>
             </Card>
