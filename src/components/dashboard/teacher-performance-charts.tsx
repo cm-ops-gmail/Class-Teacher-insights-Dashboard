@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo } from 'react';
@@ -44,6 +43,7 @@ type TeacherStats = {
   totalAverageAttendance: number;
   avgAttendance: number;
   highestPeakAttendance: number;
+  lateEntries: number;
 };
 
 const isAppEntry = (entry: DataEntry): entry is AppClassEntry => 'product' in entry;
@@ -119,7 +119,7 @@ const CustomTooltipContent = ({ active, payload, label, total, metricLabel }: an
 export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps) {
   const { teacherStats, totals } = useMemo(() => {
     if (!data || data.length === 0) {
-      return { teacherStats: [], totals: { classCount: 0, avgAttendance: 0, totalDuration: 0 } };
+      return { teacherStats: [], totals: { classCount: 0, avgAttendance: 0, totalDuration: 0, lateEntries: 0 } };
     }
 
     const stats: { [key: string]: TeacherStats } = {};
@@ -136,11 +136,15 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
           totalAverageAttendance: 0,
           avgAttendance: 0,
           highestPeakAttendance: 0,
+          lateEntries: 0,
         };
       }
       
       const currentStats = stats[teacherName];
       currentStats.classCount += 1;
+
+      let scheduledTime;
+      let entryTime;
 
       if (isAppEntry(item)) {
         currentStats.totalDuration += parseNumericValue(item.classDuration);
@@ -149,6 +153,8 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
         if (peakAttendance > currentStats.highestPeakAttendance) {
             currentStats.highestPeakAttendance = peakAttendance;
         }
+        scheduledTime = item.scheduleTime;
+        entryTime = item.teacherEntryTime;
 
       } else {
         currentStats.totalDuration += parseNumericValue(item.totalDuration);
@@ -157,6 +163,20 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
         if (peakAttendance > currentStats.highestPeakAttendance) {
           currentStats.highestPeakAttendance = peakAttendance;
         }
+        scheduledTime = (item as ClassEntry).scheduledTime;
+        entryTime = (item as ClassEntry).entryTime;
+      }
+
+      if (scheduledTime && entryTime) {
+          const scheduleDate = new Date(`1/1/2000 ${scheduledTime}`);
+          const entryDate = new Date(`1/1/2000 ${entryTime}`);
+
+          if (isNaN(scheduleDate.getTime()) || isNaN(entryDate.getTime())) return;
+
+          const diffMinutes = (scheduleDate.getTime() - entryDate.getTime()) / (1000 * 60);
+          if (diffMinutes < 30) {
+              currentStats.lateEntries += 1;
+          }
       }
     });
 
@@ -170,6 +190,7 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
       classCount: statsArray.reduce((acc, t) => acc + t.classCount, 0),
       avgAttendance: statsArray.reduce((acc, t) => acc + t.avgAttendance, 0),
       totalDuration: statsArray.reduce((acc, t) => acc + t.totalDuration, 0),
+      lateEntries: statsArray.reduce((acc, t) => acc + t.lateEntries, 0),
     };
 
 
@@ -187,6 +208,7 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
   const { chartData: classCountData, othersData: classCountOthers } = processChartData(teacherStats, 'classCount');
   const { chartData: avgAttendanceData, othersData: avgAttendanceOthers } = processChartData(teacherStats, 'avgAttendance');
   const { chartData: totalDurationData, othersData: totalDurationOthers } = processChartData(teacherStats, 'totalDuration');
+  const { chartData: lateEntriesData, othersData: lateEntriesOthers } = processChartData(teacherStats, 'lateEntries');
 
   if (!data || data.length === 0) {
     return null;
@@ -196,6 +218,7 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
     { title: "Classes Taught by Teacher", data: classCountData, total: totals.classCount, metricLabel: 'Classes', othersData: classCountOthers, valueKey: 'classCount' as keyof TeacherStats },
     { title: "Average Attendance by Teacher", data: avgAttendanceData, total: totals.avgAttendance, metricLabel: 'Avg. Attendance', othersData: avgAttendanceOthers, valueKey: 'avgAttendance' as keyof TeacherStats },
     { title: "Total Duration (min) by Teacher", data: totalDurationData, total: totals.totalDuration, metricLabel: 'Duration (min)', othersData: totalDurationOthers, valueKey: 'totalDuration' as keyof TeacherStats },
+    { title: "Most Late Entries by Teacher", data: lateEntriesData, total: totals.lateEntries, metricLabel: 'Late Entries', othersData: lateEntriesOthers, valueKey: 'lateEntries' as keyof TeacherStats },
   ];
 
   return (
