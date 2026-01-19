@@ -5,7 +5,7 @@ import Image from 'next/image';
 import type { ClassEntry, AppClassEntry } from '@/lib/definitions';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Award, Clock, Star, Users, UserSearch, Info } from 'lucide-react';
+import { Award, Clock, Star, Users, UserSearch, Info, AlertTriangle } from 'lucide-react';
 import { Table, TableBody, TableCell, TableRow, TableHead, TableHeader } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '../ui/scroll-area';
@@ -56,6 +56,8 @@ type TeacherStats = {
   ratedClasses: (AppClassEntry & { dataSource: 'app' })[];
   totalRating: number;
   imageUrl?: string;
+  lateEntries: StatDetail;
+  lateEntryPercentage: StatDetail;
 };
 
 const isAppEntry = (entry: DataEntry): entry is AppClassEntry & {dataSource: 'app'} => 'product' in entry && 'averageClassRating' in entry && entry.dataSource === 'app';
@@ -84,7 +86,9 @@ const calculateTeacherGroupStats = (teacherNames: string[], allData: DataEntry[]
       ratedClassesCount: 0,
       ratedClasses: [],
       totalRating: 0,
-      imageUrl: teacherImages[firstTeacher]
+      imageUrl: teacherImages[firstTeacher],
+      lateEntries: { ...initialStat },
+      lateEntryPercentage: { ...initialStat },
   };
 
   if (teacherClasses.length === 0) {
@@ -118,6 +122,26 @@ const calculateTeacherGroupStats = (teacherNames: string[], allData: DataEntry[]
       highestPeak = peak;
       stats.highestAttendanceClass = item;
     }
+
+    const scheduleTime = isFbEntry(item) ? item.scheduledTime : (item as AppClassEntry).scheduleTime;
+    const entryTime = isFbEntry(item) ? item.entryTime : (item as AppClassEntry).teacherEntryTime;
+
+    if (scheduleTime && entryTime) {
+        const scheduleDate = new Date(`1/1/2000 ${scheduleTime}`);
+        const entryDate = new Date(`1/1/2000 ${entryTime}`);
+
+        if (!isNaN(scheduleDate.getTime()) && !isNaN(entryDate.getTime())) {
+            const diffMinutes = (scheduleDate.getTime() - entryDate.getTime()) / (1000 * 60);
+            if (diffMinutes < 30) {
+                stats.lateEntries.total++;
+                if (isFbEntry(item)) {
+                    stats.lateEntries.fb++;
+                } else if (isAppEntry(item)) {
+                    stats.lateEntries.app++;
+                }
+            }
+        }
+    }
   });
 
   stats.classCount.total = stats.classCount.fb + stats.classCount.app;
@@ -134,6 +158,10 @@ const calculateTeacherGroupStats = (teacherNames: string[], allData: DataEntry[]
   
   stats.highestPeakAttendance.total = highestPeak;
   stats.averageRating = stats.ratedClassesCount > 0 ? stats.totalRating / stats.ratedClassesCount : 0;
+
+  stats.lateEntryPercentage.fb = stats.classCount.fb > 0 ? (stats.lateEntries.fb / stats.classCount.fb) * 100 : 0;
+  stats.lateEntryPercentage.app = stats.classCount.app > 0 ? (stats.lateEntries.app / stats.classCount.app) * 100 : 0;
+  stats.lateEntryPercentage.total = stats.classCount.total > 0 ? (stats.lateEntries.total / stats.classCount.total) * 100 : 0;
 
   return stats;
 };
@@ -152,7 +180,7 @@ const formatDuration = (totalMinutes: number) => {
     return result.trim() || '0 min';
   };
 
-const StatPopover = ({ details, statType }: { details: TeacherStats | null, statType: 'classCount' | 'avgAttendance' | 'highestPeakAttendance' | 'totalDuration' | 'avgDurationApp' | 'avgDurationFb' | 'avgRating' }) => {
+const StatPopover = ({ details, statType }: { details: TeacherStats | null, statType: 'classCount' | 'avgAttendance' | 'highestPeakAttendance' | 'totalDuration' | 'avgDurationApp' | 'avgDurationFb' | 'avgRating' | 'lateEntries' }) => {
     if (!details) return null;
 
     let content;
@@ -301,6 +329,47 @@ const StatPopover = ({ details, statType }: { details: TeacherStats | null, stat
                 </div>
             );
             break;
+        case 'lateEntries':
+            title = `Late Entries for ${details.name}`;
+            const lateClasses = details.classes.filter(item => {
+                const scheduleTime = isFbEntry(item) ? item.scheduledTime : (item as AppClassEntry).scheduleTime;
+                const entryTime = isFbEntry(item) ? item.entryTime : (item as AppClassEntry).teacherEntryTime;
+
+                if (!scheduleTime || !entryTime) return false;
+                
+                const scheduleDate = new Date(`1/1/2000 ${scheduleTime}`);
+                const entryDate = new Date(`1/1/2000 ${entryTime}`);
+
+                if (isNaN(scheduleDate.getTime()) || isNaN(entryDate.getTime())) return false;
+
+                const diffMinutes = (scheduleDate.getTime() - entryDate.getTime()) / (1000 * 60);
+                return diffMinutes < 30;
+            });
+            content = (
+                <ScrollArea className="h-72 mt-4">
+                   <Table>
+                     <TableHeader>
+                       <TableRow>
+                           <TableHead>Class Topic</TableHead>
+                           <TableHead>Source</TableHead>
+                           <TableHead>Scheduled</TableHead>
+                           <TableHead>Entered</TableHead>
+                       </TableRow>
+                     </TableHeader>
+                     <TableBody>
+                         {lateClasses.map(item => (
+                             <TableRow key={item.id}>
+                                 <TableCell className="font-medium max-w-xs truncate">{isFbEntry(item) ? item.course : (item as AppClassEntry).classTopic}</TableCell>
+                                 <TableCell><Badge variant={isAppEntry(item) ? 'default' : 'secondary'}>{item.dataSource?.toUpperCase()}</Badge></TableCell>
+                                 <TableCell>{isFbEntry(item) ? item.scheduledTime : (item as AppClassEntry).scheduleTime}</TableCell>
+                                 <TableCell>{isFbEntry(item) ? item.entryTime : (item as AppClassEntry).teacherEntryTime}</TableCell>
+                             </TableRow>
+                         ))}
+                     </TableBody>
+                   </Table>
+                </ScrollArea>
+            );
+            break;
         default:
             return null;
     }
@@ -330,13 +399,14 @@ export function TeacherComparison({ data, allTeachers, teacherImages }: TeacherC
   const teacherGroup1Stats = useMemo(() => calculateTeacherGroupStats(teacherGroup1, data, teacherImages), [teacherGroup1, data, teacherImages]);
   const teacherGroup2Stats = useMemo(() => calculateTeacherGroupStats(teacherGroup2, data, teacherImages), [teacherGroup2, data, teacherImages]);
 
-  const statsToCompare: { label: string; icon: React.ElementType; key: 'classCount' | 'avgAttendance' | 'highestPeakAttendance' | 'totalDuration' | 'avgDurationApp' | 'avgDurationFb' | 'avgRating'; unit?: string; formatter?: (value: number) => string; }[] = [
+  const statsToCompare: { label: string; icon: React.ElementType; key: 'classCount' | 'avgAttendance' | 'highestPeakAttendance' | 'totalDuration' | 'avgDurationApp' | 'avgDurationFb' | 'lateEntries' | 'avgRating'; unit?: string; formatter?: (value: number) => string; }[] = [
     { label: "Total Classes", icon: Award, key: "classCount" },
     { label: "Avg. Attendance", icon: Users, key: "avgAttendance" },
     { label: "Highest Peak Attendance", icon: Star, key: "highestPeakAttendance" },
     { label: "Total Duration", icon: Clock, key: "totalDuration", unit: " min" },
     { label: "Avg Duration (App)", icon: Clock, key: "avgDurationApp", unit: " min" },
     { label: "Avg Duration (Fb)", icon: Clock, key: "avgDurationFb", unit: " min" },
+    { label: "Late Entries", icon: AlertTriangle, key: "lateEntries" },
     { label: "Average Rating", icon: Star, key: "avgRating", formatter: (v) => v.toFixed(2) },
   ];
 
@@ -410,8 +480,19 @@ export function TeacherComparison({ data, allTeachers, teacherImages }: TeacherC
                            val2 = isDetailedStat(stat2) ? stat2.total : null;
                        }
 
-                       const displayVal1 = val1 !== null ? (stat.formatter ? stat.formatter(val1) : val1.toLocaleString()) : 'N/A';
-                       const displayVal2 = val2 !== null ? (stat.formatter ? stat.formatter(val2) : val2.toLocaleString()) : 'N/A';
+                       let displayVal1 = val1 !== null ? (stat.formatter ? stat.formatter(val1) : val1.toLocaleString()) : 'N/A';
+                       let displayVal2 = val2 !== null ? (stat.formatter ? stat.formatter(val2) : val2.toLocaleString()) : 'N/A';
+
+                       if (stat.key === 'lateEntries') {
+                            const percentage1 = teacherGroup1Stats?.lateEntryPercentage.total;
+                            const percentage2 = teacherGroup2Stats?.lateEntryPercentage.total;
+                            if (val1 !== null && percentage1 !== undefined) {
+                                displayVal1 = `${displayVal1} (${percentage1.toFixed(1)}%)`;
+                            }
+                            if (val2 !== null && percentage2 !== undefined) {
+                                displayVal2 = `${displayVal2} (${percentage2.toFixed(1)}%)`;
+                            }
+                       }
                        
                        return (
                         <TableRow key={stat.key} className="transition-colors hover:bg-accent/20 group">
