@@ -34,6 +34,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import Footer from '@/components/footer';
+import { Badge } from '@/components/ui/badge';
 
 const parseNumericValue = (value: string | number | undefined | null): number => {
   if (value === null || value === undefined) return 0;
@@ -68,7 +69,7 @@ const formatDuration = (totalMinutes: number) => {
 const isAppEntry = (entry: CombinedClassEntry): entry is AppClassEntry & { dataSource: 'app' } => entry.dataSource === 'app';
 const isFbEntry = (entry: CombinedClassEntry): entry is ClassEntry & { dataSource: 'fb' } => entry.dataSource === 'fb';
 
-const StatCard = ({ icon: Icon, title, stat, popoverContent, colorClass }: { icon: React.ElementType, title: string, stat: any, popoverContent: React.ReactNode, colorClass: string }) => {
+const StatCard = ({ icon: Icon, title, stat, popoverContent, colorClass, percentage }: { icon: React.ElementType, title: string, stat: any, popoverContent: React.ReactNode, colorClass: string, percentage?: number }) => {
     const total = stat?.total ?? 0;
     return (
         <Card className={`border-${colorClass}/50`}>
@@ -78,7 +79,12 @@ const StatCard = ({ icon: Icon, title, stat, popoverContent, colorClass }: { ico
             </CardHeader>
             <CardContent>
                 <div className="flex items-center justify-between">
-                    <div className={`text-2xl font-bold text-${colorClass}`}>{total.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                    <div className={`text-2xl font-bold text-${colorClass}`}>
+                        {total.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        {percentage !== undefined && (
+                            <span className="text-base font-normal text-muted-foreground ml-2">({percentage.toFixed(1)}%)</span>
+                        )}
+                    </div>
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4 text-muted-foreground" /></Button>
@@ -239,6 +245,27 @@ export default function CentralDashboard() {
     let totalRating = 0;
     let ratedClassesCount = 0;
 
+    const lateClasses = activeData.filter(item => {
+        const scheduleTime = isFbEntry(item) ? item.scheduledTime : (item as AppClassEntry).scheduleTime;
+        const entryTime = isFbEntry(item) ? item.entryTime : (item as AppClassEntry).teacherEntryTime;
+
+        if (!scheduleTime || !entryTime) return false;
+        
+        const scheduleDate = new Date(`1/1/2000 ${scheduleTime}`);
+        const entryDate = new Date(`1/1/2000 ${entryTime}`);
+
+        if (isNaN(scheduleDate.getTime()) || isNaN(entryDate.getTime())) return false;
+
+        const diffMinutes = (scheduleDate.getTime() - entryDate.getTime()) / (1000 * 60);
+        return diffMinutes < 30;
+    });
+
+    const lateCount = {
+        fb: lateClasses.filter(c => isFbEntry(c)).length,
+        app: lateClasses.filter(c => isAppEntry(c)).length,
+        total: lateClasses.length
+    };
+
     activeData.forEach(item => {
       let peak = 0;
       if (isFbEntry(item)) {
@@ -279,7 +306,9 @@ export default function CentralDashboard() {
       app: ratedClassesCount > 0 ? totalRating / ratedClassesCount : 0 // Rating is only from app
     };
 
-    return { classCount, totalDuration, avgAttendance, highestAttendance, avgRating, totalAttendance, ratedClassesCount };
+    const latePercentage = classCount.total > 0 ? (lateCount.total / classCount.total) * 100 : 0;
+
+    return { classCount, totalDuration, avgAttendance, highestAttendance, avgRating, totalAttendance, ratedClassesCount, lateCount, lateClasses, latePercentage };
   }, [filteredData]);
   
   const { issuePercentage, issueCount, issueBreakdown } = useMemo(() => {
@@ -527,6 +556,41 @@ export default function CentralDashboard() {
                     </div>
                 </>
             } />
+            <StatCard 
+              icon={AlertTriangle} 
+              title="Late Entries" 
+              stat={summary.lateCount} 
+              percentage={summary.latePercentage} 
+              colorClass="destructive" 
+              popoverContent={
+                 <>
+                    <DialogHeader><DialogTitle>Late Entries ({summary.lateCount.total})</DialogTitle></DialogHeader>
+                    <ScrollArea className="h-72 mt-4">
+                       <Table>
+                         <TableHeader>
+                           <TableRow>
+                               <TableHead>Teacher</TableHead>
+                               <TableHead>Class Topic</TableHead>
+                               <TableHead>Source</TableHead>
+                               <TableHead>Scheduled</TableHead>
+                               <TableHead>Entered</TableHead>
+                           </TableRow>
+                         </TableHeader>
+                         <TableBody>
+                             {summary.lateClasses.map(item => (
+                                 <TableRow key={item.id}>
+                                     <TableCell>{item.teacher}</TableCell>
+                                     <TableCell className="font-medium max-w-xs truncate">{isFbEntry(item) ? item.course : (item as AppClassEntry).classTopic}</TableCell>
+                                     <TableCell><Badge variant={isAppEntry(item) ? 'default' : 'secondary'}>{item.dataSource?.toUpperCase()}</Badge></TableCell>
+                                     <TableCell>{isFbEntry(item) ? item.scheduledTime : (item as AppClassEntry).scheduleTime}</TableCell>
+                                     <TableCell>{isFbEntry(item) ? item.entryTime : (item as AppClassEntry).teacherEntryTime}</TableCell>
+                                 </TableRow>
+                             ))}
+                         </TableBody>
+                       </Table>
+                    </ScrollArea>
+                 </>
+            } />
           </div>
         </section>
 
@@ -744,4 +808,3 @@ const allCombinedColumns: { key: keyof CombinedClassEntry; header: string; sorta
     { key: 'averageClassRating', header: 'Rating', sortable: true },
     { key: 'issuesType', header: 'Issue Type', sortable: true },
 ];
-
