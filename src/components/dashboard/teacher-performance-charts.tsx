@@ -253,12 +253,16 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
         const top30Percent = !isPercentage && total > 0 ? ((top30Value / total) * 100).toFixed(1) : "0";
         const othersPercent = !isPercentage && total > 0 ? ((othersValue / total) * 100).toFixed(1) : "0";
         
+        const isAvgAttendanceChart = metricLabel === 'Avg. Attendance';
+        
         return (
           <Card key={title} className="flex flex-col">
             <CardHeader>
               <CardTitle>{title}</CardTitle>
               {isPercentage ? (
                 <CardDescription>Teachers with the highest late entry percentage.</CardDescription>
+              ) : isAvgAttendanceChart ? (
+                <CardDescription>Top 30 teachers with the highest average attendance.</CardDescription>
               ) : (
                 <CardDescription className="flex items-center gap-2">
                   <span>Top 30 contribute {top30Percent}% of the total.</span>
