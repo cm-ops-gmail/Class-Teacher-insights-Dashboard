@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo } from 'react';
@@ -255,7 +256,7 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
         return (
           <Card key={title} className="flex flex-col">
             <CardHeader>
-              <CardTitle>{title} ({isPercentage ? `${total.toFixed(2)}%` : total.toLocaleString()})</CardTitle>
+              <CardTitle>{title}</CardTitle>
               {isPercentage ? (
                 <CardDescription>Teachers with the highest late entry percentage.</CardDescription>
               ) : (
