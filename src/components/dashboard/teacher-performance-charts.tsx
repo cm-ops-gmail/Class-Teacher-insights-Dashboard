@@ -44,6 +44,7 @@ type TeacherStats = {
   avgAttendance: number;
   highestPeakAttendance: number;
   lateEntries: number;
+  lateEntryPercentage: number;
 };
 
 const isAppEntry = (entry: DataEntry): entry is AppClassEntry => 'product' in entry;
@@ -97,17 +98,17 @@ const processChartData = (
   return { chartData: finalChartData, othersData: others };
 };
 
-const CustomTooltipContent = ({ active, payload, label, total, metricLabel }: any) => {
+const CustomTooltipContent = ({ active, payload, label, total, metricLabel, isPercentage }: any) => {
   if (active && payload && payload.length) {
     const value = payload[0].value;
-    const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
+    const contribution = !isPercentage && total > 0 ? ((value / total) * 100).toFixed(2) : null;
     return (
       <div className="rounded-lg border bg-background p-2.5 text-sm shadow-sm">
         <div className="grid grid-cols-1 gap-1.5">
           <p className="font-bold">{label}</p>
-          <p>{metricLabel}: <span className="font-bold">{value.toLocaleString()}</span></p>
-          <p>Percentage: <span className="font-bold">{percentage}%</span></p>
-          <p>Total: <span className="font-bold">{total.toLocaleString()}</span></p>
+          <p>{metricLabel}: <span className="font-bold">{isPercentage ? `${value.toFixed(2)}%` : value.toLocaleString()}</span></p>
+          {contribution !== null && <p>Contribution: <span className="font-bold">{contribution}%</span></p>}
+          {!isPercentage && <p>Platform Total: <span className="font-bold">{total.toLocaleString()}</span></p>}
         </div>
       </div>
     );
@@ -137,6 +138,7 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
           avgAttendance: 0,
           highestPeakAttendance: 0,
           lateEntries: 0,
+          lateEntryPercentage: 0,
         };
       }
       
@@ -182,6 +184,7 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
 
     Object.values(stats).forEach(t => {
       t.avgAttendance = t.classCount > 0 ? Math.round(t.totalAverageAttendance / t.classCount) : 0;
+      t.lateEntryPercentage = t.classCount > 0 ? (t.lateEntries / t.classCount) * 100 : 0;
     });
 
     const statsArray = Object.values(stats);
@@ -209,66 +212,75 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
   const { chartData: avgAttendanceData, othersData: avgAttendanceOthers } = processChartData(teacherStats, 'avgAttendance');
   const { chartData: totalDurationData, othersData: totalDurationOthers } = processChartData(teacherStats, 'totalDuration');
   const { chartData: lateEntriesData, othersData: lateEntriesOthers } = processChartData(teacherStats, 'lateEntries');
+  const { chartData: lateEntryPercentageData, othersData: lateEntryPercentageOthers } = processChartData(teacherStats, 'lateEntryPercentage');
 
   if (!data || data.length === 0) {
     return null;
   }
   
+  const platformWideLatePercentage = totals.classCount > 0 ? (totals.lateEntries / totals.classCount) * 100 : 0;
+
   const allChartCards = [
-    { title: "Classes Taught by Teacher", data: classCountData, total: totals.classCount, metricLabel: 'Classes', othersData: classCountOthers, valueKey: 'classCount' as keyof TeacherStats },
-    { title: "Average Attendance by Teacher", data: avgAttendanceData, total: totals.avgAttendance, metricLabel: 'Avg. Attendance', othersData: avgAttendanceOthers, valueKey: 'avgAttendance' as keyof TeacherStats },
-    { title: "Total Duration (min) by Teacher", data: totalDurationData, total: totals.totalDuration, metricLabel: 'Duration (min)', othersData: totalDurationOthers, valueKey: 'totalDuration' as keyof TeacherStats },
-    { title: "Most Late Entries by Teacher", data: lateEntriesData, total: totals.lateEntries, metricLabel: 'Late Entries', othersData: lateEntriesOthers, valueKey: 'lateEntries' as keyof TeacherStats },
+    { title: "Classes Taught by Teacher", data: classCountData, total: totals.classCount, metricLabel: 'Classes', othersData: classCountOthers, valueKey: 'classCount' as keyof TeacherStats, isPercentage: false },
+    { title: "Average Attendance by Teacher", data: avgAttendanceData, total: totals.avgAttendance, metricLabel: 'Avg. Attendance', othersData: avgAttendanceOthers, valueKey: 'avgAttendance' as keyof TeacherStats, isPercentage: false },
+    { title: "Total Duration (min) by Teacher", data: totalDurationData, total: totals.totalDuration, metricLabel: 'Duration (min)', othersData: totalDurationOthers, valueKey: 'totalDuration' as keyof TeacherStats, isPercentage: false },
+    { title: "Most Late Entries by Teacher", data: lateEntriesData, total: totals.lateEntries, metricLabel: 'Late Entries', othersData: lateEntriesOthers, valueKey: 'lateEntries' as keyof TeacherStats, isPercentage: false },
+    { title: "Highest Late Entry % by Teacher", data: lateEntryPercentageData, total: platformWideLatePercentage, metricLabel: 'Late Entry %', othersData: lateEntryPercentageOthers, valueKey: 'lateEntryPercentage' as keyof TeacherStats, isPercentage: true },
   ];
 
   return (
     <div className="grid grid-cols-1 gap-6">
-      {allChartCards.map(({ title, data, total, metricLabel, othersData, valueKey }) => {
+      {allChartCards.map(({ title, data, total, metricLabel, othersData, valueKey, isPercentage }) => {
         const top30Value = data.filter(d => d.name !== 'Others').reduce((acc, d) => acc + d.value, 0);
         const othersValue = data.find(d => d.name === 'Others')?.value ?? 0;
-        const top30Percent = total > 0 ? ((top30Value / total) * 100).toFixed(1) : 0;
-        const othersPercent = total > 0 ? ((othersValue / total) * 100).toFixed(1) : 0;
+        
+        const top30Percent = !isPercentage && total > 0 ? ((top30Value / total) * 100).toFixed(1) : "0";
+        const othersPercent = !isPercentage && total > 0 ? ((othersValue / total) * 100).toFixed(1) : "0";
         
         return (
           <Card key={title} className="flex flex-col">
             <CardHeader>
-              <CardTitle>{title} ({total.toLocaleString()})</CardTitle>
-              <CardDescription className="flex items-center gap-2">
-                <span>Top 30 contribute {top30Percent}% of the total.</span>
-                {othersData.length > 0 && (
-                   <div className="flex items-center gap-1">
-                        <span>Others contribute {othersPercent}%.</span>
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4" /></Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-md">
-                                <DialogHeader>
-                                    <DialogTitle>Teachers in "Others"</DialogTitle>
-                                </DialogHeader>
-                                <ScrollArea className="h-96 mt-4">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Teacher</TableHead>
-                                                <TableHead className="text-right">{metricLabel}</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {othersData.sort((a, b) => (b[valueKey] as number) - (a[valueKey] as number)).map(teacher => (
-                                                <TableRow key={teacher.name}>
-                                                    <TableCell className="font-medium">{teacher.name}</TableCell>
-                                                    <TableCell className="text-right">{(teacher[valueKey] as number).toLocaleString()}</TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </ScrollArea>
-                            </DialogContent>
-                        </Dialog>
-                   </div>
-                )}
-              </CardDescription>
+              <CardTitle>{title} ({isPercentage ? `${total.toFixed(2)}%` : total.toLocaleString()})</CardTitle>
+              {isPercentage ? (
+                <CardDescription>Teachers with the highest late entry percentage.</CardDescription>
+              ) : (
+                <CardDescription className="flex items-center gap-2">
+                  <span>Top 30 contribute {top30Percent}% of the total.</span>
+                  {othersData.length > 0 && (
+                    <div className="flex items-center gap-1">
+                          <span>Others contribute {othersPercent}%.</span>
+                          <Dialog>
+                              <DialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-5 w-5"><Info className="h-4 w-4" /></Button>
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-md">
+                                  <DialogHeader>
+                                      <DialogTitle>Teachers in "Others"</DialogTitle>
+                                  </DialogHeader>
+                                  <ScrollArea className="h-96 mt-4">
+                                      <Table>
+                                          <TableHeader>
+                                              <TableRow>
+                                                  <TableHead>Teacher</TableHead>
+                                                  <TableHead className="text-right">{metricLabel}</TableHead>
+                                              </TableRow>
+                                          </TableHeader>
+                                          <TableBody>
+                                              {othersData.sort((a, b) => (b[valueKey] as number) - (a[valueKey] as number)).map(teacher => (
+                                                  <TableRow key={teacher.name}>
+                                                      <TableCell className="font-medium">{teacher.name}</TableCell>
+                                                      <TableCell className="text-right">{(teacher[valueKey] as number).toLocaleString()}</TableCell>
+                                                  </TableRow>
+                                              ))}
+                                          </TableBody>
+                                      </Table>
+                                  </ScrollArea>
+                              </DialogContent>
+                          </Dialog>
+                    </div>
+                  )}
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent className="flex-1 pl-0 pr-6">
               <ChartContainer
@@ -281,7 +293,7 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
                   layout="vertical"
                   margin={{
                     left: 10,
-                    right: 30,
+                    right: 40,
                   }}
                 >
                   <YAxis
@@ -297,7 +309,7 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
                   <XAxis dataKey="value" type="number" hide />
                   <ChartTooltip
                     cursor={{ fill: 'hsl(var(--muted))' }}
-                    content={<CustomTooltipContent total={total} metricLabel={metricLabel} />}
+                    content={<CustomTooltipContent total={total} metricLabel={metricLabel} isPercentage={isPercentage} />}
                   />
                   <Bar
                     dataKey="value"
@@ -309,7 +321,7 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
                         position="right"
                         offset={8}
                         className="fill-foreground text-xs"
-                        formatter={(value: number) => value.toLocaleString()}
+                        formatter={(value: number) => isPercentage ? `${value.toFixed(2)}%` : value.toLocaleString()}
                       />
                   </Bar>
                 </BarChart>
