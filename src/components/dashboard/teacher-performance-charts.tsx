@@ -101,14 +101,25 @@ const processChartData = (
 const CustomTooltipContent = ({ active, payload, label, total, metricLabel, isPercentage }: any) => {
   if (active && payload && payload.length) {
     const value = payload[0].value;
-    const contribution = !isPercentage && total > 0 ? ((value / total) * 100).toFixed(2) : null;
+    const isAvgAttendance = metricLabel === 'Avg. Attendance';
+    const contribution = !isPercentage && !isAvgAttendance && total > 0 ? ((value / total) * 100).toFixed(2) : null;
+    
+    let totalLine = null;
+    if (isPercentage) {
+      totalLine = <p>Platform Avg %: <span className="font-bold">{total.toFixed(2)}%</span></p>;
+    } else if (isAvgAttendance) {
+      totalLine = <p>Platform Average: <span className="font-bold">{total.toLocaleString()}</span></p>;
+    } else {
+      totalLine = <p>Platform Total: <span className="font-bold">{total.toLocaleString()}</span></p>;
+    }
+
     return (
       <div className="rounded-lg border bg-background p-2.5 text-sm shadow-sm">
         <div className="grid grid-cols-1 gap-1.5">
           <p className="font-bold">{label}</p>
           <p>{metricLabel}: <span className="font-bold">{isPercentage ? `${value.toFixed(2)}%` : value.toLocaleString()}</span></p>
           {contribution !== null && <p>Contribution: <span className="font-bold">{contribution}%</span></p>}
-          {!isPercentage && <p>Platform Total: <span className="font-bold">{total.toLocaleString()}</span></p>}
+          {totalLine}
         </div>
       </div>
     );
@@ -189,9 +200,13 @@ export function TeacherPerformanceCharts({ data }: TeacherPerformanceChartsProps
 
     const statsArray = Object.values(stats);
     
+    const totalPlatformClasses = statsArray.reduce((acc, t) => acc + t.classCount, 0);
+    const totalPlatformAttendance = statsArray.reduce((acc, t) => acc + t.totalAverageAttendance, 0);
+    const platformAvgAttendance = totalPlatformClasses > 0 ? Math.round(totalPlatformAttendance / totalPlatformClasses) : 0;
+
     const totals = {
-      classCount: statsArray.reduce((acc, t) => acc + t.classCount, 0),
-      avgAttendance: statsArray.reduce((acc, t) => acc + t.avgAttendance, 0),
+      classCount: totalPlatformClasses,
+      avgAttendance: platformAvgAttendance,
       totalDuration: statsArray.reduce((acc, t) => acc + t.totalDuration, 0),
       lateEntries: statsArray.reduce((acc, t) => acc + t.lateEntries, 0),
     };
